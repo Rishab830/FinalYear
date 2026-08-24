@@ -1,0 +1,2991 @@
+FILE: Vision-Language_Modeling_Meets_Remote_Sensing_Models_datasets_and_perspectives.txt
+
+
+--- PAGE 1 FULL/EDGE ---
+276 
+ IEE E GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 20252473-2397 © 2025 IEEE. All rights reserved, including rights for text and 
+data mining, and training of artificial intelligence and similar technologies.
+V
+ision-language modeling (VLM) aims to bridge 
+the information gap between images and 
+natural language. Under the new paradigm 
+of first pretraining on massive image-
+text pairs and then fine-tuning on 
+task-specific data, VLM in the re -
+mote sensing (RS) domain has 
+made significant progress. 
+The resulting models benefit 
+from  the absorption of ex -
+tensive  general knowledge 
+and demonstrate strong 
+performance across a vari -
+ety of remote sensing data 
+analysis tasks. Moreover, 
+they are capable of inter -
+acting with users in a con -
+versational manner. In this 
+article, we aim to provide 
+the remote sensing com -
+munity with a timely and 
+comprehensive review of the 
+developments in VLM using the 
+two-stage paradigm. Specifically, 
+we first cover a taxonomy of VLM 
+in remote sensing: contrastive learn -
+ing, visual instruction tuning, and text-
+conditioned image generation. For each 
+category, we detail the commonly used net -
+work architecture and pretraining objectives. Sec-
+ond, we conduct a thorough review of existing works, 
+examining foundation models and task-specific adaptation 
+methods in contrastive-based VLM, architectural upgrades, 
+training strategies, and model capabilities in instruction-
+based VLM as well as generative foundation models with 
+their representative downstream applications. Third, we 
+summarize datasets used for VLM pretraining, fine-tun -
+ing, and evaluation, with an analysis of their construction 
+methodologies (including image sources and caption gen-
+eration) and key properties, such as scale and task adapt -
+ability. Finally, we conclude this survey with insights and 
+discussions on future research directions: cross-modal rep-
+resentation alignment, vague requirement comprehension, 
+explanation-driven model reliability, continually scalable 
+model capabilities, and large-scale datasets featuring richer 
+modalities and greater challenges. 
+INTRODUCTION
+VLM in remote sensing, aiming to bridge the information 
+gap between remote sensing images and natural language, 
+facilitates a deeper understanding of remote sensing scene 
+Digital Object Identifier 10.1 109/MGRS.2025.3572702 
+Date of publication 9 June 2025; date of current version 19 September 2025.
+Vision-Language Modeling 
+Meets Remote Sensing
+Models, datasets, and perspectives XINGXING WENG , CHAO PANG , 
+AND GUI-SONG XIA
+©SHUTTERSTOCK.COM/RANJITH RAVINDRAN
+Authorized licensed use limited to: Amrita School of Engineering. Downloaded on August 23,2026 at 13:14:55 UTC from IEEE Xplore.  Restrictions apply. 
+
+--- PAGE 2 FULL/EDGE ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+277 
+semantics, like the attributes of ground objects and their 
+relationship, and enables more natural human interaction 
+with intelligent remote sensing data analysis models or 
+methods [1], [2]. Since the introduction of remote sensing 
+tasks, such as image captioning [3], visual question answer-
+ing (VQA) [4], text-image (or image-text) retrieval [5], and 
+text-based image generation [6] , VLM in remote sensing 
+has achieved significant success, driven by advancements 
+in deep learning.
+Early works on VLM primarily emphasize the careful 
+design of model architectures, followed by supervised 
+training from scratch on small-scale datasets. For exam -
+ple, in image captioning research, many efforts [7], [8], [9], 
+[10] have been made to effectively combine convolutional 
+neural networks (e.g., VGG [11] and ResNet [12]) with se -
+quential models (e.g., LSTM [13]  and Transformer [14] ) 
+before training on UCM-captions [3] and Sydney-captions 
+[3] datasets. Under this classical construction paradigm, 
+deep models often excel on test datasets but struggle to 
+perform satisfactorily in large-scale deployments. More -
+over, although these models are capable of describing im -
+age content, they fall short when tasked with answering 
+questions about the images. In other words, they struggle 
+to accomplish related tasks, such as VQA. The task-specific 
+nature of these models seriously limits their applicability 
+across diverse scenarios.
+Recently, a new paradigm of pretraining followed by 
+fine-tuning provides a promising solution to address the 
+challenges mentioned previously. The core idea is to first 
+pretrain a model on massive image-text data, enabling it 
+to capture general knowledge that covers a wide range of 
+visual and textual concepts, along with their underlying 
+correspondence. The pretrained model is then fine-tuned 
+on task-specific training data. The integration of general 
+knowledge has been shown to enhance the model’s gener-
+alization ability in a single task [15], [16] while also making 
+it more versatile and capable of handling a variety of down-
+stream tasks [17], [18]. Consequently, VLM with this new 
+paradigm has emerged as a prominent research focus in the 
+field of remote sensing.
+To date, significant progress has been achieved, as il -
+lustrated in Figure 1 . This includes works based on the 
+following:
+1)
+ con
+trastive learning [19], such as GeoRSCLIP [15], Sky-
+CLIP [16], and RemoteCLIP [20], which have driven sub-
+stantial advancements in various cross-modal tasks and 
+zero-shot image understanding tasks
+2)
+ lea
+rning an implicit joint distribution between text and 
+images, like RS-SD [15] , DiffusionSat [21] , and CRS-
+Diff [22], which allow for image generation from text 
+prompts
+3) vis
+ual instruction tuning [23] , such as GeoChat [18] , 
+LHRS-Bot [24], and SkySenseGPT [25] , which have 
+demonstrated improved performance, diverse capabili -
+ties, and conversational interactions in remote sensing 
+data analysis.
+Despite these remarkable achievements, it is widely 
+acknowledged that VLM remains an open challenge. In -
+deed, existing works have not yet achieved the level of re -
+mote sensing experts in processing remote sensing data. To 
+provide clarity and motivation for further advances in the 
+research community, several surveys have reviewed VLM 
+in remote sensing. For instance, Li et al. [2] summarize vi -
+sion-language models from an application perspective and 
+suggest potential research opportunities. However, due to 
+time constraints, they primarily concentrate on vision-only 
+foundation models and early works. Zhou et al. [26] review 
+recent developments but lack an in-depth analysis of key 
+designs, which is significant for inspiring future research. 
+Moreover, datasets, as a prerequisite of visual-language 
+modeling research, have not been given adequate attention 
+in existing surveys.
+In this work, we aim to provide a timely and compre -
+hensive review of the literature, with a focus on VLM based 
+on the pretraining and fine-tuning paradigm in the field of 
+remote sensing. Specifically, we cover the following: 
+1)
+ a ta
+xonomy of VLM in remote sensing, detailing com -
+monly used network architectures and pretraining ob -
+jectives for each category
+2) the l
+atest advancements in contrastive-based, instruc -
+tion-based, and generation-based VLM in remote 
+sensing, highlighting key designs and downstream  
+applications
+3)
+ pro
+gress in datasets for VLM pretraining, fine-tuning, 
+and evaluation
+4) sev
+eral challenges and potential research directions. 
+Figure 2 presents an overview of this article.
+THE TAXONOMY OF VISUAL-LANGUAGE  
+MODELING IN REMOTE SENSING
+Under the pretraining and fine-tuning paradigm, VLM in 
+remote sensing can be divided into three distinct groups 
+based on their strategies for bridging the two modalities in 
+the pretraining phase: contr
+
+--- PAGE 3 FULL/EDGE ---
+                                           IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 2025
+278 
+section, we present commonly used network architectures 
+and pretraining objectives within each group.
+CONTRASTIVE LEARNING
+The motivation behind applying contrastive learning to 
+VLM is training a model to map vision and language into 
+a shared representation space, where an image and its cor -
+responding text share similar representations while differ -
+ing from other texts, which was first implemented by the 
+pioneering work CLIP [27] in the field of computer vision. 
+As illustrated in Figure 3(a), CLIP utilizes two independent 
+encoders responsible for encoding visual and textual infor-
+mation. Given a batch of N  image-text pairs 
+{( ,) },xyii i
+N
+1=  
+the embeddings extracted by the two encoders followed 
+by normalization are 
+{, }.e ei
+I
+i
+T
+i
+N
+1=  To achieve the similarity 
+between visual and textual representations, CLIP is trained 
+to maximize the cosine similarity of the embeddings of 
+the ith image and the corresponding ith text 
+([ ]iN!  with 
+[] {, ,, })NN 12 f=  while minimizing the cosine similarity 
+of the embeddings of the ith image and jth text (, [] ,ij N!  
+).ij!  The loss is computed using InfoNCE [29] as follows:
+() (, {} )( ,{ })logl ogN ss ss2
+1L ii
+I
+ij
+I
+j
+N
+ii
+T
+ij
+T
+j
+N
+i
+N
+11
+1
+InfoNCE vv=- +xx ==
+=
+/  
+ (1)
+wh
+ere (, )s eeSij
+I
+i
+I
+j
+T=  and (, )s eeSij
+T
+i
+T
+j
+I=  are the similar -
+ity scores between the image and text embeddings, 
+as computed by the function .(, )/ee ee eeS $ ;; ;;=ll l  
+(, {} )( /) /( (/ ))exp expss ssij j
+N
+i j
+N
+j11vx xR=x ==  is the softmax 
+function, which normalizes the similarity score sii
+I  or sii
+T  
+over the corresponding sets {}sij
+I
+j
+N
+1=  or {} .sij
+T
+j
+N
+1=  x is the 
+temperature.
+The original CLIP model was trained on 400 million 
+image-text pairs collected from the Internet and has dem -
+onstrated impressive results across various computer vision 
+tasks [30], [31], [32]. These advancements spark interest in 
+extending its capability to advance VLM in remote sensing. 
+Two primary lines of research have been actively explored. 
+The first, following the CLIP learning way, focuses on pre -
+training foundation models that are task agnostic but specif-
+ically adapted for the remote sensing domain. This includes 
+efforts such as constructing large-scale image-text datasets 
+[15], [16] and developing novel pretraining objectives [33], 
+[34]. The second line explores the effective adaptation of 
+pretrained CLIP models toward diverse downstream tasks, 
+including image captioning [35], [36], zero-shot scene clas-
+sification [37], [38], image-text retrieval [39], [40], etc.
+VISUAL INSTRUCTION TUNING
+Optimizing a model from scratch for image-text alignment 
+is extremely resource intensive due to the need for vast 
+amounts of data and computational power. Fortunately, 
+many pretrained vision encoders and language models have 
+been released. Pretrained vision encoders can provide high-
+quality visual representations, while pretrained language 
+models, particularly large language models (LLMs), dem -
+onstrate advanced language understanding capabilities. As 
+a result, recent works increasingly leverage these models to 
+achieve image-text alignment through visual instruction 
+tuning, as introduced by LLaVA [23]  and MiniGPT-4 [41]. 
+Figure 3(b) illustrates a network architecture for this type 
+of work, consisting of three key components: a pretrained 
+vision encoder, a connector, and an LLM. Specifically, the 
+vision encoder compresses remote sensing images into 
+compact visual representations, while the connector maps 
+image embeddings into the word-embedding space of the 
+LLM. The LLM then receives both visual information and 
+language instructions to perform reasoning tasks. Different 
+from CLIP, which directly takes images and corresponding 
+texts as input, this type of work preprocesses image-text 
+pairs to instruction-following data. In this setup, each im -
+age is accompanied by a question or a language instruc -
+tion, requiring the LLM to describe the image, while the 
+corresponding text serves as the ground truth for the LLM’s 
+Vision-Language Modeling Meets Remote Sensing
+Contrastive-Based VLM Instruction-Based VLM Generation-Based VLM Datasets
+Foundation Model Construction
+Effective Adaptation Methods
+Training Strategy Instruction-Following Datasets
+Benchmark DatasetsModel Capability
+Downstream Applications
+Training Datasets Vision Encoder
+Vision-Language Connector
+Only SFT
+Pretraining Followed by SFT
+Common Capabilities
+Captioning
+Conversation Generation
+Impressive Datasets
+Instruction-Specific Datasets
+General-Purpose Datasets
+Pansharpening
+Zero-Shot Target Recognition
+Cloud Removal
+Urban PredictionUnique Capabilities
+Enhancing Reliability
+Improving Diversity
+Performance Evaluation
+Image Collection
+Caption Generation
+Dataset Property
+Pretraining Objectives
+Encoder Architectures
+Performance Evaluation
+Image Captioning
+Cross-Modal Retri
+
+--- PAGE 4 TARGETED ---
+N
+1=  where qi  is the question associated with the 
+ith image. The pretraining objective is defined as follows:
+(, ,)logN L Pw xq y11L ,ii
+N
+j
+L
+ji ii jVIT
+11
+i
+--- hit ---
+wj  given the image ,xi  
+question ,qi  and the previous words 
+y ,ij1  in the caption. During pretrain-
+ing, the vision encoder and LLM are 
+typically kept frozen, with only the 
+parameters of the connector being 
+trainable.
+In [23] and [41], the authors dem-
+onstrated that pretraining with visu -
+al instruction tuning can align vision 
+--- hit ---
+typically kept frozen, with only the 
+parameters of the connector being 
+trainable.
+In [23] and [41], the authors dem-
+onstrated that pretraining with visu -
+al instruction tuning can align vision 
+and language representations while 
+preserving extensive knowledge. 
+Since then, advances have been made 
+by modifying network architectures 
+--- hit ---
+trainable.
+In [23] and [41], the authors dem-
+onstrated that pretraining with visu -
+al instruction tuning can align vision 
+and language representations while 
+preserving extensive knowledge. 
+Since then, advances have been made 
+by modifying network architectures 
+and creating high-quality pretrain -
+ing datasets [24], [42]. In addition to 
+--- hit ---
+Since then, advances have been made 
+by modifying network architectures 
+and creating high-quality pretrain -
+ing datasets [24], [42]. In addition to 
+improving alignment, another line 
+of research focuses on supervised 
+fine-tuning (SFT), aiming to enable 
+the model to perform a variety of 
+remote sensing image analysis tasks 
+and interact with users in a conversa-
+
+--- PAGE 5 TARGETED ---
+added at time step t . Finally, the VAE decoder upsamples 
+the denoised latent representation to reconstruct the input 
+image. Based on image-text pairs, the training objective is 
+defined as follows:
+ (, ,)zt cEL ,, ,zc ttLDM 2
+2
+0 ee=- ei 7 A (3)
+whe
+re (, ,)zt ctei  is the model’s predicted noise, parameter-
+ized by .i  The application of diffusion models in remote 
+--- hit ---
+mote sensing scene semantics and well aligned with textual 
+representations. On the other hand, effective adaptation 
+answers the question of how to leverage pretrained CLIP 
+models for specific remote sensing tasks. In the following 
+sections, we analyze the existing works from these two  
+directions.
+FOUNDATION MODEL CONSTRUCTION
+Table 1 summarizes contrastive-based vision-language 
+models in remote sensing. To build foundation models, 
+three key components need to be carefully designed: 
+--- hit ---
+models in remote sensing. To build foundation models, 
+three key components need to be carefully designed: 
+training datasets, pretraining objectives, and encoder 
+architectures.
+TRAINING DATASETS
+Large-scale image-text datasets form the basis for construct-
+ing foundation models. Ready-made image-text datasets in 
+remote sensing, e.g., UCM-captions and Sydney-captions, 
+suffer from limited data volume and insufficient image di-
+versity, rendering them inadequate for pretraining models 
+--- hit ---
+training datasets, pretraining objectives, and encoder 
+architectures.
+TRAINING DATASETS
+Large-scale image-text datasets form the basis for construct-
+ing foundation models. Ready-made image-text datasets in 
+remote sensing, e.g., UCM-captions and Sydney-captions, 
+suffer from limited data volume and insufficient image di-
+versity, rendering them inadequate for pretraining models 
+to capture general knowledge of the domain. Recognizing 
+the availability of numerous remote sensing image data -
+--- hit ---
+architectures.
+TRAINING DATASETS
+Large-scale image-text datasets form the basis for construct-
+ing foundation models. Ready-made image-text datasets in 
+remote sensing, e.g., UCM-captions and Sydney-captions, 
+suffer from limited data volume and insufficient image di-
+versity, rendering them inadequate for pretraining models 
+to capture general knowledge of the domain. Recognizing 
+the availability of numerous remote sensing image data -
+sets, [15] and [20] use open source datasets as the image 
+
+--- PAGE 6 TARGETED ---
+embedding .el
+k  Since few image-text pairs are involved 
+in the fine-tuning process, the overall training objective 
+also includes the InfoNCE loss, as shown in the following 
+equation:
+ () .2
+1LL LLSC LIPI nfoNCE captionk eyword- =+ +  (6)
+With a si
+milar training data setup consisting of mas -
+sive unpaired images and texts {, }uvii i
+--- hit ---
+1LL LLSC LIPI nfoNCE captionk eyword- =+ +  (6)
+With a si
+milar training data setup consisting of mas -
+sive unpaired images and texts {, }uvii i
+M
+1=  and limited 
+image-text pairs {( ,) },xyii i
+N
+1=  Set-CLIP [34]  transforms 
+the representation alignment between images and texts 
+--- hit ---
+LMK MMD - 
+and a semantic density distribution loss .LSDD  The loss 
+LMK MMD - constrains the consistency of whole representa -
+tion distributions of images and texts, thereby achieving 
+macrolevel alignment, as formulated in the following 
+equation:
+ () ()MN MN
+11 eeL
+i
+MN
+--- hit ---
+VISION 
+ENCODER TEXT ENCODER 
+TRAINING 
+DATASET 
+PRETRAINING 
+OBJECTIVE 
+EVALUATION TASK PUBLIC
+GeoRSCLIP [15] a ViT-B/32,  
+ViT-H/14 [54] 
+Transformer [14] RS5M [15]  InfoNCE loss [29]  Zero-shot scene classification 
+--- hit ---
+ENCODER TEXT ENCODER 
+TRAINING 
+DATASET 
+PRETRAINING 
+OBJECTIVE 
+EVALUATION TASK PUBLIC
+GeoRSCLIP [15] a ViT-B/32,  
+ViT-H/14 [54] 
+Transformer [14] RS5M [15]  InfoNCE loss [29]  Zero-shot scene classification 
+Image-text retrieval 
+
+--- PAGE 7 TARGETED ---
++  is the representation of 
+the positive sample generated by augmentation techniques. 
+Ultimately, the overall training objective is formulated as 
+follows:
+ LL LLLSetC LIPI nfoNCE SS LM KM MD SDD-- an dh=+ ++  (11)
+whe
+re ,a  ,n  ,d  and h are tunable hyperparameters to bal -
+ance the loss terms.
+Even a small set of image-text pairs requires expert 
+knowledge to craft textual descriptions. To avoid textual 
+--- hit ---
+annotations entirely, GRAFT [33]  proposes utilizing colo -
+cated ground images as the bridge between satellite images 
+and language. In doing so, a dataset of 2 million ground-
+satellite image pairs, denoted as 
+{, {} },xgii j j
+N
+i
+N
+1 1
+i
+--- hit ---
+i
+= =  is collect-
+ed to support model training. Building on this, a feature 
+extractor is designed to map satellite images to the repre -
+sentation space of the CLIP model, which was trained on 
+Internet image-text pairs. Since a satellite image 
+xi  can cov-
+er a large ground area and thus be associated with multiple 
+ground images 
+{} ,gij j
+--- hit ---
+ed to support model training. Building on this, a feature 
+extractor is designed to map satellite images to the repre -
+sentation space of the CLIP model, which was trained on 
+Internet image-text pairs. Since a satellite image 
+xi  can cov-
+er a large ground area and thus be associated with multiple 
+ground images 
+{} ,gij j
+N
+1
+--- hit ---
+age 
+gij  can be mapped to a specific pixel location pij  in the 
+corresponding satellite image .xi  Thus, GRAFT trains the 
+feature extractor with an additional pixel-level contrastive 
+loss as follows:
+ 
+(( ,) /)
+(( ,) /)log
+exp
+exp
+
+--- PAGE 8 TARGETED ---
+the alignment between image and text representations. In 
+[66], this problem is addressed by using prior knowledge 
+of remote sensing scenes to instruct the pretrained model 
+in filtering out semantic noise before calculating the simi -
+larity between image and text embeddings. This is practi -
+cally achieved by adding an instruction encoder and a 
+transformer encoder layer on top of the vision encoder. 
+The instruction encoder, pretrained on the scene classifi -
+cation dataset AID [70], generates instruction embeddings, 
+which are used to filter image embeddings via a soft belief 
+--- hit ---
+cally achieved by adding an instruction encoder and a 
+transformer encoder layer on top of the vision encoder. 
+The instruction encoder, pretrained on the scene classifi -
+cation dataset AID [70], generates instruction embeddings, 
+which are used to filter image embeddings via a soft belief 
+strategy. The filtered embeddings are then activated using 
+instruction information through the transformer encoder 
+layer, producing relevant image embeddings for subsequent 
+alignment.
+PERFORMANCE EVALUATION
+--- hit ---
+transformer encoder layer on top of the vision encoder. 
+The instruction encoder, pretrained on the scene classifi -
+cation dataset AID [70], generates instruction embeddings, 
+which are used to filter image embeddings via a soft belief 
+strategy. The filtered embeddings are then activated using 
+instruction information through the transformer encoder 
+layer, producing relevant image embeddings for subsequent 
+alignment.
+PERFORMANCE EVALUATION
+Zero-shot scene classification and image-text retrieval are 
+--- hit ---
+layer, producing relevant image embeddings for subsequent 
+alignment.
+PERFORMANCE EVALUATION
+Zero-shot scene classification and image-text retrieval are 
+commonly used tasks to assess foundation models’ capa -
+bilities to capture a wide range of visual and textual con -
+cepts, along with their correspondence. Table 2 lists the 
+performance of contrastive-based vision-language founda-
+tion models on these two tasks. Note that it shows the best 
+model performance in the original articles. For zero-shot 
+--- hit ---
+tion models on these two tasks. Note that it shows the best 
+model performance in the original articles. For zero-shot 
+scene classification, three conclusions can be drawn: 
+1)
+ AID [7
+0] is the most widely used dataset for evaluation, 
+with RemoteCLIP achieving the best accuracy of 87.9%.
+2) Usi
+ng the same vision encoder (ViT-L/14), SkyCLIP, 
+which is pretrained on images collected from Google 
+
+--- PAGE 9 TARGETED ---
+VISION 
+ENCODER 
+AID 
+[70] 
+EuroSAT 
+[71] 
+fMoW 
+[60] 
+MILLION-
+AID [67] 
+--- hit ---
+AID 
+[70] 
+EuroSAT 
+[71] 
+fMoW 
+[60] 
+MILLION-
+AID [67] 
+MLRSNet 
+[72] 
+--- hit ---
+[60] 
+MILLION-
+AID [67] 
+MLRSNet 
+[72] 
+RESISC 
+[56] 
+OPTIMAL- 
+31 [73] 
+PatternNet 
+--- hit ---
+MLRSNet 
+[72] 
+RESISC 
+[56] 
+OPTIMAL- 
+31 [73] 
+PatternNet 
+[74] 
+RSSCN7 
+[75] 
+--- hit ---
+WHU 
+[79] 
+UCM 
+[80] 
+WHU-
+RS19 
+[81] 
+SkyCLIP [16]  ViT-L/14 [54] 71.7 51.33 27.12 67.45 — 70.94 — 80.88 — — — 50.09 — — — —
+Set-CLIP [34]  ResNet-50 [12]  76.2 — — — — — — — 66.2 — — — 69.2 — 67.5 89
+GRAFT [33]  ViT-B/16 [54] — 63.76 — — — — — — — — — — — — — —
+
+--- PAGE 10 TARGETED ---
+VLCA [83]  Image captioning CLIP ResNet-50, ViT [27]  Utilize external attention [84]  to enhance visual representations extracted 
+by CLIP’s vision encoder.
+MVP [36] Image captioning CLIP ViT-B/16 [27]  Fuse visual representations from CLIP and pretrained vision models.
+BITA [85] Image captioning CLIP ViT-L/14 [27]  Introduce the Fourier-based transformer to align images and texts in the 
+remote sensing domain.
+MGIMM [86]  Image captioning CLIP ViT-L/14 [27]  Use region-level and image-level instruction tuning for generating 
+captions with detailed geographical information.
+CFD-C [87]  Image captioning CLIP ViT-B/16 [27]  Define image captioning as the aggregation of information from multiturn 
+dialogues.
+Prompt-CC 
+--- hit ---
+[88] 
+Change captioning CLIP ViT-B/32 [27]  Develop an image-level classifier, a feature-level encoder on top of the 
+pretrained vision encoder for detecting the presence of changes and 
+extracting discriminative features.
+CISEN [40] Image-text retrieval CLIP ResNet-50, ViT-
+B/32+Transformer [27]  
+GeoRSCLIP ViT-B/32+Transformer 
+[15] 
+Use two-stage training to progressively fuse fine-grained semantic 
+features to enrich visual representation.
+--- hit ---
+GeoRSCLIP ViT-B/32+Transformer 
+[15] 
+Use two-stage training to progressively fuse fine-grained semantic 
+features to enrich visual representation.
+KTIR [89]  Image-text retrieval BLIP ViT-B/16+BERT [90]  Incorporate knowledge into text features for better image-text alignment.
+Zavras et al. 
+[39] 
+Zero-shot RGB-
+multispectral 
+retrieval 
+--- hit ---
+L/14+Transformer [20]  
+Use a weighting parameter for combining image-query and text-query 
+retrieval results, achieving a composed query.
+Rahhal et al. 
+[37] 
+Zero-shot scene 
+classification
+Thirteen CLIP/Open-CLIP Models 
+[27] 
+Use tuning prompts by adding task-relevant context words, including 
+--- hit ---
+Zero-shot scene 
+classification
+Thirteen CLIP/Open-CLIP Models 
+[27] 
+Use tuning prompts by adding task-relevant context words, including 
+“remote sensing image” and “scene.”
+Lan et al. [92] Few-shot fine-
+grained ship 
+classification
+CLIP ResNet-50, ViT-
+
+--- PAGE 11 TARGETED ---
+286 
+Unlike previous works that caption a single image, 
+Prompt-CC [88] utilizes pretrained models to describe 
+differences between bitemporal images, a task known as 
+change captioning. Based on bitemporal visual representa -
+tions from CLIP, Prompt-CC introduces an image-level 
+classifier to detect the presence of changes and a feature-
+level encoder to extract discriminative features that identify 
+the specific changes.
+CROSS-MODAL RETRIEVAL
+--- hit ---
+and text [40] , [89], [91] as well as between images cap -
+tured with different imaging parameters [39] . Image-text 
+retrieval involves the challenges of finding textual de -
+scriptions that correspond to given image queries and vice 
+versa. Taking advantage of advances in vision-language 
+foundation models, existing works use pretrained encod -
+ers to encode images and text separately, mapping them 
+into a shared representation space for similarity measure -
+ment. Typically, CISEN [40]  adopts encoders from CLIP 
+and GeoRSCLIP as the backbone for its retrieval network. 
+--- hit ---
+scriptions that correspond to given image queries and vice 
+versa. Taking advantage of advances in vision-language 
+foundation models, existing works use pretrained encod -
+ers to encode images and text separately, mapping them 
+into a shared representation space for similarity measure -
+ment. Typically, CISEN [40]  adopts encoders from CLIP 
+and GeoRSCLIP as the backbone for its retrieval network. 
+Given the abundance of objects in remote sensing im -
+ages, CISEN is trained in two stages to enhance visual 
+representation. In the first stage, an image adapter [109]  
+--- hit ---
+and GeoRSCLIP as the backbone for its retrieval network. 
+Given the abundance of objects in remote sensing im -
+ages, CISEN is trained in two stages to enhance visual 
+representation. In the first stage, an image adapter [109]  
+is trained to map global visual features into textual-like 
+features. In the second stage, a feature pyramid network is 
+used to integrate the textual-like features into local visual 
+features, which are then utilized to enrich global visual 
+features. Rather than focusing on effective representation, 
+KTIR [89] aims to improve alignment by explicitly incor -
+--- hit ---
+ages, CISEN is trained in two stages to enhance visual 
+representation. In the first stage, an image adapter [109]  
+is trained to map global visual features into textual-like 
+features. In the second stage, a feature pyramid network is 
+used to integrate the textual-like features into local visual 
+features, which are then utilized to enrich global visual 
+features. Rather than focusing on effective representation, 
+KTIR [89] aims to improve alignment by explicitly incor -
+porating knowledge into text features. The knowledge 
+is derived from textual information using off-the-shelf 
+
+--- PAGE 12 TARGETED ---
+“forest,” or “playground.” The input text, also known as 
+the prompt, plays a crucial role in the performance of foun-
+dation models on downstream tasks. As a result, several 
+works [35], [37] pay attention to prompt tuning and sug -
+gest adding task-relevant context words to improve perfor-
+mance. An example is provided by [37], where the authors 
+replace “photo” with terms such as “remote sensing im -
+age,” “top view image,” “satellite image,” and “scene.” This 
+slight modification results in more than a 5% increase in 
+the accuracy of the CLIP model with the ViT-B/32 vision 
+--- hit ---
+replace “photo” with terms such as “remote sensing im -
+age,” “top view image,” “satellite image,” and “scene.” This 
+slight modification results in more than a 5% increase in 
+the accuracy of the CLIP model with the ViT-B/32 vision 
+encoder on the UCM dataset [80] . However, as noted in 
+other experiments from [37] , prompts subjected to exten -
+sive tuning are not guaranteed to be optimal for the task 
+and may not be suitable for other test datasets. 
+To avoid manual prompt tuning, Lan et al. [92]  model 
+context words in a prompt as learnable vectors, which are 
+--- hit ---
+slight modification results in more than a 5% increase in 
+the accuracy of the CLIP model with the ViT-B/32 vision 
+encoder on the UCM dataset [80] . However, as noted in 
+other experiments from [37] , prompts subjected to exten -
+sive tuning are not guaranteed to be optimal for the task 
+and may not be suitable for other test datasets. 
+To avoid manual prompt tuning, Lan et al. [92]  model 
+context words in a prompt as learnable vectors, which are 
+combined with the class token embeddings before being 
+input to the text encoder. Moreover, the class token em -
+--- hit ---
+the accuracy of the CLIP model with the ViT-B/32 vision 
+encoder on the UCM dataset [80] . However, as noted in 
+other experiments from [37] , prompts subjected to exten -
+sive tuning are not guaranteed to be optimal for the task 
+and may not be suitable for other test datasets. 
+To avoid manual prompt tuning, Lan et al. [92]  model 
+context words in a prompt as learnable vectors, which are 
+combined with the class token embeddings before being 
+input to the text encoder. Moreover, the class token em -
+beddings for each category are organized across multiple 
+--- hit ---
+other experiments from [37] , prompts subjected to exten -
+sive tuning are not guaranteed to be optimal for the task 
+and may not be suitable for other test datasets. 
+To avoid manual prompt tuning, Lan et al. [92]  model 
+context words in a prompt as learnable vectors, which are 
+combined with the class token embeddings before being 
+input to the text encoder. Moreover, the class token em -
+beddings for each category are organized across multiple 
+levels of granularity, taking the form: “a photo of a ship, 
+the primary type is [CLASS1], secondary type is [CLASS2], 
+
+--- PAGE 13 TARGETED ---
+change detection.
+Alternatively, only the vision encoders of founda -
+tion models are adopted as most existing datasets pro -
+vide only bitemporal images for identifying changes. In 
+BAN [100], the authors introduce bridging modules to 
+inject general knowledge extracted from the vision en -
+coders of foundation models into existing change de -
+tection models like BiT [113]  and ChangeFormer [114] . 
+Since the input image sizes for foundation models and 
+change detection models may differ and not all general 
+--- hit ---
+the following:
+1)
+ VQA: VQ
+A attempts to provide answers to questions 
+related to the content of images. In [101], CLIP is used 
+to extract both visual and textual representations from 
+images and questions. Two decoders, followed by two 
+classifiers, are then developed to capture the intrade -
+pendencies and interdependencies within and between 
+these representations. The final answer is determined by 
+--- hit ---
+vision encoder can be employed by itself, with a linear 
+classifier added on top. Unlike the first strategy, the other 
+approaches necessitate training for prompts or classifiers.
+3)
+ Tex
+t-based image generation: Text-based image generation 
+refers to the task of creating images from textual descrip-
+tions, which can help mitigate the issue of class imbal -
+ance commonly found in remote sensing data. Typically, 
+TGN [103] utilizes CLIP to classify generated images, 
+--- hit ---
+ChangeFormer,
+Stacked-Blocks, etc.
+Pretrained
+Foundation Model
+e.g. ViTs of CLIP, 
+RemoteCLIP, etc. LN + Linear
+Hf × Wf × Cf
+Hf × Wf × Cc
+Hc × Wc × Cc
+Hc × Wc × Cc Hc × Wc × Cc Hc × Wc × Cc
+
+--- PAGE 14 TARGETED ---
+tating their widespread deployment and application. This 
+section presents critical developments in terms of model ar-
+chitecture, and training strategy, model capability.
+MODEL ARCHITECTURE
+As CLIP has been trained to align image and text represen-
+tations, most works [18], [24], [25], [42], [132] directly em-
+ploy its vision encoder. The commonly used LLMs include 
+the LLaMA family [119], [130] and its derivative, the Vicuna 
+family [118]. Developed by Meta, the first-generation LLa -
+MA [130] adopts transformer architectures ranging from 7 
+--- hit ---
+chitecture, and training strategy, model capability.
+MODEL ARCHITECTURE
+As CLIP has been trained to align image and text represen-
+tations, most works [18], [24], [25], [42], [132] directly em-
+ploy its vision encoder. The commonly used LLMs include 
+the LLaMA family [119], [130] and its derivative, the Vicuna 
+family [118]. Developed by Meta, the first-generation LLa -
+MA [130] adopts transformer architectures ranging from 7 
+to 65 billion parameters, pretrained on approximately 1.4 
+trillion tokens of publicly available text corpora. Despite 
+--- hit ---
+family [118]. Developed by Meta, the first-generation LLa -
+MA [130] adopts transformer architectures ranging from 7 
+to 65 billion parameters, pretrained on approximately 1.4 
+trillion tokens of publicly available text corpora. Despite 
+its smaller scale, LLaMA outperforms proprietary models 
+like GPT-3 [108]. Its successor, LLaMA 2 [119] , introduces 
+significant improvements, including expanded pretrain -
+ing data (2 trillion tokens), architectural upgrades such as 
+grouped-query attention [136], and a scaled-up 70-billion-
+parameter variant. Through SFT and reinforcement learning 
+--- hit ---
+its smaller scale, LLaMA outperforms proprietary models 
+like GPT-3 [108]. Its successor, LLaMA 2 [119] , introduces 
+significant improvements, including expanded pretrain -
+ing data (2 trillion tokens), architectural upgrades such as 
+grouped-query attention [136], and a scaled-up 70-billion-
+parameter variant. Through SFT and reinforcement learning 
+with human feedback, LLaMA 2 was further optimized for 
+dialogue, yielding the LLaMA 2-Chat series [119] . Parallel 
+to this development, the research community developed 
+Vicuna [118] by fine-tuning LLaMA models on 70,000 con-
+--- hit ---
+···
+located in South Side Flats, specifically
+on a section of East Carson St. lying
+between South 10th St. and 12th St.
+located in South Side Flats, specifically
+on a section of East Carson St. lying
+between South 10th St. and 12th St.
+a street view of a house with a tree in
+front of it and a fence in front of it
+located in the South Side Flats,
+
+--- PAGE 15 TARGETED ---
+TABLE 4. SUMMARY OF INSTRUCTION-BASED VISION-LANGUAGE MODELS IN REMOTE SENSING.
+MODEL VISION ENCODER CONNECTOR LLM 
+TRAINING 
+DATASET TRAINING STRATEGY PUBLIC 
+RSGPT [17] EVA CLIP-G [116]  Q-Former 
+[117 ] +Linear 
+layer
+Vicuna-
+7B/13B [118] 
+RSICap [17] •
+--- hit ---
+MODEL VISION ENCODER CONNECTOR LLM 
+TRAINING 
+DATASET TRAINING STRATEGY PUBLIC 
+RSGPT [17] EVA CLIP-G [116]  Q-Former 
+[117 ] +Linear 
+layer
+Vicuna-
+7B/13B [118] 
+RSICap [17] •
+  Load pret
+--- hit ---
+LAION-400M 
+[124] 
+COCO Caption 
+[125] 
+MMRS-1M [122] 
+•
+  Load pret
+rained weights of [27] , [119], and 
+[123].
+•  Train lin
+--- hit ---
+rained weights of [27] , [119], and 
+[123].
+•  Train lin
+ear layer and LLM on LAION-400M 
+and COCO Caption.
+•  Employ bi
+as tuning [126] for LLM on 
+MMRS-1M.
+✗
+EarthMarker [44]  DINOv2 ViT-L/14 
+--- hit ---
+•  Train lin
+ear layer and LLM on LAION-400M 
+and COCO Caption.
+•  Employ bi
+as tuning [126] for LLM on 
+MMRS-1M.
+✗
+EarthMarker [44]  DINOv2 ViT-L/14 
+[123] 
++CLIP ConvNeXt 
+
+--- PAGE 16 TARGETED ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+291 
+Targeting this limitation, some works [44], [122], [129] pro-
+pose combining vision encoders from CLIP and DINOv2 
+[123]. DINOv2 learns visual representation from images 
+alone via self-supervised learning, enabling it to capture 
+both image-level and pixel-level information. Moreover, 
+given the varied object sizes in remote sensing images, 
+these works refine visual representations by incorporating 
+multiscale information. In [122], a vision encoder with the 
+--- hit ---
+tion between instruction and query embeddings, and then 
+cross-attention is employed between the query and image 
+embeddings. The resulting output from the Q-Former, af -
+ter passing through a linear layer, is then input into the 
+LLM along with the instruction embeddings to generate 
+responses. LHRS-Bot proposes incorporating multilevel 
+image embeddings to sufficiently capture the semantic 
+content of images. To mitigate the computational burden 
+and the risk of overwhelming language information with 
+excessive visual information, it introduces a set of learn -
+--- hit ---
+queries are used to summarize the semantic information 
+of each level through stacked cross-attention and MLP lay-
+ers. As a result, a dedicated visual perceiver is developed, 
+with experimental results demonstrating that, compared 
+to single-level visual representations and a two-layer MLP, 
+multilevel representations paired with the visual per -
+ceiver improve the model’s performance in scene clas -
+sification, VQA, and visual grounding (VG) tasks.
+TRAINING STRATEGY
+Training instruction-based vision-language models typical-
+--- hit ---
+of each level through stacked cross-attention and MLP lay-
+ers. As a result, a dedicated visual perceiver is developed, 
+with experimental results demonstrating that, compared 
+to single-level visual representations and a two-layer MLP, 
+multilevel representations paired with the visual per -
+ceiver improve the model’s performance in scene clas -
+sification, VQA, and visual grounding (VG) tasks.
+TRAINING STRATEGY
+Training instruction-based vision-language models typical-
+ly involves two stages: pretraining for modality alignment 
+--- hit ---
+multilevel representations paired with the visual per -
+ceiver improve the model’s performance in scene clas -
+sification, VQA, and visual grounding (VG) tasks.
+TRAINING STRATEGY
+Training instruction-based vision-language models typical-
+ly involves two stages: pretraining for modality alignment 
+and SFT for following task-specific instructions.
+ONLY SUPERVISED FINE-TUNING
+Due to the lack of large-scale image-text datasets specifi -
+cally designed for the remote sensing domain, most works 
+
+--- PAGE 17 TARGETED ---
+sensin
+g data analysis [18] , [24], [25], [42], [43], [44], 
+[122], [134], with only Popeye [129]  and IFShip [133]  
+specifically tailored for remote sensing images of ships. 
+These models primarily process optical images but have 
+expanded to include synthetic aperture radar (SAR) 
+[122], [129] and infrared (IR) [122] images. 
+2)
+ Most mod
+els support conversational interaction with 
+--- hit ---
+As shown in Table 5, most models are capable of perform-
+ing remote sensing tasks such as image captioning, scene 
+classification, VQA, and VG. Accordingly, we present model 
+performance on these tasks in Tables 6 –8. To ensure a fair 
+comparison, we report only the models’ performance on 
+public datasets. Although multiturn conversation (MTC) 
+is also a common capability among existing models [18] , 
+[24], [25], [42], [43], [44], [122], [129], [134], it is challeng-
+ing to evaluate quantitatively. Figure 7 provides examples 
+of conversations between various models and users.
+--- hit ---
+performance on these tasks in Tables 6 –8. To ensure a fair 
+comparison, we report only the models’ performance on 
+public datasets. Although multiturn conversation (MTC) 
+is also a common capability among existing models [18] , 
+[24], [25], [42], [43], [44], [122], [129], [134], it is challeng-
+ing to evaluate quantitatively. Figure 7 provides examples 
+of conversations between various models and users.
+1)
+ Image ca
+ptioning: Based on the input remote sensing im-
+--- hit ---
+provided remote sensing image in detail” [122]. From Ta-
+ble 6, we can observe that SkyEyeGPT [43] outperforms 
+RSGPT [17] on the RSICD [78], UCM-captions [3], and 
+Sydney-captions [3] datasets in terms of BLEU [137], ME-
+TEOR [138], and ROUGE_L [139], though it falls short of 
+RSGPT in CIDEr [140] scores. On the UCM-captions da-
+taset, RS-LLaVA achieves BLEU scores comparable to Sky-
+EyeGPT while surpassing it in all other metrics. On the 
+NWPU-Captions [141] dataset, EarthGPT [122] achieves 
+state-of-the-art results, with a remarkable improvement 
+--- hit ---
+ble 6, we can observe that SkyEyeGPT [43] outperforms 
+RSGPT [17] on the RSICD [78], UCM-captions [3], and 
+Sydney-captions [3] datasets in terms of BLEU [137], ME-
+TEOR [138], and ROUGE_L [139], though it falls short of 
+RSGPT in CIDEr [140] scores. On the UCM-captions da-
+taset, RS-LLaVA achieves BLEU scores comparable to Sky-
+EyeGPT while surpassing it in all other metrics. On the 
+NWPU-Captions [141] dataset, EarthGPT [122] achieves 
+state-of-the-art results, with a remarkable improvement 
+in CIDEr (nearly 30%) over EarthMarker [44].
+
+--- PAGE 18 TARGETED ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+293 
+performance to more than 93% on the NWPU-RE -
+SISC45 [56] dataset, which includes 45 scene catego -
+ries with image spatial resolutions ranging from 0.2 m 
+to more than 30 m. For zero-shot scene classification, 
+LHRS-Bot [24], VHM, and SkySenseGPT [25]  demon-
+strate impressive generalization, achieving accuracy 
+above 91% on the AID [70] dataset and more than 93% 
+on the WHU-RS19 [142] dataset. 
+--- hit ---
+293 
+performance to more than 93% on the NWPU-RE -
+SISC45 [56] dataset, which includes 45 scene catego -
+ries with image spatial resolutions ranging from 0.2 m 
+to more than 30 m. For zero-shot scene classification, 
+LHRS-Bot [24], VHM, and SkySenseGPT [25]  demon-
+strate impressive generalization, achieving accuracy 
+above 91% on the AID [70] dataset and more than 93% 
+on the WHU-RS19 [142] dataset. 
+SkySenseGPT notably achieves 
+--- hit ---
+LHRS-Bot [24], VHM, and SkySenseGPT [25]  demon-
+strate impressive generalization, achieving accuracy 
+above 91% on the AID [70] dataset and more than 93% 
+on the WHU-RS19 [142] dataset. 
+SkySenseGPT notably achieves 
+the highest accuracy, reaching 
+92.25% and 97.02% on these da-
+tasets, respectively. Despite these 
+remarkable results, low-reso -
+lution and fine-grained scene 
+--- hit ---
+strate impressive generalization, achieving accuracy 
+above 91% on the AID [70] dataset and more than 93% 
+on the WHU-RS19 [142] dataset. 
+SkySenseGPT notably achieves 
+the highest accuracy, reaching 
+92.25% and 97.02% on these da-
+tasets, respectively. Despite these 
+remarkable results, low-reso -
+lution and fine-grained scene 
+classification remain significant 
+--- hit ---
+92.25% and 97.02% on these da-
+tasets, respectively. Despite these 
+remarkable results, low-reso -
+lution and fine-grained scene 
+classification remain significant 
+challenges. The EuroSAT [71]  
+dataset, used for land use and 
+land cover classification, has an 
+image spatial resolution of 10 m, 
+while fMoW [60]  contains more 
+
+--- PAGE 19 TARGETED ---
+                                           IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 2025
+294 
+test set 2 of the RSVQA-HR dataset and surpassing RS -
+GPT on the RSVQA-LR dataset in the supervised setting.
+4) VG: VG a
+ims to locate specific objects within an image based 
+on a natural language expression. Vision-language models 
+accomplish this task by providing the coordinates of the tar-
+get object. Table 8 presents the performance of several mod-
+els on RSVG [143] and DIOR-RSVG [144] datasets, using an 
+--- hit ---
+294 
+test set 2 of the RSVQA-HR dataset and surpassing RS -
+GPT on the RSVQA-LR dataset in the supervised setting.
+4) VG: VG a
+ims to locate specific objects within an image based 
+on a natural language expression. Vision-language models 
+accomplish this task by providing the coordinates of the tar-
+get object. Table 8 presents the performance of several mod-
+els on RSVG [143] and DIOR-RSVG [144] datasets, using an 
+intersection over union (IoU) threshold of 0.5 adopted as 
+--- hit ---
+accomplish this task by providing the coordinates of the tar-
+get object. Table 8 presents the performance of several mod-
+els on RSVG [143] and DIOR-RSVG [144] datasets, using an 
+intersection over union (IoU) threshold of 0.5 adopted as 
+the evaluation metric. LHRS-Bot [24] achieves the highest 
+score on the RSVG test set, while SkyEyeGPT [43] leads on 
+the DIOR-RSVG test set. Due to differences in metric calcula-
+tions, VHM [42] achieves a score of 57.17% on DIOR-RSVG. 
+TABLE 8. PERFORMANCE OF INSTRUCTION-BASED 
+ VIS
+--- hit ---
+els on RSVG [143] and DIOR-RSVG [144] datasets, using an 
+intersection over union (IoU) threshold of 0.5 adopted as 
+the evaluation metric. LHRS-Bot [24] achieves the highest 
+score on the RSVG test set, while SkyEyeGPT [43] leads on 
+the DIOR-RSVG test set. Due to differences in metric calcula-
+tions, VHM [42] achieves a score of 57.17% on DIOR-RSVG. 
+TABLE 8. PERFORMANCE OF INSTRUCTION-BASED 
+ VIS
+ION-LANGUAGE MODELS ON VG.
+MODEL RSVG [143] DIOR-RSVG [144] 
+--- hit ---
+intersection over union (IoU) threshold of 0.5 adopted as 
+the evaluation metric. LHRS-Bot [24] achieves the highest 
+score on the RSVG test set, while SkyEyeGPT [43] leads on 
+the DIOR-RSVG test set. Due to differences in metric calcula-
+tions, VHM [42] achieves a score of 57.17% on DIOR-RSVG. 
+TABLE 8. PERFORMANCE OF INSTRUCTION-BASED 
+ VIS
+ION-LANGUAGE MODELS ON VG.
+MODEL RSVG [143] DIOR-RSVG [144] 
+Val Test Test
+
+--- PAGE 20 TARGETED ---
+LLM via a two-layer MLP. The LLM processes these pro-
+jected image embeddings alongside instruction embed-
+dings to produce change detection results in the form 
+of bounding boxes. To train TEOChat, the authors of 
+[134] develop TEOChatlas, the first instruction-follow -
+ing dataset tailored for time-series image analysis tasks. 
+Leveraging this dataset, TEOChat extends its capabili -
+ties beyond change detection to include tasks such as 
+change question answering, temporal scene classifica -
+tion, temporal referring expression, and spatial change 
+--- hit ---
+jected image embeddings alongside instruction embed-
+dings to produce change detection results in the form 
+of bounding boxes. To train TEOChat, the authors of 
+[134] develop TEOChatlas, the first instruction-follow -
+ing dataset tailored for time-series image analysis tasks. 
+Leveraging this dataset, TEOChat extends its capabili -
+ties beyond change detection to include tasks such as 
+change question answering, temporal scene classifica -
+tion, temporal referring expression, and spatial change 
+referring expression. Figure 8 provides specific examples 
+--- hit ---
+of bounding boxes. To train TEOChat, the authors of 
+[134] develop TEOChatlas, the first instruction-follow -
+ing dataset tailored for time-series image analysis tasks. 
+Leveraging this dataset, TEOChat extends its capabili -
+ties beyond change detection to include tasks such as 
+change question answering, temporal scene classifica -
+tion, temporal referring expression, and spatial change 
+referring expression. Figure 8 provides specific examples 
+illustrating each of these tasks.
+3)
+--- hit ---
+[134] develop TEOChatlas, the first instruction-follow -
+ing dataset tailored for time-series image analysis tasks. 
+Leveraging this dataset, TEOChat extends its capabili -
+ties beyond change detection to include tasks such as 
+change question answering, temporal scene classifica -
+tion, temporal referring expression, and spatial change 
+referring expression. Figure 8 provides specific examples 
+illustrating each of these tasks.
+3)
+ Fro
+--- hit ---
+VHM goes a step further by not only handling these 
+tasks but also measuring object size. Unlike LHRS-Bot, 
+all quantitative tasks in VHM adopt open-ended ques -
+tion formats, which may be more suitable for practical 
+application. On the test set of the VariousRS-Instruct 
+[42], VHM achieves mean absolute errors of 0.24 for 
+mage resolution estimation, 6.75 for object counting, 
+and 12.82 for geometric measurement. These results 
+highlight the potential of vision-language models to 
+advance quantitative analysis in remote sensing images. 
+
+--- PAGE 21 TARGETED ---
+                                           IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 2025
+296 
+sensing scenes [150] , [151]. Consequently, the latest 
+models, i.e., LHRS-Bot [24] , VHM [42] , EarthMarker 
+[44], and SkySenseGPT [25] , extend their capabili -
+ties to understand relationships between objects in 
+an image. Specifically, LHRS-Bot and VHM target 
+spatial relationships, using simple rules like “top” 
+or “top right corner” to indicate object relationships. 
+EarthMarker, on the other hand, explores functional 
+--- hit ---
+example, the “crane” is over the “boat.” This promis -
+ing understanding of relationships benefits from the 
+design of specialized instruction-following datasets, 
+as discussed in the “Instruction-Following Data
+ sets
+” 
+section.
+GENERATION-BASED VISION-LANGUAGE MODELING
+Similar to research on contrastive-based VLM, generation-
+based VLM follows two major research directions: the con-
+--- hit ---
+and a bridge” is used to guide RS-SD [15], while the text “a 
+fMoW satellite image of a car dealership in the United States 
+of America” constrains DiffusionSat [21]. However, it is evi-
+dent that these textual descriptions alone struggle to fully 
+encapsulate the variety of objects and intricate relation -
+ships present within a satellite image. The lack of sufficient 
+constraint information poses a challenge to generating re -
+liable images. To address this challenge, additional condi -
+tions, such as metadata or images, are increasingly utilized 
+to constrain the generation process.
+--- hit ---
+encapsulate the variety of objects and intricate relation -
+ships present within a satellite image. The lack of sufficient 
+constraint information poses a challenge to generating re -
+liable images. To address this challenge, additional condi -
+tions, such as metadata or images, are increasingly utilized 
+to constrain the generation process.
+1)
+ Metada
+ta: Metadata, such as latitude, longitude, ground 
+sampling distance, cloud cover, and imaging time (year, 
+--- hit ---
+ships present within a satellite image. The lack of sufficient 
+constraint information poses a challenge to generating re -
+liable images. To address this challenge, additional condi -
+tions, such as metadata or images, are increasingly utilized 
+to constrain the generation process.
+1)
+ Metada
+ta: Metadata, such as latitude, longitude, ground 
+sampling distance, cloud cover, and imaging time (year, 
+month, and day), are adopted in both DiffusionSat [21] 
+
+--- PAGE 22 TARGETED ---
+easily available as they are inherently embedded within 
+remote sensing images. Furthermore, they allow gen -
+erative foundation models to be trained on large-scale 
+image datasets, benefiting from the diverse geographic 
+distribution of these datasets. Consequently, the key 
+problem lies in addressing how to inject metadata condi-
+tions into diffusion models. Identical to the encoding of 
+diffusion time steps, DiffusionSat and MetaEarth pro -
+cess metadata values through sinusoidal encoding, fol -
+lowed by MLPs. The resulting metadata embeddings are 
+--- hit ---
+remote sensing images. Furthermore, they allow gen -
+erative foundation models to be trained on large-scale 
+image datasets, benefiting from the diverse geographic 
+distribution of these datasets. Consequently, the key 
+problem lies in addressing how to inject metadata condi-
+tions into diffusion models. Identical to the encoding of 
+diffusion time steps, DiffusionSat and MetaEarth pro -
+cess metadata values through sinusoidal encoding, fol -
+lowed by MLPs. The resulting metadata embeddings are 
+added with time step embeddings before being fed into 
+--- hit ---
+erative foundation models to be trained on large-scale 
+image datasets, benefiting from the diverse geographic 
+distribution of these datasets. Consequently, the key 
+problem lies in addressing how to inject metadata condi-
+tions into diffusion models. Identical to the encoding of 
+diffusion time steps, DiffusionSat and MetaEarth pro -
+cess metadata values through sinusoidal encoding, fol -
+lowed by MLPs. The resulting metadata embeddings are 
+added with time step embeddings before being fed into 
+the diffusion model. CRS-Diff maps metadata values to a 
+--- hit ---
+diffusion time steps, DiffusionSat and MetaEarth pro -
+cess metadata values through sinusoidal encoding, fol -
+lowed by MLPs. The resulting metadata embeddings are 
+added with time step embeddings before being fed into 
+the diffusion model. CRS-Diff maps metadata values to a 
+fixed range and encodes them using different MLPs. The 
+metadata embeddings are concatenated with text and 
+content embeddings, providing global control informa-
+tion. For latitude and longitude, an alternative approach 
+is to utilize a pretrained location encoder. An example is 
+--- hit ---
+content embeddings, providing global control informa-
+tion. For latitude and longitude, an alternative approach 
+is to utilize a pretrained location encoder. An example is 
+[155] where the authors employ SatCLIP [64] to extract 
+location embeddings and use CoordNet, which takes lo-
+cation and time step embeddings as input, to integrate 
+these conditions into the diffusion model. CoordNet 
+consists of 13 multihead cross-attention blocks, each in-
+cluding a zero-initialized feed-forward layer.
+2)
+
+--- PAGE 23 TARGETED ---
+298 
+images, while GeoSynth employs OSM images to achieve 
+similar constraints on layout and object placement.
+Image-form conditions are typically injected into diffu-
+sion models using ControlNet [154]. ControlNet replicates 
+the encoder blocks and the middle block of Stable Diffu -
+sion’s U-Net and incorporates several zero convolutions. It 
+processes both conditioning representations and noisy latent 
+representations as inputs, with its outputs added to the de-
+coder blocks and middle block of Stable Diffusion’s U-Net. 
+--- hit ---
+ENCODER 
+CONDITION 
+TRAINING 
+DATASET 
+GenImgType PUBLIC 
+Text Metadata Image
+RS-SD [15]a Stable Diffusion 
+[28] 
+CLIP Transformer [27]  ✓ ✗ ✗ 1% RS5M [15] Optical ✓
+DiffusionSat [21]
+--- hit ---
+CONDITION 
+TRAINING 
+DATASET 
+GenImgType PUBLIC 
+Text Metadata Image
+RS-SD [15]a Stable Diffusion 
+[28] 
+CLIP Transformer [27]  ✓ ✗ ✗ 1% RS5M [15] Optical ✓
+DiffusionSat [21]
+b Stable Diffusion 
+--- hit ---
+RS-SD [15]a Stable Diffusion 
+[28] 
+CLIP Transformer [27]  ✓ ✗ ✗ 1% RS5M [15] Optical ✓
+DiffusionSat [21]
+b Stable Diffusion 
+[28] 
+CLIP Transformer [27]  
+Sinusoidal 
+Projection+MLP 3D 
+ControlNet [21] 
+--- hit ---
+RSICD [78] 
+fMoW [60] 
+Million-AID [67]  
+Optical ✓
+GeoSynth [155]
+d Stable Diffusion 
+[28] 
+CLIP Transformer [27]  
+SatCLIP Location 
+Encoder [64]  
+
+--- PAGE 24 TARGETED ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+299 
+ground sampling distance, resulting in varied stadiums, 
+different scenes, and multiresolution images, respectively. 
+In addition to considering the perspective of conditions, 
+some works [49], [165] explore new frameworks for gener -
+ating multiresolution images. In [165], cascaded diffusion 
+models [166] are employed, where one model generates 
+low-resolution images conditioned on text embeddings, 
+and the other superresolves these low-resolution images. 
+--- hit ---
+windows with overlaps and a noise sampling strategy to 
+generate continuous unbounded scenes.
+PERFORMANCE EVALUATION
+With these efforts, existing generative foundation models 
+have demonstrated the capability to generate optical re -
+mote sensing images [15], [21], [22], [47], [49], [155], [165] 
+or hyperspectral remote sensing images [48] . Their perfor-
+mance is typically evaluated using metrics such as Fréchet 
+Inception Distance (FID) [173]  and Inception Score (IS) 
+[174]. For text-conditioned models, CLIP [27] is employed 
+--- hit ---
+to measure the similarity between generated images and 
+their corresponding textual descriptions, as detailed in  
+Table 10. In addition to the direct evaluations, some works 
+A Satellite
+Image
+Generic Caption,
+Null Metadata
+Fixed Caption and Metadata,
+Varying Coordinates-France
+to United States
+--- hit ---
+Fixed Caption and
+Metadata, Varying
+Month-Summer to Winter
+A Satellite Image of an 
+Electric Substation in Finland
+August January
+Fixed Caption and Metadata,
+Varying  Resolution-Low to
+High Resolution
+A Satellite Image of an 
+
+--- PAGE 25 TARGETED ---
+fusionSat [21] is applied to tasks such as superresolution, 
+temporal generation, and in-painting, while CRS-Diff [22] 
+uses its generated images to augment training datasets of 
+the road detection model.
+DOWNSTREAM APPLICATIONS
+Generative foundation models serve as powerful and versa-
+tile tools for advancing various remote sensing tasks. Their ex-
+ceptional image generation capabilities have been utilized to 
+tackle challenges such as limited image availability [175] and 
+the high costs associated with annotation [176], [177]. Addi-
+--- hit ---
+tile tools for advancing various remote sensing tasks. Their ex-
+ceptional image generation capabilities have been utilized to 
+tackle challenges such as limited image availability [175] and 
+the high costs associated with annotation [176], [177]. Addi-
+tionally, the conditionally controllable nature of these models 
+makes them particularly suitable for remote sensing image en-
+hancement tasks. Examples include tasks like superresolution 
+[178], [179], where low-resolution images serve as conditions, 
+and cloud removal [180], [181], where SAR images are used 
+as conditions. Moreover, their advantages in learning diverse 
+--- hit ---
+advancements predominantly center on the ability of genera-
+tive foundation models to model image distribution, which 
+has been comprehensively reviewed in [46]. In this discussion, 
+however, we shift the focus to recently emerging applications 
+that show how the joint distribution between images and texts 
+in generative foundation models promotes advancements in 
+remote sensing tasks. This includes tasks such as image or 
+change captioning [50], [51], pansharpening [52], and zero-
+shot target recognition [53], as illustrated in Table 11. This 
+section delves into representative implementations in con-
+--- hit ---
+authors focus on extracting both global and local features of 
+remote sensing images to enhance the visual conditions for 
+the generative model, addressing challenges such as intra -
+class diversity, interclass similarity, and varying object sizes. 
+They then improve the interaction between noisy represen-
+tations and visual conditions in the decoder by sequentially 
+interacting with global and local conditions, aiming for 
+generated captions that better align with the image content. 
+In [51], the difference features of bitemporal images condi-
+tion the generative model to generate change captions from 
+--- hit ---
+the U-Net architecture, organizes 
+TABLE 10. PERFORMANCE OF GENERATIVE FOUNDATION MODELS.
+MODEL CONDITION DATASET FID IS CLIP-SCORE 
+DiffusionSat [21] Text+Metadata fMoW [60] 15.8 6.69 17.2
+CRS-Diff [22]  Text 
+HED 
+MLSD 
+Depthmap 
+Sketch 
+Seg. mask 
+
+--- PAGE 26 TARGETED ---
+RADAR TARGET RECOGNITION
+Due to the high costs associated with SAR imaging and the lim-
+ited azimuth range for capturing images, SAR datasets are often 
+small, making it essential to explore SAR target recognition in 
+zero-shot settings. From the perspective of SAR image simula-
+tion, adopting generative foundation models for this task is a 
+natural solution. Typically, Wang et al. [53] employ generative 
+models to create 3D models of targets conditioned on semantic 
+information, such as the category and structure of targets. Since 
+most existing generative models are trained on RGB natural 
+--- hit ---
+models to create 3D models of targets conditioned on semantic 
+information, such as the category and structure of targets. Since 
+most existing generative models are trained on RGB natural 
+images or optical remote sensing images, the authors adopt a 
+two-step process; they first use the generative model to gener-
+ate optical images based on the target semantic information, 
+and then they transform these optical images into 3D models 
+using TripoSR [192] rather than directly generating 3D models 
+or SAR images.
+CLOUD REMOVAL
+--- hit ---
+require geographically aligned multimodal image pairs, 
+which are challenging to obtain in practical applications. To 
+overcome this limitation, Czerkawski and Tachtatzis [189] 
+propose a novel approach that uses historical edge infor -
+mation and textual descriptions (e.g., a cloud-free satellite 
+image) to constrain the generation process. Experimental 
+results suggest that general-purpose generative models may 
+not be directly applicable for cloud removal of remote sens-
+ing images as they tend to generate undesirable artifacts in 
+cloud-contaminated areas.
+--- hit ---
+propose a novel approach that uses historical edge infor -
+mation and textual descriptions (e.g., a cloud-free satellite 
+image) to constrain the generation process. Experimental 
+results suggest that general-purpose generative models may 
+not be directly applicable for cloud removal of remote sens-
+ing images as they tend to generate undesirable artifacts in 
+cloud-contaminated areas.
+URBAN PREDICTION
+Urban prediction aims to forecast future urban layouts 
+based on current urban layouts and planned change maps, 
+--- hit ---
+mation and textual descriptions (e.g., a cloud-free satellite 
+image) to constrain the generation process. Experimental 
+results suggest that general-purpose generative models may 
+not be directly applicable for cloud removal of remote sens-
+ing images as they tend to generate undesirable artifacts in 
+cloud-contaminated areas.
+URBAN PREDICTION
+Urban prediction aims to forecast future urban layouts 
+based on current urban layouts and planned change maps, 
+providing support for urban planning. The pioneering 
+
+--- PAGE 27 TARGETED ---
+                                           IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 2025
+302 
+PRETRAINING DATASETS
+Pretraining datasets, which consist of remote sensing images 
+and their corresponding texts, play a crucial role in infusing 
+the model with a broad range of visual and language con -
+cepts. This requires the images in pretraining datasets to be 
+sufficiently diverse and rich. Currently, there are two alter-
+native sources for collecting images; one is combining vari-
+ous open source remote sensing image datasets [15] , [17], 
+--- hit ---
+302 
+PRETRAINING DATASETS
+Pretraining datasets, which consist of remote sensing images 
+and their corresponding texts, play a crucial role in infusing 
+the model with a broad range of visual and language con -
+cepts. This requires the images in pretraining datasets to be 
+sufficiently diverse and rich. Currently, there are two alter-
+native sources for collecting images; one is combining vari-
+ous open source remote sensing image datasets [15] , [17], 
+[20], [42], [83], [158], [195], and the other is utilizing public 
+--- hit ---
+and their corresponding texts, play a crucial role in infusing 
+the model with a broad range of visual and language con -
+cepts. This requires the images in pretraining datasets to be 
+sufficiently diverse and rich. Currently, there are two alter-
+native sources for collecting images; one is combining vari-
+ous open source remote sensing image datasets [15] , [17], 
+[20], [42], [83], [158], [195], and the other is utilizing public 
+geographic databases [16], [24], [40], [158], [197]. Once the 
+images are collected, corresponding textual descriptions 
+can be generated through manual annotation [17], [40]. Al-
+--- hit ---
+sufficiently diverse and rich. Currently, there are two alter-
+native sources for collecting images; one is combining vari-
+ous open source remote sensing image datasets [15] , [17], 
+[20], [42], [83], [158], [195], and the other is utilizing public 
+geographic databases [16], [24], [40], [158], [197]. Once the 
+images are collected, corresponding textual descriptions 
+can be generated through manual annotation [17], [40]. Al-
+though manual annotation is easy to implement and highly 
+accurate, the complexity and diversity of remote sensing im-
+ages make it costly, which can significantly limit the dataset 
+--- hit ---
+though manual annotation is easy to implement and highly 
+accurate, the complexity and diversity of remote sensing im-
+ages make it costly, which can significantly limit the dataset 
+size. As a result, there is a growing shift toward automatic 
+image captioning using rule-based methods [16], [20] or off-
+the-shelf models [15], [24], [42], [158], [195], [197]. This sec-
+tion begins by presenting the image collection strategies of 
+existing pretraining datasets, followed by an introduction to 
+their caption generation methods.
+IMAGE COLLECTION
+
+--- PAGE 28 TARGETED ---
+contours for each class and then sorting the contour points 
+to define the bounding boxes. By applying M2B followed 
+by B2C, it becomes convenient to create image-text datasets 
+from image segmentation datasets. With a similar motiva-
+tion, Wang et al. [16] leverage semantic information from 
+OSM to caption remote sensing images from Google Earth 
+Engine as the two can be linked through geo-coordinates. 
+Due to its uncurated nature, semantic information from 
+OSM is rich but often messy. Consequently, not all this 
+information is suitable for describing images, especially if 
+--- hit ---
+to define the bounding boxes. By applying M2B followed 
+by B2C, it becomes convenient to create image-text datasets 
+from image segmentation datasets. With a similar motiva-
+tion, Wang et al. [16] leverage semantic information from 
+OSM to caption remote sensing images from Google Earth 
+Engine as the two can be linked through geo-coordinates. 
+Due to its uncurated nature, semantic information from 
+OSM is rich but often messy. Consequently, not all this 
+information is suitable for describing images, especially if 
+it is not visually discernible. To address this, the authors le-
+--- hit ---
+the image’s visual content” [15] . However, to improve 
+caption quality, prompts are optimized by adding con -
+straints on the model’s response [40] , [42], [195] or in-
+corporating semantic information about the image [40], 
+[158], [195]. For instance, VersaD [42]  defines prompts 
+to ensure that the captions generated by Gemini-Vision 
+encompass information about image properties, ob -
+ject attributes, and scene context while preventing the 
+model from describing uncertain objects. Furthermore, 
+it imposes constraints on the format of the model’s re -
+--- hit ---
+ject attributes, and scene context while preventing the 
+model from describing uncertain objects. Furthermore, 
+it imposes constraints on the format of the model’s re -
+sponse. LuoJiaHOG [40] prompts MiniGPT-4 to follow 
+principles such as describing object attributes, reducing 
+vague words, using “next” instead of “up,” adding syn -
+onyms, and more. Incorporating image semantic infor-
+mation into the prompt helps guide the model’s focus 
+toward the image content of interest while enriching the 
+captions. For example, in ChatEarthNet [195] , the dis -
+--- hit ---
+quality of the semantic information directly impacts the 
+quality of the captions, a significant portion of the effort in 
+caption generation for these two datasets is devoted to care-
+fully processing the semantic data. For example, similar to 
+SkyScript [16], LHRS-Align filters out invisible semantic 
+information using rules, followed by manual inspection. 
+Additionally, LHRS-Align removes duplicate semantics for 
+each image and applies a threshold to ensure semantic bal-
+ance across the entire dataset. Given that an image is often 
+associated with abundant OSM semantic data, providing 
+
+--- PAGE 29 TARGETED ---
+                                           IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 2025
+304 
+1)  Geographic coverage:  Th e datasets 
+RS5M, VersaD, and ChatEarthNet 
+benefit from large-scale remote 
+sensing image datasets, while Sky-
+Script, LHRS-Align, LuoJiaHOG, 
+and Git-10M derive from public 
+geographic databases. Each of these 
+datasets provides relatively compre-
+--- hit ---
+304 
+1)  Geographic coverage:  Th e datasets 
+RS5M, VersaD, and ChatEarthNet 
+benefit from large-scale remote 
+sensing image datasets, while Sky-
+Script, LHRS-Align, LuoJiaHOG, 
+and Git-10M derive from public 
+geographic databases. Each of these 
+datasets provides relatively compre-
+hensive global coverage, with Git-
+--- hit ---
+RS5M, VersaD, and ChatEarthNet 
+benefit from large-scale remote 
+sensing image datasets, while Sky-
+Script, LHRS-Align, LuoJiaHOG, 
+and Git-10M derive from public 
+geographic databases. Each of these 
+datasets provides relatively compre-
+hensive global coverage, with Git-
+10M being the largest (more than10 
+million image-text pairs). In con -
+--- hit ---
+and Git-10M derive from public 
+geographic databases. Each of these 
+datasets provides relatively compre-
+hensive global coverage, with Git-
+10M being the largest (more than10 
+million image-text pairs). In con -
+trast, RSTeller’s coverage is primar -
+ily limited to the continental United 
+States and parts of Hawaii, poten -
+tially introducing geographic bias in 
+--- hit ---
+States and parts of Hawaii, poten -
+tially introducing geographic bias in 
+trained models.
+2)
+  Sce
+ne diversity:  Large-scale datasets 
+such as RS5M, LHRS-Align, and Sky-
+Script have, to some extent, ensured 
+diversity in remote sensing scenes. 
+Taking this a step further, the creators 
+
+--- PAGE 30 TARGETED ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+305 
+4) Distinctive characteristics:  C urrent pretraining datasets 
+predominantly contain English text, with DIOR-Cap -
+tions being the only exception that provides bilingual 
+captions in both Chinese and English. This enables the 
+exploration of cross-lingual vision-language alignment. 
+Moreover, while most datasets focus on optical images, 
+ChatEarthNet stands out by facilitating a deeper under-
+standing of multispectral images by offering satellite im-
+--- hit ---
+captions in both Chinese and English. This enables the 
+exploration of cross-lingual vision-language alignment. 
+Moreover, while most datasets focus on optical images, 
+ChatEarthNet stands out by facilitating a deeper under-
+standing of multispectral images by offering satellite im-
+ages with nine specific bands, each paired with textual 
+descriptions.
+INSTRUCTION-FOLLOWING DATASETS
+Instruction-following datasets are specifically designed for 
+the SFT of instruction-based vision-language models, al -
+--- hit ---
+ages with nine specific bands, each paired with textual 
+descriptions.
+INSTRUCTION-FOLLOWING DATASETS
+Instruction-following datasets are specifically designed for 
+the SFT of instruction-based vision-language models, al -
+lowing them to perform specific remote sensing tasks. For 
+contrastive or generation-based vision-language models, 
+the emphasis during task-specific applications lies more 
+on designing network architectures than on developing 
+new datasets, as discussed in the “ Effective Adaptation 
+--- hit ---
+descriptions.
+INSTRUCTION-FOLLOWING DATASETS
+Instruction-following datasets are specifically designed for 
+the SFT of instruction-based vision-language models, al -
+lowing them to perform specific remote sensing tasks. For 
+contrastive or generation-based vision-language models, 
+the emphasis during task-specific applications lies more 
+on designing network architectures than on developing 
+new datasets, as discussed in the “ Effective Adaptation 
+Methods” and the “ Downstream Applications ” sections. 
+--- hit ---
+the emphasis during task-specific applications lies more 
+on designing network architectures than on developing 
+new datasets, as discussed in the “ Effective Adaptation 
+Methods” and the “ Downstream Applications ” sections. 
+Therefore, in the fine-tuning phase of VLM, we exclusively 
+summarize instruction-following datasets. This type of 
+dataset is composed of images paired with conversations, 
+structured as instructions (or questions) and answers. Its 
+construction involves image collection and conversation 
+generation, with images primarily sourced from open 
+
+--- PAGE 31 TARGETED ---
+decision-making.
+The three methods can be combined to facilitate the con-
+struction of instruction-following datasets [25], [44], with the 
+goal of creating rich and diverse samples across a variety of tasks. 
+To help vision-language models better distinguish between 
+tasks, a common practice is to incorporate task-specific identi-
+fiers into the instructions, as demonstrated in [18], [24], [42], 
+and [43]. One example is [43] where the authors introduce task 
+identifiers such as “[caption],” “[vqa],” and “[refer]” to specify 
+captioning, VQA, and VG tasks, respectively.
+--- hit ---
+fiers into the instructions, as demonstrated in [18], [24], [42], 
+and [43]. One example is [43] where the authors introduce task 
+identifiers such as “[caption],” “[vqa],” and “[refer]” to specify 
+captioning, VQA, and VG tasks, respectively.
+IMPRESSIVE DATASETS
+Table 13  provides an overview of existing instruction-  
+following datasets. MMShip [129] and TITANIC-FGS [133] 
+are specifically tailored for ship image analysis, whereas 
+the others are designed for general-purpose remote sens -
+ing data analysis. Most datasets include instruction data for 
+--- hit ---
+and [43]. One example is [43] where the authors introduce task 
+identifiers such as “[caption],” “[vqa],” and “[refer]” to specify 
+captioning, VQA, and VG tasks, respectively.
+IMPRESSIVE DATASETS
+Table 13  provides an overview of existing instruction-  
+following datasets. MMShip [129] and TITANIC-FGS [133] 
+are specifically tailored for ship image analysis, whereas 
+the others are designed for general-purpose remote sens -
+ing data analysis. Most datasets include instruction data for 
+tasks such as captioning, VQA, VG, and MTCs [18] , [24], 
+--- hit ---
+identifiers such as “[caption],” “[vqa],” and “[refer]” to specify 
+captioning, VQA, and VG tasks, respectively.
+IMPRESSIVE DATASETS
+Table 13  provides an overview of existing instruction-  
+following datasets. MMShip [129] and TITANIC-FGS [133] 
+are specifically tailored for ship image analysis, whereas 
+the others are designed for general-purpose remote sens -
+ing data analysis. Most datasets include instruction data for 
+tasks such as captioning, VQA, VG, and MTCs [18] , [24], 
+[25], [43], [122], [133], [134], [228], [228]. Among these, 
+--- hit ---
+IMPRESSIVE DATASETS
+Table 13  provides an overview of existing instruction-  
+following datasets. MMShip [129] and TITANIC-FGS [133] 
+are specifically tailored for ship image analysis, whereas 
+the others are designed for general-purpose remote sens -
+ing data analysis. Most datasets include instruction data for 
+tasks such as captioning, VQA, VG, and MTCs [18] , [24], 
+[25], [43], [122], [133], [134], [228], [228]. Among these, 
+MMRS-1M [122] stands out for featuring instruction data 
+that involve not only optical remote sensing images but 
+
+--- PAGE 32 TARGETED ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+307 
+TABLE 13. SUMMARY OF INSTRUCTION-FOLLOWING DATASETS FOR FINE-TUNING VISION-LANGUAGE MODELS IN REMOTE 
+SENSING.
+DATASET TASK DATA SOURCE 
+NO. OF SAMPLE 
+TRAIN/TEST PUBLIC 
+MMShip [129] OD DOSR[222] DOTA ship 
+subset [198] 
+HRSID [223]  SSDD [224]  81,000/— ✗
+--- hit ---
+TABLE 13. SUMMARY OF INSTRUCTION-FOLLOWING DATASETS FOR FINE-TUNING VISION-LANGUAGE MODELS IN REMOTE 
+SENSING.
+DATASET TASK DATA SOURCE 
+NO. OF SAMPLE 
+TRAIN/TEST PUBLIC 
+MMShip [129] OD DOSR[222] DOTA ship 
+subset [198] 
+HRSID [223]  SSDD [224]  81,000/— ✗
+HnstD [42]a Honest question 
+answering
+--- hit ---
+DATASET TASK DATA SOURCE 
+NO. OF SAMPLE 
+TRAIN/TEST PUBLIC 
+MMShip [129] OD DOSR[222] DOTA ship 
+subset [198] 
+HRSID [223]  SSDD [224]  81,000/— ✗
+HnstD [42]a Honest question 
+answering
+DOTA v2 [198] FAIR1M [225] 45,000/1,642 ✓
+VersaD-In -
+--- hit ---
+tions [132] 
+Image captioning 
+VQA
+RSIVQA [226]  RSVQA-LR [4]  UAV [227]  UCM-captions 
+[3] 
+5,506/1,552 ✓
+RS-GPT4V 
+[228] 
+VG 
+Complex reasoning 
+--- hit ---
+Image captioning 
+VQA
+RSIVQA [226]  RSVQA-LR [4]  UAV [227]  UCM-captions 
+[3] 
+5,506/1,552 ✓
+RS-GPT4V 
+[228] 
+VG 
+Complex reasoning 
+Image/region cap -
+
+--- PAGE 33 TARGETED ---
+queries. To construct HnstD, template-based trans -
+formations are applied to images sourced from the 
+DOTA [198] and FAIR1M [225]  datasets. The model’s 
+response formats vary by task: “yes” or “no” for the 
+presence task, free-form text for the color task, and 
+option selection from candidates for relative and 
+absolute position tasks. Figure 12  presents samples 
+from the HnstD dataset.
+5)
+ FIT-R
+--- hit ---
+option selection from candidates for relative and 
+absolute position tasks. Figure 12  presents samples 
+from the HnstD dataset.
+5)
+ FIT-R
+S: FIT-RS [25]  is designed to advance vision-
+language models’ ability to comprehend fine-grained 
+semantic relationships, introducing tasks such as ob -
+ject relationship reasoning (ORR) and scene graph 
+generation at both region and image levels. ORR is 
+--- hit ---
+further divided into relation detection and relation 
+reasoning. Relation detection requires the model to 
+TABLE 13. SUMMARY OF INSTRUCTION-FOLLOWING DATASETS FOR FINE-TUNING VISION-LANGUAGE MODELS IN REMOTE 
+SENSING.
+DATASET TASK DATA SOURCE 
+NO. OF SAMPLE 
+TRAIN/TEST PUBLIC 
+FIT-RS [25] h VG 
+OD 
+Image/region cap -
+--- hit ---
+TABLE 13. SUMMARY OF INSTRUCTION-FOLLOWING DATASETS FOR FINE-TUNING VISION-LANGUAGE MODELS IN REMOTE 
+SENSING.
+DATASET TASK DATA SOURCE 
+NO. OF SAMPLE 
+TRAIN/TEST PUBLIC 
+FIT-RS [25] h VG 
+OD 
+Image/region cap -
+tioning 
+VQA 
+--- hit ---
+DATASET TASK DATA SOURCE 
+NO. OF SAMPLE 
+TRAIN/TEST PUBLIC 
+FIT-RS [25] h VG 
+OD 
+Image/region cap -
+tioning 
+VQA 
+Multilabel classifica -
+tion 
+
+--- PAGE 34 TARGETED ---
+graphs for entire images, appending isolated objects 
+(with no relationships) to the answer in an OD for -
+mat. These tasks challenge vision-language models 
+to accurately interpret relationships between targets 
+and distinguish between subjects and objects within 
+those relationships. To construct FIT-RS, the scene 
+graph generation dataset STAR [247] , containing more 
+than 400,000 triplets across 48 object categories and 
+58 semantic relationship categories, serves as the data 
+source. Template-based transformations are applied 
+--- hit ---
+and distinguish between subjects and objects within 
+those relationships. To construct FIT-RS, the scene 
+graph generation dataset STAR [247] , containing more 
+than 400,000 triplets across 48 object categories and 
+58 semantic relationship categories, serves as the data 
+source. Template-based transformations are applied 
+to generate task-specific instruction data. Similar to 
+most instruction-following datasets, FIT-RS also sup -
+ports tasks such as captioning and VQA. In total, it 
+comprises 1,800,851 samples.
+--- hit ---
+source. Template-based transformations are applied 
+to generate task-specific instruction data. Similar to 
+most instruction-following datasets, FIT-RS also sup -
+ports tasks such as captioning and VQA. In total, it 
+comprises 1,800,851 samples.
+BENCHMARK DATASETS
+Benchmark datasets are essential for evaluating and fairly 
+comparing the performance of different models. To fos -
+ter research in VLM for remote sensing, efforts have been 
+made to develop benchmark datasets that integrate re -
+--- hit ---
+to generate task-specific instruction data. Similar to 
+most instruction-following datasets, FIT-RS also sup -
+ports tasks such as captioning and VQA. In total, it 
+comprises 1,800,851 samples.
+BENCHMARK DATASETS
+Benchmark datasets are essential for evaluating and fairly 
+comparing the performance of different models. To fos -
+ter research in VLM for remote sensing, efforts have been 
+made to develop benchmark datasets that integrate re -
+mote sensing images with text. Consequently, datasets like 
+--- hit ---
+ports tasks such as captioning and VQA. In total, it 
+comprises 1,800,851 samples.
+BENCHMARK DATASETS
+Benchmark datasets are essential for evaluating and fairly 
+comparing the performance of different models. To fos -
+ter research in VLM for remote sensing, efforts have been 
+made to develop benchmark datasets that integrate re -
+mote sensing images with text. Consequently, datasets like 
+UCM-captions [3], RSICD [78], and RSVQA [4] have been 
+established and are widely utilized to assess models’ abili -
+
+--- PAGE 35 TARGETED ---
+                                           IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 2025
+310 
+into two types: instruction-specific datasets and general-
+purpose datasets, based on the organization of their sam -
+ples. Note that remote sensing image datasets, such as AID 
+[70] and NWPU-RESISC45 [56], which have been adapted 
+for evaluating the performance of vision-language models 
+through appropriate transformations, are comprehensively 
+reviewed in [67] and [260].
+INSTRUCTION-SPECIFIC DATASETS
+--- hit ---
+310 
+into two types: instruction-specific datasets and general-
+purpose datasets, based on the organization of their sam -
+ples. Note that remote sensing image datasets, such as AID 
+[70] and NWPU-RESISC45 [56], which have been adapted 
+for evaluating the performance of vision-language models 
+through appropriate transformations, are comprehensively 
+reviewed in [67] and [260].
+INSTRUCTION-SPECIFIC DATASETS
+This type of dataset is specifically designed for instruc -
+--- hit ---
+into two types: instruction-specific datasets and general-
+purpose datasets, based on the organization of their sam -
+ples. Note that remote sensing image datasets, such as AID 
+[70] and NWPU-RESISC45 [56], which have been adapted 
+for evaluating the performance of vision-language models 
+through appropriate transformations, are comprehensively 
+reviewed in [67] and [260].
+INSTRUCTION-SPECIFIC DATASETS
+This type of dataset is specifically designed for instruc -
+tion-based vision-language models, with samples typi -
+--- hit ---
+purpose datasets, based on the organization of their sam -
+ples. Note that remote sensing image datasets, such as AID 
+[70] and NWPU-RESISC45 [56], which have been adapted 
+for evaluating the performance of vision-language models 
+through appropriate transformations, are comprehensively 
+reviewed in [67] and [260].
+INSTRUCTION-SPECIFIC DATASETS
+This type of dataset is specifically designed for instruc -
+tion-based vision-language models, with samples typi -
+cally presented as image-instruction-answer pairs. Its 
+--- hit ---
+through appropriate transformations, are comprehensively 
+reviewed in [67] and [260].
+INSTRUCTION-SPECIFIC DATASETS
+This type of dataset is specifically designed for instruc -
+tion-based vision-language models, with samples typi -
+cally presented as image-instruction-answer pairs. Its 
+creation follows a similar process to instruction-follow -
+ing datasets, involving image collection and conversation 
+generation. As summarized in Table 14, most benchmark 
+datasets source their images from open source image da -
+
+--- PAGE 36 TARGETED ---
+spatial reasoning limits their effectiveness in object  
+localization, object counting, and change detection 
+TABLE 14. SUMMARY OF BENCHMARK DATASETS FOR VISION-LANGUAGE MODELS IN REMOTE SENSING.
+DATASET DATA SOURCE TASK 
+NO. OF 
+SAMPLE 
+QUESTION 
+FORMAT 
+PUBLIC 
+FIT-RSRC [25] a — Relation comprehension — Single choice ✓
+--- hit ---
+localization, object counting, and change detection 
+TABLE 14. SUMMARY OF BENCHMARK DATASETS FOR VISION-LANGUAGE MODELS IN REMOTE SENSING.
+DATASET DATA SOURCE TASK 
+NO. OF 
+SAMPLE 
+QUESTION 
+FORMAT 
+PUBLIC 
+FIT-RSRC [25] a — Relation comprehension — Single choice ✓
+RSIEval [17]b DOTA-v1.5 [198] Image captioning 
+--- hit ---
+FIT-RSRC [25] a — Relation comprehension — Single choice ✓
+RSIEval [17]b DOTA-v1.5 [198] Image captioning 
+VQA
+100
+936
+Open ended 
+Open ended
+✓
+VRSBench 
+[194]
+--- hit ---
+100
+936
+Open ended 
+Open ended
+✓
+VRSBench 
+[194]
+c
+DIOR [199] DOTA v2 [198]  Image captioning 
+VG 
+--- hit ---
+936
+Open ended 
+Open ended
+✓
+VRSBench 
+[194]
+c
+DIOR [199] DOTA v2 [198]  Image captioning 
+VG 
+VQA
+
+--- PAGE 37 TARGETED ---
+causes, assessing disaster impacts, and classifying crop 
+types based on long-term time-series images. Detailed 
+experiments with 10 vision-language models show that 
+none excels across all tasks in GEOBench-VLM. Signifi -
+cant effort is still required to develop remote sensing-
+specific models capable of addressing challenging tasks 
+like referring expression segmentation.
+5)
+ UrBe
+nch: UrBench [196] concentrates on exploring the 
+--- hit ---
+tasks, spanning four dimensions: geo-localization, scene 
+reasoning, scene understanding, and object understand-
+ing. Unlike the previously mentioned datasets that in -
+clude only single-view questions in satellite or aerial 
+images, UrBench also incorporates cross-view questions 
+in which each question pairs images of the same scenario 
+captured from satellite and street views. These questions 
+involve tasks such as image retrieval, orientation identifi-
+cation, camera localization, road understanding, object 
+attribute recognition, and object matching. Meanwhile, 
+--- hit ---
+model’s ability to understand urban scenarios at a region 
+level, and role-level questions, which evaluate its poten-
+tial to assist humans in daily life. Experiments with 21 
+general-purpose models on UrBench reveal that current 
+models still lag significantly behind human experts in 
+urban environments. They struggle to understand multi-
+view image relations, and their performance varies incon-
+sistently across different views.
+GENERAL-PURPOSE DATASETS
+General-purpose datasets are designed to evaluate various 
+--- hit ---
+view image relations, and their performance varies incon-
+sistently across different views.
+GENERAL-PURPOSE DATASETS
+General-purpose datasets are designed to evaluate various 
+types of vision-language models. These datasets typically 
+target specific remote sensing multimodal tasks, with sam-
+ples consisting of images and task ground truth presented in 
+text form. As summarized in [2] , commonly used general-
+purpose datasets for vision-language model evaluation have 
+been well documented. This section, therefore, focuses on 
+--- hit ---
+sistently across different views.
+GENERAL-PURPOSE DATASETS
+General-purpose datasets are designed to evaluate various 
+types of vision-language models. These datasets typically 
+target specific remote sensing multimodal tasks, with sam-
+ples consisting of images and task ground truth presented in 
+text form. As summarized in [2] , commonly used general-
+purpose datasets for vision-language model evaluation have 
+been well documented. This section, therefore, focuses on 
+the latest research advancements from the past two years, 
+
+--- PAGE 38 TARGETED ---
+languages (e.g., Chinese, English, and French), diverse 
+types of images (e.g., photographs and emojis), videos, 
+and more. This complexity and diversity pose challenges 
+for models in comprehending the embedded information 
+and associating it with remote sensing data. Consequent -
+ly, there is a pressing need for effective representation and 
+alignment across a broader scope of cross-modal data.
+REQUIREMENTS ARBITRARILY  
+DESCRIBED IN NATURAL LANGUAGE
+Existing instructions for prompting vision-language models 
+--- hit ---
+Existing vision-language models take language instructions 
+and visual representations as input, producing image analysis 
+results in the form of natural language. However, these models 
+typically do not provide expert explanations for their answers, 
+leading users to doubt the reliability of the outputs, especially 
+in tasks requiring complex reasoning rather than simple recog-
+nition. For instance, in precision agriculture, where the model 
+may be used to guide pesticide spraying schedules, the lack 
+of explanations regarding crop diseases and pest conditions 
+makes it hard to convince farmers to follow the recommenda-
+--- hit ---
+may be used to guide pesticide spraying schedules, the lack 
+of explanations regarding crop diseases and pest conditions 
+makes it hard to convince farmers to follow the recommenda-
+tions. Consequently, expert explanations accompanying im-
+age analysis results are necessary as they not only enhance the 
+reliability and interpretability of the model’s answers but also 
+offer insight into the decision-making process, thereby foster-
+ing user trust. A recent initiative [133] has begun exploring the 
+feasibility of developing the vision-language model capable 
+of performing fine-grained ship classification while provid-
+--- hit ---
+makes it hard to convince farmers to follow the recommenda-
+tions. Consequently, expert explanations accompanying im-
+age analysis results are necessary as they not only enhance the 
+reliability and interpretability of the model’s answers but also 
+offer insight into the decision-making process, thereby foster-
+ing user trust. A recent initiative [133] has begun exploring the 
+feasibility of developing the vision-language model capable 
+of performing fine-grained ship classification while provid-
+ing reasoning behind its classification. This is accomplished 
+by integrating domain knowledge into the construction of the 
+--- hit ---
+ing reasoning behind its classification. This is accomplished 
+by integrating domain knowledge into the construction of the 
+instruction-following dataset.
+CONTINUALLY ADAPTING VISION- 
+LANGUAGE MODELS
+It is well known that new remote sensing images are collect-
+ed daily from around the world, and human demands may 
+change accordingly. This necessitates continually adapting 
+vision-language models to these dynamic changes rather 
+than relying solely on one-time pretraining and fine-
+
+--- PAGE 39 TARGETED ---
+of Computer Science, Wuhan University, Wuhan 430072, 
+China. His research interests include artificial intelligence, 
+computer vision, photogrammetry, remote sensing, and ro-
+botics. He is a Senior Member of IEEE.
+REFERENCES
+[1] L. Bashmal, Y. Baz i, F. Melgani, M. M. Al Rahhal, and M. A . 
+Al Zuair, “Language integration in remote sensing: Tasks, 
+datasets, and future directions ,” IEEE Geosci. Remote Sens. 
+Mag., vol. 11 , no. 4, pp. 63 –93, Dec. 2023 , doi: 10.1109/
+MGRS.2023.3316438.
+--- hit ---
+[1] L. Bashmal, Y. Baz i, F. Melgani, M. M. Al Rahhal, and M. A . 
+Al Zuair, “Language integration in remote sensing: Tasks, 
+datasets, and future directions ,” IEEE Geosci. Remote Sens. 
+Mag., vol. 11 , no. 4, pp. 63 –93, Dec. 2023 , doi: 10.1109/
+MGRS.2023.3316438.
+[2] X. Li, C. Wen, Y. Hu, Z. Yua
+n, and X. X. Zhu, “Vision-language 
+models in remote sensing: Current progress and future trends,” 
+IEEE Geosci. Remote Sens. Mag. , vol. 12, no. 2, pp. 32–66, Jun. 
+2024, doi: 10.1109/MGRS.2024.3383473.
+--- hit ---
+[2] X. Li, C. Wen, Y. Hu, Z. Yua
+n, and X. X. Zhu, “Vision-language 
+models in remote sensing: Current progress and future trends,” 
+IEEE Geosci. Remote Sens. Mag. , vol. 12, no. 2, pp. 32–66, Jun. 
+2024, doi: 10.1109/MGRS.2024.3383473.
+[3] B. Qu, X. Li, D. Tao, an
+d X. Lu, “Deep semantic understand -
+ing of high resolution remote sensing image,” in Proc. Int. Conf. 
+Comput. Inf. Telecom. Syst. (CITS), 2016, pp. 1–5, doi: 10.1109/
+CITS.2016.7546397.
+--- hit ---
+CITS.2016.7546397.
+[4] S. Lobr
+y, D. Marcos, J. Murray, and D . Tuia, “RSVQA: Visual 
+question answering for remote sensing data ,” IEEE Trans. Geos-
+ci. Remote Sens., vol . 58, no. 12, pp. 8555–8566, Dec. 2020, doi: 
+10.1109/TGRS.2020.2988782.
+[5] T. Abdu
+llah, Y. Bazi, M. M. Al Rahhal , M. L. Mekhalfi , L. Ran-
+garajan, and M . Zua ir, “TextRS: Deep bidirectional triplet 
+network for matching text to remote sensing images ,” Remote 
+--- hit ---
+Mar. 2019, doi: 10.1109/JSTARS.2019.2895693.
+[7] Z. Zha
+ng, W. Zhang, W. Diao, M. Yan, X. Gao, and X . Sun, 
+“VAA: Visual aligning attention model for remote sensing im -
+age captioning,” IE EE Access, vol. 7, pp. 137,355–137,364, 2019, 
+doi: 10.1109/ACCESS.2019.2942154.
+[8] Y. Li, S. Fang, L. J
+iao, R. Liu, and R. Shang, “A multi-level atten-
+tion model for remote sensing image captions ,” Re mote Sens., 
+vol. 12, no. 6, p. 939, 2020, doi: 10.3390/rs12060939.
+
+--- PAGE 40 TARGETED ---
+[25] J. Luo et 
+al., “SkySenseGPT: A fine-grained instruction tuning 
+dataset and model for remote sensing vision-language under -
+standing,” 20 24, arXiv:2406.10100.
+[26] Y. Zhou e
+t al., “Towards vision-language geo-foundation mod-
+el: A survey,” 20 24, arXiv:2406.09385.
+[27] A. Rad
+ford et al., “Learning transferable visual models from 
+natural language supervision,” in Proc. 38th Int. Conf. Mach. 
+--- hit ---
+o, M. Zhang, B. Yang, Z. Zhang, J. Kang, and J . Gong, 
+“LuoJiaHOG: A hierarchy oriented geo-aware image caption 
+dataset for remote sensing image–text retrieval ,” ISPRS J. Pho-
+togramm. Remote Sens. , vol . 222, pp. 130 –151, Apr. 2025, doi: 
+10.1016/j.isprsjprs.2025.02.009.
+[41] D. Zhu, J. Che
+n, X. Shen, X. Li, and M. Elhoseiny, “MiniGPT-4: 
+Enhancing vision-language understanding with advanced 
+large language models,” in Proc. Int. Conf. Learn. Representations 
+(ICLR), 2024.
+
+--- PAGE 41 TARGETED ---
+[56] G. Chen
+g, J. Han, and X . Lu, “Remote sensing image scene 
+classification: Benchmark and state of the art ,” Proc. IEEE , 
+vol. 105, no. 10 , pp. 1865 –1883, Oct. 2017 , doi: 10.1109/
+JPROC.2017.2675998.
+[57] T. Chen, S. K
+ornblith, M. Norouzi, and G . Hinton, “A simple 
+framework for contrastive learning of visual representations ,” 
+in Proc. Int. Conf. Mach. Learn. (ICML), 2020, pp. 1597–1607.
+[58] G. Mai, N. La
+--- hit ---
+[58] G. Mai, N. La
+o, Y. He, J. Song, and S . Ermon, “Csp: Self-  
+supervised contrastive spatial pre-training for geospatial-visual 
+repr
+esentations,” in Proc. Int. Conf. Mach. Learn. (ICML), 2023, 
+pp. 23,498–23,515.
+[59] G. Mai, K. Ja
+nowicz, B. Yan, R. Zhu, L. Cai, and N. Lao, “Multi-
+scale representation learning for spatial feature distributions 
+using grid cells,” in Proc. Int. Conf. Learn. Representations (ICLR), 
+--- hit ---
+[63] M. Lar
+son, M. Soleymani, G. Gravier, B. Ionescu, and G. J . 
+Jones, “The benchmarking initiative for multimedia evalua -
+tion: MediaEval 2016,” IE EE Multimedia Mag., vol. 24, no. 1, pp. 
+93–96, Jan./Mar. 2017, doi: 10.1109/MMUL.2017.9.
+[64] K. Klem
+mer, E. Rolf, C. Robinson, L. Mackey, and M. Rußwurm, 
+“SatCLIP: Global, general-purpose location embeddings with 
+satellite imagery ,” in Proc. AAAI Conf. Artif. Intell. , vol. 39, pp. 
+4347–4355, 2025.
+--- hit ---
+4347–4355, 2025.
+[65] M. Rußw
+urm, K. Klemmer, E. Rolf, R. Zbinden, and D . Tuia, 
+“Geographic location encoding with spherical harmonics and 
+sinusoidal representation networks,” in Proc. Int. Conf. Learn. Rep-
+resentations (ICLR), 202 4, pp. 1–12.
+[66] J. Pan, M. Ma, Q. Ma, C. Bai, a
+nd S. Chen, “PIR: Remote sens -
+ing image-text retrieval with prior instruction representation 
+lear
+--- hit ---
+ning,” 2024, arXiv:2405.10160.
+[67] Y. Lon
+g et al., “On creating benchmark dataset for aerial image 
+in
+terpretation: Reviews, guidances, and million-aid ,” IEEE J. 
+Sel. Topics Appl. Earth Observ. Remote Sens. , vol. 14, pp. 4205–
+4230, 2021, doi: 10.1109/JSTARS.2021.3070368.
+[68] G. Sum
+bul, M. Charfuelan, B. Demir, and V. Markl, “Bigearthnet: 
+A large-scale benchmark archive for remote sensing image under-
+
+--- PAGE 42 TARGETED ---
+[90] J. Li, D. Li, C. Xiong, a
+nd S. Hoi, “Blip: Bootstrapping language-
+image pre-training for unified vision-language understanding 
+and generation,” in Proc. Int. Conf. Mach. Learn. (ICML), 2022, 
+pp. 12,888–12,900.
+[91]
+ B. Pso
+mas et al., “Composed image retrieval for remote sens -
+ing,” in P roc. IEEE Int. Geosci. Remote Sens. Symp. (IGARSS) , 
+2
+--- hit ---
+[97] K. Li, R. Liu, X. Ca
+o, D. Meng, and Z . Wang, “SegEarth-OV: 
+Towards-free open-vocabulary segmentation for remote sens -
+ing images,” 20 24, arXiv:2410.01768.
+[98] X. Tan, G. Che
+n, T. Wang , J. Wang , and X . Zhang , “ Seg -
+ment change model (SCM) for unsupervised change 
+det
+ection in VHR remote sensing images: A case study 
+of buildings,” in Proc. IEEE Int. Geosci. Remote Sens. 
+--- hit ---
+task learners ,” Op enAI Blog, vol. 1, no. 8, p. 9, 2019.
+[106] J. Dev
+lin, M.-W. Chang, K. Lee, and K. Toutanova, “BERT: Pre-train-
+ing of deep bidirectional transformers for language understand-
+ing,” in Proc. Conf. North Amer. Chapter Assoc. Comput. Linguist.: 
+Hum
+. Lang. Technol. (NAACL-HLT), 2019, vol. 1, pp. 4171–4186.
+[107] S. Zha
+ng et al., “OPT: Open pre-trained transformer language 
+models,” 2022, arXiv:2205.01068.
+--- hit ---
+. Lang. Technol. (NAACL-HLT), 2019, vol. 1, pp. 4171–4186.
+[107] S. Zha
+ng et al., “OPT: Open pre-trained transformer language 
+models,” 2022, arXiv:2205.01068.
+[108] T. Brow
+n et al., “Language models are few-shot learners ,” in 
+Proc. Adv. Neural Inf. Process. Syst., 2020, vol. 33, pp. 1877–1901.
+[1
+09] P. Gao e
+t al., “CLIP-adapter: Better vision-language models 
+--- hit ---
+[111]
+ R. Spee
+r, J. Chin, and C . Havasi, “ConceptNet 5.5: An open 
+multilingual graph of general knowledge,” in Proc. AAAI Conf. 
+Artif. Intell., 2017, vol. 31, pp. 4444–4451.
+[112]
+ A. Kiri
+llov et al., “ Segment anything ,” in Proc. IEEE/CVF Int. 
+Conf. Comput. Vis. (ICCV), 2023, pp. 3992–4003, doi: 10.1109/
+ICCV51070.2023.00371.
+
+--- PAGE 43 TARGETED ---
+Inf. Process. Syst. (NeurIPS), 2023, pp. 49,250–49,267.
+[118] W.-L. C
+hiang et al., “Vicuna: An open-source Chatbot im -
+pressing GPT-4 with 90%* Chatgpt quality ,” LM SYS Org , 
+Mar. 2023 . [Online]. Available: https://lmsys.org/blog/2023  
+-03-30-vicuna/
+[11
+9] H. Touv
+ron et al., “Llama 2: Open foundation and fine-tuned 
+chat models,” 2023, arXiv:2307.09288.
+--- hit ---
+[11
+9] H. Touv
+ron et al., “Llama 2: Open foundation and fine-tuned 
+chat models,” 2023, arXiv:2307.09288.
+[120] J. Chen e
+t al., “MiniGPT-v2: Large language model as a uni -
+fied interface for vision-language multi-task learning ,” 202 3, 
+arXiv:2310.09478.
+[121] E. J. Hu e
+t al., “LoRA: Low-rank adaptation of large language 
+--- hit ---
+2024. 
+[124] C. Sch
+uhmann et al., “LAION-400m: Open dataset of CLIP-
+filtered 400 million image-text pairs,” in Proc. Adv. Neural Inf. 
+Process. Syst. (NeurIPS), 2021, pp. 1–5.
+[125]
+ X. Chen e
+t al., “Microsoft COCO captions: Data collection and 
+evaluation server,” 2015, arXiv:1504.00325.
+[126] P. Gao e
+--- hit ---
+[125]
+ X. Chen e
+t al., “Microsoft COCO captions: Data collection and 
+evaluation server,” 2015, arXiv:1504.00325.
+[126] P. Gao e
+t al., “Llama-adapter v2: Parameter-efficient visual in -
+struction model,” 202 3, arXiv:2304.15010.
+[127] S. Kaz
+emzadeh, V. Ordonez, M. Matten, and T. Berg, “ReferIt-
+Game: Referring to objects in photographs of natural scenes ,” 
+--- hit ---
+ X. Chen e
+t al., “Microsoft COCO captions: Data collection and 
+evaluation server,” 2015, arXiv:1504.00325.
+[126] P. Gao e
+t al., “Llama-adapter v2: Parameter-efficient visual in -
+struction model,” 202 3, arXiv:2304.15010.
+[127] S. Kaz
+emzadeh, V. Ordonez, M. Matten, and T. Berg, “ReferIt-
+Game: Referring to objects in photographs of natural scenes ,” 
+in P
+
+--- PAGE 44 TARGETED ---
+[147] B. Zhu et a
+l., “METER-ML: A multi-sensor earth observation 
+benchmark for automated methane source mapping ,” 2022, 
+arXiv:2207.11166.
+[148] X. Huan
+g, Y. Cao, and J . Li, “An automatic change detection 
+method for monitoring newly constructed building areas us -
+ing time-series multi-view high-resolution optical satellite im -
+ages,” Remote Sens. Environ., v ol. 244, Jul. 2020, Art. no. 111802, 
+doi: 10.1016/j.rse.2020.111802.
+--- hit ---
+[150] Z. Lin, F. Zhu, Y. K
+ong, Q. Wang, and J. Wang, “SRSG and S2SG: 
+A model and a dataset for scene graph generation of remote sens-
+ing images from segmentation results,” IE EE Trans. Geosci. Remote 
+Sens., vol. 60, pp. 1–11, 2022, doi: 10.1109/TGRS.2022.3185678.
+[151] Y. Yang, X. Ta
+ng, Y.-M. Cheung, X. Zhang, and L. Jiao, “SAGN: 
+Semantic-aware graph network for remote sensing scene clas -
+sification,” IE EE Trans. Image Process. , vol. 32 , pp. 1011–1025, 
+2023, doi: 10.1109/TIP.2023.3238310.
+--- hit ---
+ong, Q. Wang, and J. Wang, “SRSG and S2SG: 
+A model and a dataset for scene graph generation of remote sens-
+ing images from segmentation results,” IE EE Trans. Geosci. Remote 
+Sens., vol. 60, pp. 1–11, 2022, doi: 10.1109/TGRS.2022.3185678.
+[151] Y. Yang, X. Ta
+ng, Y.-M. Cheung, X. Zhang, and L. Jiao, “SAGN: 
+Semantic-aware graph network for remote sensing scene clas -
+sification,” IE EE Trans. Image Process. , vol. 32 , pp. 1011–1025, 
+2023, doi: 10.1109/TIP.2023.3238310.
+[152] F. Bast
+--- hit ---
+[152] F. Bast
+ani, P. Wolters, R. Gupta, J. Ferdinando, and A . Kemb-
+havi, “SatlasPretrain: A large-scale dataset for remote sensing 
+im
+age understanding,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. 
+(ICCV), 2023, pp. 16,772–16,782.
+[153] A. Van E
+tten, D. Lindenbaum, and T. M . Bacastow, “SpaceNet: 
+A remote sensing dataset and challenge series ,” 2018, arX-
+iv:1807.01232.
+--- hit ---
+[153] A. Van E
+tten, D. Lindenbaum, and T. M . Bacastow, “SpaceNet: 
+A remote sensing dataset and challenge series ,” 2018, arX-
+iv:1807.01232.
+[15
+4] L. Zha
+ng, A. Rao, and M. Agrawala, “Adding conditional con -
+trol to text-to-image diffusion models,” i n Proc. IEEE/CVF Int. 
+Conf. Comput. Vis. (ICCV), 2023, pp. 3813–3824, doi: 10.1109/
+ICCV51070.2023.00355.
+
+--- PAGE 45 TARGETED ---
+[194] X. Li, J. Ding, a
+nd M. Elhoseiny, “VRSBench: A versatile vision-
+language benchmark dataset for remote sensing image under -
+standing,” in Proc. Adv. Neural Inf. Process. Syst. (NeurIPS) Data-
+se
+ts Benchmarks Track, 202 4, pp. 1–13. 
+[195] Z. Yuan, Z. 
+Xiong, L. Mou, and X. X . Zhu, “ChatEarthNet: A 
+global-scale image-text dataset empowering vision-language 
+geo-foundation models,” Earth Syst. Sci. Data, vol. 17, no. 3, pp. 
+--- hit ---
+standing,” in Proc. Adv. Neural Inf. Process. Syst. (NeurIPS) Data-
+se
+ts Benchmarks Track, 202 4, pp. 1–13. 
+[195] Z. Yuan, Z. 
+Xiong, L. Mou, and X. X . Zhu, “ChatEarthNet: A 
+global-scale image-text dataset empowering vision-language 
+geo-foundation models,” Earth Syst. Sci. Data, vol. 17, no. 3, pp. 
+1245–1263, 2025, doi: 10.5194/essd-17-1245-2025.
+[196]
+ B. Zhou e
+--- hit ---
+[195] Z. Yuan, Z. 
+Xiong, L. Mou, and X. X . Zhu, “ChatEarthNet: A 
+global-scale image-text dataset empowering vision-language 
+geo-foundation models,” Earth Syst. Sci. Data, vol. 17, no. 3, pp. 
+1245–1263, 2025, doi: 10.5194/essd-17-1245-2025.
+[196]
+ B. Zhou e
+t al., “UrBench: A comprehensive benchmark for evalu-
+ating large multimodal models in multi-view urban scenarios,” 
+in P
+--- hit ---
+[196]
+ B. Zhou e
+t al., “UrBench: A comprehensive benchmark for evalu-
+ating large multimodal models in multi-view urban scenarios,” 
+in P
+roc. AAAI Conf. Artif. Intell., 2025, vol. 39, pp. 10,707–10,715.
+[197] J. Ge, Y. Zhen
+g, K. Guo, and J. Liang, “RSTeller: Scaling up vi -
+sual language modeling in remote sensing with rich linguistic 
+sem
+--- hit ---
+sual language modeling in remote sensing with rich linguistic 
+sem
+antics from openly available data and large language mod-
+els,” 2024, a rXiv:2408.14744.
+[198] J. Ding e
+t al., “Object detection in aerial images: A large-scale 
+benchmark and challenges ,” IEEE Trans. Pattern Anal. Mach. In-
+tell., vol. 44, n o. 11, pp. 7778–7796, Nov. 2022, doi: 10.1109/
+TPAMI.2021.3117983.
+[199] K. Li, G. Wan, G. Che
+
+--- PAGE 46 FULL/EDGE ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+321 
+in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) , 2017, pp. 
+4165–4173, doi: 10.1109/ICCV.2017.446.
+[207] Y. Zha
+ng, Y. Yuan, Y. Feng, and X . Lu, “Hierarchical and ro -
+bust convolutional neural network for very high-resolution 
+rem
+ote sensing object detection ,” IEEE Trans. Geosci. Remote 
+Sens., vol. 57, no. 8 , pp. 5535–5548, Aug. 2019, doi: 10.1109/
+TGRS.2019.2900302.
+[208] H. Chen a
+nd Z. Shi, “A spatial-temporal attention-based meth-
+od and a new dataset for remote sensing image change detec -
+tion,” Remote Sens., v ol. 12, no. 10, p. 1662, 2020, doi: 10.3390/
+rs12101662.
+[209] A. Robi
+cquet, A. Sadeghian, A. Alahi, and S. Savarese, “Learn-
+ing social etiquette: Human trajectory understanding in 
+crow
+ded scenes,” in Proc. Eur. Conf. Comput. Vis. (ECCV), 2016, 
+pp. 549–565.
+[210] P. Zhu et 
+al., “Detection and tracking meet drones challenge ,” 
+IEEE Trans. Pattern Anal. Mach. Intell., vol. 44, no. 11, pp. 7380–
+7399, Nov. 2022, doi: 10.1109/TPAMI.2021.3119563.
+[211] Z. Liu, L. Yua
+n, L. Weng, and Y. Yang, “A high resolution opti-
+cal satellite image dataset for ship recognition and some new 
+base
+lines,” in Proc. Int. Conf. Pattern Recognit. Appl. Methods 
+(ICPRAM), 2017, vol. 1, pp. 324–331.
+[212] J. Wang, Z. Z
+heng, A. Ma, X. Lu, and Y. Zhong, “LoveDA: A re-
+mote sensing land-cover dataset for domain adaptive semantic 
+seg
+mentation,” in Proc. Adv. Neural Inf. Process. Syst. (NeurIPS) 
+Datasets Benchmarks Track, 2021, pp. 1–12. 
+[213] “Cr
+owdAI mapping challenge: CrowdAI dataset.” AIcrowd. Ac-
+cessed: Oct. 30, 2024. [Online]. Available: https://www.crow -
+dai.org/challenges/mapping-challenge/dataset_files
+[214] L. Liu a
+nd H. Li, “Lending orientation to neural networks for 
+cross-view geo-localization,” in Proc. IEEE/CVF Conf. Com -
+put. Vis. Pattern Recognit. (CVPR) , 201 9, pp. 5624 –5633, doi: 
+10.1109/CVPR.2019.00577.
+[215] S. Work
+man, R. Souvenir, and N . Jacobs, “ Wide-area image 
+geolocalization with aerial reference imagery,” in Proc. IEEE/
+CVF Int. Conf. Comput. Vis. (ICCV) , 2015, pp. 3961–3969, doi: 
+10.1109/ICCV.2015.451.
+[216]
+ R. Ani
+l et al., “Gemini: A family of highly capable multimodal 
+models,” 2023, arXiv:2312.11805.
+[217] Y. Wang, N
+. A. A. Braham, Z. Xiong, C. Liu, C. M. Albrecht, and 
+X. X. Zhu, “SSL4EO-S12: A large-scale multimodal, multitem -
+poral dataset for self-supervised learning in earth observation 
+[Sof
+tware and Data Sets],” IEEE Geosci. Remote Sens. Mag., vol. 11, 
+no. 3, pp. 98–106, 2023, doi: 10.1109/MGRS.2023.3281651.
+[218] M. Men
+dieta, B. Han, X. Shi, Y. Zhu, and C . Chen, “Towards 
+geospatial foundation models via continual pretraining ,” 
+in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) , 2023, pp. 
+16,760–16,770, doi: 10.1109/ICCV51070.2023.01541.
+[219] H. Li et al
+., “RSI-CB: A large scale remote sensing image 
+classification benchmark via crowdsource data ,” 2017, arX-
+iv:1705.10450.
+[220
+] A. Q. Ji
+ang et al., “Mixtral of experts ,” 2024, arXiv:2401.04088.
+[221] P. Shar
+ma, N. Ding, S. Goodman, and R. Soricut, “Conceptual 
+captions: A cleaned, hypernymed, image alt-text dataset for 
+automatic image captioning,” in Proc. 56th Annu. Meet. Assoc. 
+Comput. Linguist. (ACL), 2018, pp. 2556–2565.
+[222
+] Y. Han, X. Ya
+ng, T. Pu, and Z. Peng, “Fine-grained recognition 
+for oriented ship against complex scenes in optical remote 
+sensing images ,” IEEE Trans. Geosci. Remote Sens. , vol. 60 , pp. 
+1–18, 2021, doi: 10.1109/TGRS.2021.3123666.
+[223]
+ S. Wei, X. Ze
+ng, Q. Qu, M. Wang, H. Su, and J. Shi, “HRSID: A 
+high-resolution SAR images dataset for ship detection and in -
+stance segmentation,” IE EE Access, vol. 8, pp. 120,234–120,254, 
+2020, doi: 10.1109/ACCESS.2020.3005861.
+[224] T. Zha
+ng et al., “SAR ship detection dataset (SSDD): Official 
+release and comprehensive data analysis,” Remote Sens., vol. 13, 
+no. 18, p. 3690, 2021, doi: 10.3390/rs13183690.
+[225] X. Sun et a
+l., “FAIR1M: A benchmark dataset for fine-grained 
+object recognition in high-resolution remote sensing imagery,” 
+ISPRS J. Photogramm. Remote Sens., vol. 184, pp. 116–130, Feb. 
+2022, doi: 10.1016/j.isprsjprs.2021.12.004.
+[226] X. Zhen
+g, B. Wang, X. Du, and X. Lu, “Mutual attention incep-
+tion network for remote sensing visual question answering ,” 
+IE
+EE Trans. Geosci. Remote Sens. , vol. 60 , pp. 1–14, 2021, doi: 
+10.1109/TGRS.2021.3079918.
+[227] G. Hoxh
+a and F . Melgani , “A novel SVM-based decoder for 
+remote sensing image captioning ,” IEEE Trans. Geosci. Remote 
+Sens., vol. 60, pp. 1–14, 2022, doi: 10.1109/TGRS.2021.3105004.
+[228] L. Xu et al
+., “RS-GPT4V: A unified multimodal instruction-
+following dataset for remote sensing image understanding ,” 
+2024, arXiv:2406.12479.
+[229] M. Rah
+nemoonfar, T. Chowdhury, A. Sarkar, D. Varshney, M. 
+Yari, and R. R. Murphy, “FloodNet: A high resolution aerial imag-
+ery dataset for post flood scene understanding,” IE EE Access
+
+--- PAGE 47 FULL/EDGE ---
+                                           IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE    SEPTEMBER 2025
+322 
+[237] K. Li, G. Chen g, S. Bu, and X . You, “Rotation-insensitive and 
+context-augmented object detection in remote sensing imag -
+es,” IEEE Trans. Geosci. Remote Sens. , v ol. 56, no. 4, pp. 2337–
+2348, Apr. 2018, doi: 10.1109/TGRS.2017.2778300.
+[238] “Ae
+rial-Mancar,” InfiRay, Yantai, China, 2021. [Online]. Avail-
+able: http://openai.raytrontek.com/apply/Aerial_mancar.html/
+[2
+39] Y. Di, Z. Jia
+ng, and H. Zhang, “A public dataset for fine-grained 
+ship classification in optical remote sensing images ,” Remote 
+Sens., vol. 13, no. 4, p. 747, 2021, doi: 10.3390/rs13040747.
+[240] “In
+frared-security ,” InfiRay, Yantai, China, 2021 . [Online]. 
+Available: http://openai.raytrontek.com/apply/Infrared_secu -
+rity.html/ 
+[24
+1] “Do
+uble-light-vehicle,” InfiRay, Yantai, China, 2021. [Online]. 
+Available: http://openai.raytrontek.com/apply/Double_light_
+vehicle.html/
+[242] “Se
+a-shipping,” InfiRay, Yantai, China, 2021 . [Online]. Avail-
+able: http://openai.raytrontek.com/apply/Double_light_  
+vehicle.html/
+[24
+3] M. Zha
+ng, F. Chen, and B . Li, “ Multistep question-driven 
+visual question answering for remote sensing ,” IEEE Trans. 
+Geosci. Remote Sens. , vol. 61 , pp. 1– 12, 2023, doi: 10.1109/
+TGRS.2023.3312479.
+[244] Y. Di, Z. Jia
+ng, H. Zhang, and G . Meng, “A public dataset for 
+ship classification in remote sensing images ,” Proc. SPIE, vol. 
+11155, pp. 515–521, Oct. 2019.
+[245] J. Suo, T. Wan
+g, X. Zhang, H. Chen, W. Zhou, and W. Shi, “HIT-
+UAV: A high-altitude infrared thermal dataset for unmanned 
+aerial vehicle-based object detection ,” Sci. Data, vol. 10, no. 1, 
+p. 227, 2023, doi: 10.1038/s41597-023-02066-6.
+[246]
+ “Oc
+eanic-Ship,” Center for Optics Research and Engineering of 
+Shandong University, Qingdao, Shandong, China, 2020. [Online]. 
+Available: http://www.gxzx.sdu.edu.cn/info/1133/2174.htm/
+[247] Y. Li et al
+., “STAR: A first-ever dataset and a large-scale bench -
+mark for scene graph generation in large-size satellite imag -
+ery,” IEEE Trans. Pattern Anal. Mach. Intell. , v ol. 47, no. 3 , pp. 
+1832–1849, Mar. 2025, doi: 10.1109/TPAMI.2024.3508072.
+[248] C. Pang, J. Wu, J. D
+ing, C. Song, and G.-S . Xia, “ Detecting 
+building changes with off-nadir aerial images ,” Sci. China Inf. 
+Sci., vol. 66, no. 4, 2023, Art. no. 140306, doi: 10.1007/s11432-
+022-3691-4.
+[249] R. Xia et a
+l., “Crtranssar: A visual transformer based on contex-
+tual joint representation learning for sar ship detection,” Re mote 
+Sens., vol. 14, no. 6, p. 1488, 2022, doi: 10.3390/rs14061488.
+[250] X.-Y. To
+ng, G.-S. Xia, and X. X . Zhu, “Enabling country-scale 
+land cover mapping with meter-resolution satellite imagery ,” 
+ISPRS J. Photogramm. Remote Sens., vol. 196, pp. 178–196, 2023.
+[251] C. Wu, L. Zha
+ng, and L . Zhang, “A scene change detection 
+framework for multi-temporal very high resolution remote 
+sensing images ,” Signal Process. , vol. 124 , pp. 184 –197, Jul. 
+2016, doi: 10.1016/j.sigpro.2015.09.020.
+[252]
+ I. Demi
+r et al., “DeepGlobe 2018: A challenge to parse the earth 
+through satellite images,” in Proc. IEEE/CVF Conf. Comput. Vis. 
+Pattern Recognit. (CVPR) Workshops, 2018, pp. 172–17209, doi: 
+10.1109/CVPRW.2018.00031.
+[253]
+ X.-Y. To
+ng et al., “Land-cover classification with high-resolu -
+tion remote sensing images using transferable deep models ,” 
+Re
+mote Sens. Environ., vol. 237, Feb. 2020, Art. no. 111322, doi: 
+10.1016/j.rse.2019.111322.
+[254] S. Verm
+a, A. Panigrahi, a n d S . Gupta, “ QFabric: Multi-task 
+change detection dataset,” in Proc. IEEE/CVF Conf. Comput. Vis. 
+Pattern Recognit. (CVPR) Workshops, 2021, pp. 1052–1061, doi: 
+10.1109/CVPRW53098.2021.00116.
+[255]
+ L. Shen e
+t al., “S2Looking: A satellite side-looking dataset for 
+building change detection ,” Remote Sens. , vol. 13 , no. 24 , p. 
+5094, 2021, doi: 10.3390/rs13245094.
+[256] R. Gupt
+a et al., “Creating xbd: A dataset for assessing building 
+damage from satellite imagery,” in Proc. IEEE/CVF Conf. Com -
+put. Vis. Pattern Recognit. (CVPR) Workshops, 201 9, pp. 10–17.
+[257] J. Robe
+rts, K. Han, and S. Albanie, “SATIN: A multi-task meta -
+dataset for classifying satellite imagery using vision-language 
+mode
+ls,” 2023, arXiv:2304.11619.
+[258] X. An, J. Sun, Z. Gui, 
+and W. He, “COREval: A comprehen -
+sive and objective benchmark for evaluating the remote sens -
+ing capabilities of large vision-language models ,” 20 24, arX-
+iv:2411.18145.
+[25
+9] M. S. Da
+nish et al., “GEOBench-VLM: Benchmarking vision-
+language models for geospatial tasks ,” 2024, arXiv:2411.19325.
+[260] Z. Xiong
+, F. Zhang, Y. Wang, Y. Shi, and X. X. Zhu, “EarthNets: 
+Empowering artificial intelligence for earth observation ,” 
+IEEE Geosci. Remote Sens. Mag., early access, Oct. 23, 2024, doi: 
+10.1109/MGRS.2024.3466998.
+[261] C. Zha
+ng and S . Wang, “Good at captioning bad at counting: 
+Benchmarking GPT-4V on earth observation data,” in Proc. 
+IEEE/CVF Conf. Comput
+
+--- PAGE 48 FULL/EDGE ---
+SEPTEMBER 2025    IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE                                                        
+323 
+[269] A. Shah, L. T homas, and M . Maskey, “Marine debris dataset 
+for object detection in planetscope imagery,” NASA, Washing -
+ton, DC, USA, 2021. [On line]. Available: https://cmr.earthdata.
+nasa.gov/search/concepts/C2781412735-MLHUB.html
+[270] X. X. Zhu e
+t al., “So2Sat LCZ42: A benchmark data set for the 
+classification of global local climate zones [Software and Data 
+Sets],” IEEE Geosci. Remote Sens. Mag., vol. 8, no. 3, pp. 76–89, 
+Sep. 2020, doi: 10.1109/MGRS.2020.2964708.
+[271] “For
+est damages – Larch casebearer,” The Swedish Forest Agen-
+cy, Jönköping, Sweden, 2021 . [On line]. Available: https://lila.
+science/datasets/forest-damages-larch-casebearer/
+[272] X. Zha
+ng, W. Yu, M.-O. Pun, and W. Shi, “Cross-domain land-
+slide mapping from large-scale remote sensing images using 
+prot
+otype-guided domain-aware progressive representation 
+learning,” ISPRS J. Photogramm. Remote Sens., vol. 197, pp. 1–17, 
+Mar. 2023, doi: 10.1016/j.isprsjprs.2023.01.018.
+[273] D. R. Ca
+mbrin and P . Garza, “Quakeset: A dataset and low-
+resource models to monitor earthquakes through sentinel-1 ,” 
+in Proc. Int. ISCRAM Conf., 2024, pp. 1–12.
+[274] S. Shen, S. S
+eneviratne, X. Wanyan, and M . Kirley, “FireRisk: 
+A remote sensing dataset for fire risk assessment with bench -
+marks using supervised and self-supervised learning,” i n Proc. 
+Int. Conf. Digit. Image Comput.: Tech. Appl. (DICTA) , 2023, pp. 
+189–196, doi: 10.1109/DICTA60407.2023.00034.
+[275] C. Tund
+ia, R. Kumar, O. Damani, and G . Sivakumar, “FPCD: 
+An open aerial VHR dataset for farm pond change detection ,” 
+2023, arXiv:2302.14554.
+[276] J. Liu, W. Zho
+u, H. Guan, and W. Zhao, “Similarity learning for 
+land use scene-level change detection ,” IEEE J. Sel. Topics Appl. 
+Earth Observ. Remote Sens. , vol. 17, pp. 6501–6513, 2024, doi: 
+10.1109/JSTARS.2024.3373401.
+[277] V. S. F. G
+arnot and L. Landrieu, “Panoptic segmentation of sat-
+ellite image time series with convolutional temporal attention 
+net
+works,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) , 
+2021, pp. 4852–4861.
+[278] J. Sher
+meyer, T. Hossler, A. Van Etten, D. Hogan, R. Lewis, and 
+D. Kim, “RarePlanes: Synthetic data takes flight,” in Proc. IEEE 
+Winter Conf. Appl. Comput. Vis. (WACV) , 2020, pp. 207 –217, 
+doi: 10.1109/WACV48630.2021.00025.
+[279] M. Cord
+ts et al., “The cityscapes dataset for semantic urban 
+scene understanding ,” in Proc. IEEE/CVF Conf. Comput. Vis. 
+Pattern Recognit. (CVPR) , 2016, pp. 3213–3223, doi: 10.1109/
+CVPR.2016.350.
+[280] J. Hay
+s and A. A . Efros, “IM2GPS: Estimating geographic in -
+formation from a single image,” i n Proc. IEEE/CVF Conf. Com-
+put. Vis. Pattern Recognit. (CVPR), 2008, p p. 1–8, doi: 10.1109/
+CVPR.2008.4587784.
+[281] C. Ert
+ler, J. Mislej, T. Ollmann, L. Porzi, G. Neuhold, and Y. 
+Kuang, “The mapillary traffic sign dataset for detection and 
+classification on a global scale,” in Proc. Eur. Conf. Comput. Vis. 
+(ECCV), 2020, pp. 68–84.
+[282]
+ S. Zhu, T. Yan
+g, and C. Chen, “VIGOR: Cross-view image geo-lo-
+calization beyond one-to-one retrieval,” in Proc. IEEE/CVF Conf. 
+Comput. Vis. Pattern Recognit. (CVPR), 2021, pp. 3640–3649.
+[283] M. Chu, Z. Zhe
+ng, W. Ji, T. Wang, and T.-S. Chua, “Towards natural 
+language-guided drones: Geotext-1652  ben
+chmark with spatial  
+relation matching ,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , 
+2025, pp. 213–231, doi: 10.1109/CVPR46437.2021.00364.
+[2
+84] Z. Zhen
+g, Y. Wei, and Y. Yang, “University-1652: A multi-view 
+multi-source benchmark for drone-based geo-localization ,” in 
+Proc. ACM Int. Conf. Multimedia, 2020, pp. 1395–1403.
+[285] K. Nogue
+ira, J. A. Dos Santos, T. Fornazari, T. S. F. Silva, and L. 
+P. Morellato, and R. D. S. Torres, “Towards vegetation species 
+discrimination by using data-driven descriptors,” in Proc. IAPR 
+Workshop Pattern Recognit. Remote Sens. (PRRS), 2016, pp. 1–6, 
+doi: 10.1109/PRRS.2016.7867024.
+[286]
+ Q. D. C
+ao and Y. Choe, “Building damage annotation on post-
+hurricane satellite imagery based on convolutional neural net -
+works,” 2018, a rXiv:1807.01688.
+[287] S. Basu, S. G
+anguly, S. Mukhopadhyay, R. DiBiano, M. Karki, 
+and R. Nemani, “DeepSat: A learning framework for satellite 
+imagery,” in Proc. ACM SIGSPATIAL Int. Conf. Adv. Geogr. Inf. 
+Syst. (SIGSPATIAL), 2015, pp. 1–10.
+[288] “Ai
+rbus wind turbine patches.” Kaggle. Accessed: Oct. 30, 
+2024. [Online]. Available: https://www.kaggle.com/datasets/
+airbusgeo/airbus-wind-turbines-patches  
+[289]
+ A. A. B . Ja
+cques, A. B. Diallo, and E . Lord, “Towards the cre -
+ation of a canadian land-use dataset for agricultural land clas -
+sification,” in Proc. Can. Symp. Remote Sens.: Understanding Our 
+Wo
+rld: Remote Sens. Sustain. Future, 2021, vol. 4, p. 6.
+[290] Y. Hua, L. Mou, P. Ji
+n, and X. X. Zhu, “MultiScene: A large-scale 
+dataset and benchmark for multiscene recognition in single 
+aerial images ,” IEEE Trans. 

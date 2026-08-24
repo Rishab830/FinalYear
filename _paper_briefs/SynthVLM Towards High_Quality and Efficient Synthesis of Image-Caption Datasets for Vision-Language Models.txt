@@ -1,0 +1,585 @@
+FILE: SynthVLM Towards High_Quality and Efficient Synthesis of Image-Caption Datasets for Vision-Language Models.txt
+
+
+--- PAGE 1 FULL/EDGE ---
+SynthVLM: Towards High-Quality and Efficient Synthesis of
+Image-Caption Datasets for Vision-Language Models
+Zheng Liu♠
+Peking University
+Beijing, China
+2501213330@stu.pku.edu.cn
+Hao Liang♠
+Peking University
+Beijing, China
+hao.liang@stu.pku.edu.cn
+Bozhou Li
+Peking University
+Beijing, China
+2301213084@pku.edu.cn
+Wentao Xiong
+Peking University
+Beijing, China
+wtxiong@pku.edu.cn
+Chong Chen
+Huawei Technologies Ltd.
+Beijing, China
+chenchong55@huawei.com
+Conghui He
+Shanghai AI Laboratory
+Shanghai, China
+heconghui@pjlab.org.cn
+Wentao Zhang†
+Peking University
+Center for Machine Learning
+Research
+Beijing, China
+wentao.zhang@pku.edu.cn
+Bin Cui†
+Peking University
+School of Computer Science & Key
+Lab of High Confidence Software
+Technologies (MOE)
+Beijing, China
+bin.cui@pku.edu.cn
+Abstract
+Vision-Language Models (VLMs) have recently emerged, demon-
+strating remarkable vision-understanding capabilities. However,
+training these models requires large-scale datasets, which brings
+challenges related to efficiency, effectiveness, and quality of web
+data. In this paper, we introduce SynthVLM, a new data synthesis
+and curation method for generating image-caption pairs. Unlike tra-
+ditional methods, where captions are generated from images, Syn-
+thVLM utilizes advanced diffusion models and high-quality captions
+to synthesize and select images from text captions, thereby creating
+precisely aligned image-text pairs. We further introduce SynthVLM-
+100K, a high-quality dataset consisting of 100K curated and syn-
+thesized image-caption pairs. In both model and human evalua-
+tions, SynthVLM-100K outperforms traditional real-world datasets.
+Leveraging this dataset, we develop a new family of multimodal
+large language models (MLLMs), SynthVLM-7B and SynthVLM-
+13B, which achieve state-of-the-art (SOTA) performance on various
+vision question-answering (VQA) tasks. Notably, our models out-
+perform LLaVA across most metrics with only 18% pretrain data.
+Furthermore, SynthVLM-7B and SynthVLM-13B attain SOTA per-
+formance on the MMLU benchmark, demonstrating that the high-
+quality SynthVLM-100K dataset preserves language abilities. Our
+dataset and the complete data generating and curating methods
+can be found in https://github.com/starriver030515/SynthVLM.
+CCS Concepts
+• Information systems→ Information integration.
+This work is licensed under a Creative Commons Attribution 4.0 International License.
+MM ’25, Dublin, Ireland
+© 2025 Copyright held by the owner/author(s).
+ACM ISBN 979-8-4007-2035-2/2025/10
+https://doi.org/10.1145/3746027.3758222
+Keywords
+Synthetic Data, Data Curation, Vision Language Models
+ACM Reference Format:
+Zheng Liu, Hao Liang, Bozhou Li, Wentao Xiong, Chong Chen, Conghui
+He, Wentao Zhang, Bin Cui. 2025. SynthVLM: Towards High-Quality and
+Efficient Synthesis of Image-Caption Datasets for Vision-Language Models.
+In Proceedings of the 33rd ACM International Conference on Multimedia (MM
+’25), October 27–31, 2025, Dublin, Ireland. ACM, New York, NY, USA, 8 pages.
+https://doi.org/10.1145/3746027.3758222
+1 Introduction
+In recent years, with the rapid advancements in large language
+models (LLMs) [ 33, 38] and multimodal large language models
+(MLLMs) [43, 46], data management has become a crucial aspect of
+these technologies [5, 10, 18, 30, 32, 39]. At the same time, [2, 47–49]
+also demonstrates that data processing, selection, and management
+can significantly influence the performance of MLLMs.
+Vision Language Models (VLMs), a subset of MLLMs, excel in
+tasks like image classification, understanding, and captioning [1, 6,
+20, 21]. While most VLMs focus on improving model architectures
+to integrate multimodal data [1, 6, 20, 21, 26, 27], their reliance on
+web-sourced data poses a bottleneck: high-quality, precisely aligned
+image-text pairs are scarce. Noisy or misaligned data directly limits
+performance, as shown by [22, 41], who link enhanced VLM effec-
+tiveness to carefully curated datasets. Crucially, precise alignment
+between modalities underpins data quality, which is a challenge
+demanding greater focus than architectural refinements alone.
+♠ The first two authors have equal contributions.
+† Corresponding Author
+12807
+
+
+--- PAGE 2 FULL/EDGE ---
+MM ’25, October 27–31, 2025, Dublin, Ireland Zheng Liu et al.
+Caption: An orange and white cat laying on top of a blanket next to a joyce name plate.
+Caption: vintage car woman sitting in an old barn stock photo, by Robert johnson. CLIPScore: 0.46 Image Source: SDXLImage Pixel: 1024
+CLIPScore:  0.33 Image Source: LCSImage Pixel: 336 * 520
+CLIPScore:  0.47 Image Source: SDXLImage Pixel: 1024
+CLIPScore:  0.42 Image Source: COCOImage Pixel: 640* 444
+(a) generated image can avoid watermarks
+(b) generated images better reflect the content of the caption
+Figure 1: We compared SynthVLM-100K with LLaV A-558K.
+In (a), generated image can avoid content such as watermarks
+and advertisements. In (b), the generated images better reflect
+the content of the captions. Additionally, the resolution of
+the generated images is higher than real images.
+To address the scarcity of high-quality web data, data synthe-
+sis strategies have increasingly been employed [3, 13, 31]. For in-
+stance, [31] utilized BLIP2 to generate numerous image captions,
+achieving SOTA results on DataComp. In the domain of VLMs, [3]
+used GPT-4 Vision to produce highly descriptive image captions,
+resulting in significant improvements in LLaVA. The integration of
+these generative models has opened new avenues for enhancing
+data quality and alignment, further boosting VLM performance.
+Despite these notable advancements in VLMs, the challenge of
+multimodal data persists, particularly when paired image and text
+are required. Although synthetic captions have been generated for
+images, the absence of generated images means that the issue of lim-
+ited high-quality web images remains unresolved. This limitation
+gives rise to three key challenges that still need to be addressed:
+C1. Low Data Quality. Web-sourced images often contain ar-
+tifacts such as blurriness and watermarks, compromising quality.
+Furthermore, caption generation approaches [31] leveraging BLIP2
+tend to introduce logical inconsistencies and grammatical errors in
+text, which propagate through VLM training pipelines, ultimately
+weakening their linguistic reasoning capabilities.
+C2.Poor Effectiveness. Existing datasets frequently lack the
+diversity and depth required to train VLMs effectively. Many web-
+scraped datasets consist of low-quality or irrelevant content that
+fails to capture the complexity of natural language and visual in-
+formation. Furthermore, the limited scope of current datasets often
+results in models that struggle to generalize across various contexts.
+C3. Low Efficiency. Methods that rely on manual captioning are
+both labor-intensive and resource-intensive. Automated solutions
+such as ShareGPT4V [3], which leverage GPT-4 for labeling, are
+costly and difficult to scale. Additionally, many strategies require the
+creation of large datasets, resulting in significant data redundancy.
+To address these challenges, we introduced a new data genera-
+tion pipeline, SynthVLM. First, we implemented a quality selection
+process to filter high-quality caption data. Next, we employed diffu-
+sion models to generate images based on these captions. For quality
+assurance, we proposed a new method for evaluating and selecting
+image-caption pairs by combining CLIPScore [17] and SSIM [42],
+focusing on both image-text alignment and image quality. Our data
+generation approach achieved superior alignment between images
+and captions compared to existing methods. With 100K curated
+synthetic data, we attained SOTA results across multiple bench-
+marks, utilizing only 18% of the official LLaVA-558K dataset size.
+Overall, our contributions are as follows:
+• Innovative Data Synthesis Framework. We introduce
+SynthVLM, a novel two-stage pipeline for generating syn-
+thetic image-caption pairs, and curate SynthVLM-100K—a
+large-scale, high-quality dataset produced through this frame-
+work. Compared to conventional approaches, SynthVLM
+achieves superior efficiency without compromising quality.
+• Superior Synthetic Data Quality. SynthVLM-100K out-
+performs baseline datasets in both model and human evalu-
+ations. It achieves superior CLIPScore and SSIMScore, while
+also earning higher human evaluation ratings. Further vali-
+dation via GPT-4 and Intern-VL2 assessments corroborates
+its enhanced quality for training vision-language models.
+• State-of-the-Art Vision-Language Modeling. When pre-
+trained exclusively on SynthVLM-100K, our models surpass
+baseline methods relying on LLaVA-558K, achieving top-tier
+performance on vision-language understanding benchmarks.
+SynthVLM-13B also delivers exceptional performance on the
+MMLU benchmark, highlighting its multimodal versatility.
+2 Related Work
+2.1 Data Quality and Selection
+High-quality data can significantly enhance the performance of
+models [29]. Ensuring high data quality becomes more challenging
+because it requires more resources for data cleaning, selection and
+annotation [2]. LLMs-based methods were commonly used in data
+selection [2]. For instance, [8] leverages DeBERTa
+
+--- PAGE 3 FULL/EDGE ---
+SynthVLM: Towards High-Quality and Efficient Synthesis of Image-Caption Datasets for Vision-Language Models MM ’25, October 27–31, 2025, Dublin, Ireland
+c
+a pair of childrens boots in the shape of knitted shoes.
+A cute kitten is sitting in a dish on a table.Pink flower ##&#border rose watercolor clip art with floral.
+a pair of childrens boots in the shape of knitted shoes.
+A cute kitten is sitting in a dish on a table.
+A cute kitten is sitting in a dish on a table.
+CLIPScore
+CLIPScore : 0.24CLIPScore : 0.42
+(a) Image Caption Data Filtering
+A cute kitten is sitting in a dish on a table.
+c
+A cute kitten is sitting in a dish on a table.
+CLIPScore : 0.42SSIMScore : 0.98
+CLIPScore & SSIMScoreSynthVLMDataset
+(b) Data Synthesize & Filtering
+Figure 2: The pipeline of the SynthVLM data synthesis method is as follows: First, we filter high-quality image-caption pairs.
+Next, we synthesize high-quality data and subsequently filter them based on CLIPScore.
+Table 1: LCS abbreviates the LAION, CC, and SBU datasets.
+SynthVLM uses captions to generate images, while others
+use images to generate captions or manual labeling.
+Name Image
+Source Caption Source Sample
+COCO-Caption
+[25] COCO
+Human 118K
+BLIP-LCS [26] LCS
+BLIP 558K
+ShareGPT4V [3] LCS,
+COCO, etc GPT4-Vision 100K
+ShareGPT4V-PT [3] LCS,
+COCO, etc Share-Captioner 1246K
+SynthVLM Diffusion
+LCS, COCO, BLIP2-DataComp, etc 1000K
+3 Method
+3.1 Step1: Synthetic Dataset Construction
+In this section, we introduce the image generation pipeline. First, we
+construct a large pool of captions. We then select the best captions
+from the pool for image-text generation. Utilizing these high-quality
+captions, we employ diffusion models to generate the images.
+Data Source. To ensure the diversity of the captions, we com-
+bined human-generated and model-generated captions. As shown
+in Table 1. The human-generated captions were primarily sourced
+from LAION, CC, and SBU, while the model-generated captions
+were created using the method described in [ 31], which utilizes
+BLIP2 to regenerate captions for images in the DataComp dataset [12].
+Caption Curation. To maintain dataset quality, we first re-
+moved low-quality captions, such as advertisements, overly repeti-
+tive descriptions, and captions with significant grammatical errors.
+The filtering process was performed with ChatGPT, combined with
+statistical indicators such as N-grams and Perplexity, ensuring that
+only high-quality, informative captions were used for training. For
+the remaining captions, we calculated the CLIPScore[17] for these
+captions and their corresponding raw images. CLIPScore is a met-
+ric that measures the cosine similarity between images and their
+corresponding captions. The formula for calculating CLIPScore is
+as follows:
+𝐶𝐿𝐼𝑃𝑆𝑐𝑜𝑟𝑒 (𝐼,𝐶) = 𝐶𝐿𝐼𝑃(𝐼)· 𝐶𝐿𝐼𝑃(𝐶)
+||𝐶𝐿𝐼𝑃(𝐼)||·|| 𝐶𝐿𝐼𝑃(𝐶)|| (1)
+where𝐼 represents the image,𝐶 represents the caption, and𝐶𝐿𝐼𝑃(𝐼)
+and𝐶𝐿𝐼𝑃(𝐶) denote the image and text feature vectors extracted
+by the CLIP model. The dot product of the vectors is denoted by·,
+and||·|| denotes the norm of the vectors.
+We selected the top 40% of image-caption pairs with the highest
+CLIPScores. These selected captions were included in the candidate
+caption set. Ultimately, we curated a dataset of 1M captions for
+data generation. By using only captions, our method significantly
+reduces storage overhead and processing time. The caption curation
+pipeline is summarized in Figure 2(a).
+Image Generation. After filtering 1M high-quality captions, we
+employed Stable Diffusion XL (SDXL) [35], a SOTA model capable
+of efficiently generating high-quality, high-resolution images. Syn-
+thVLM produces images at a resolution of 1024x1024, effectively
+addressing the low-resolution issues present in existing datasets.
+This improvement greatly enhances the quality and utility of the
+training data across various image generation and recognition tasks.
+3.2 Step2: Synthetic Data Selection
+In this section, we introduce a novel algorithm for quality control
+of generated datasets. To better ensure the alignment between
+images and their corresponding text descriptions, we continue to
+use CLIPScore. For a given image𝐼 and its corresponding text𝐶,
+we first calculate the image-text CLIPScore, 𝐶𝐿𝐼𝑃𝑆𝑐𝑜𝑟𝑒 (𝐼,𝐶), to
+assess their alignment. Additionally, the generated images have a
+resolution of 1024× 1024, which will be resized to 336× 336 for
+compatibility with CLIP [36]. To account for the potential loss in
+quality due to this resizing process, we introduce the Structural
+12809
+
+--- PAGE 4 TARGETED ---
+MM ’25, October 27–31, 2025, Dublin, Ireland Zheng Liu et al.
+Table 2: Comparison of SynthVLM and LLaV A using the same model structure. We can see SynthVLM outperforms LLaV A on
+all the evaluation benchmarks.
+Mo
+dels LLM SQA SQA 𝐼 MMVet VizWiz VQAv2 GQA MMB MME 𝑃 MME𝐶 PoPE MMLU
+LLaV
+A-7B Vicuna-1.5-7B 69.3 67.3 30.5 49.9 78.7 62.5 65.3 1484.8 315.6 86.0 36.3
+SynthVLM-7B Vicuna-1.5-7B 70.4 68.9 32.2 49.3 79.4 63.1 66.8 1518.5 345.7 87.0 41.2
+LLaV
+A-13B Vicuna-1.5-13B 74.2 71.0 35.0 53.6 80.0 63.0 67.7 1531.3 294.5 86.9 52.4
+--- hit ---
+all the evaluation benchmarks.
+Mo
+dels LLM SQA SQA 𝐼 MMVet VizWiz VQAv2 GQA MMB MME 𝑃 MME𝐶 PoPE MMLU
+LLaV
+A-7B Vicuna-1.5-7B 69.3 67.3 30.5 49.9 78.7 62.5 65.3 1484.8 315.6 86.0 36.3
+SynthVLM-7B Vicuna-1.5-7B 70.4 68.9 32.2 49.3 79.4 63.1 66.8 1518.5 345.7 87.0 41.2
+LLaV
+A-13B Vicuna-1.5-13B 74.2 71.0 35.0 53.6 80.0 63.0 67.7 1531.3 294.5 86.9 52.4
+SynthVLM-13B Vicuna-1.5-13B 74.9 72.5 35.0 55.9 80.0 63.5 68.3 1573.0 316.1 88.4 54.6
+Table 3: Result comparison of MMLU shows that with the synthetic 100k data, our SynthVLM outperforms LLaV A in pure
+--- hit ---
+A-13B Vicuna-1.5-13B 74.2 71.0 35.0 53.6 80.0 63.0 67.7 1531.3 294.5 86.9 52.4
+SynthVLM-13B Vicuna-1.5-13B 74.9 72.5 35.0 55.9 80.0 63.5 68.3 1573.0 316.1 88.4 54.6
+Table 3: Result comparison of MMLU shows that with the synthetic 100k data, our SynthVLM outperforms LLaV A in pure
+language tasks. This demonstrates the effectiveness of the synthetic data in modality alignment.
+Models LLM SQA MMLU
+Avg STEM Humanities Social Sciences Other
+LLaV A-7B Vicuna-1.5-7B 69.3 36.3 28.6 33.4 39.5 44.5
+SynthVLM-7B Vicuna-1.5-7B 70.4 41.2 31.7 37.4 47.0 50.2
+LLaV A-13B Vicuna-1.5-13B 74.2 52.4 41.9 45.8 62.9 61.8
+SynthVLM-13B Vicuna-1.5-13B 74.9 54.6 45.0 49.3 64.0 62.2
+--- hit ---
+SynthVLM-13B Vicuna-1.5-13B 74.9 54.6 45.0 49.3 64.0 62.2
+Table 4: We compared the average CLIPScore, SSIMScore,
+and their weighted score across our synthetic dataset,
+ShareGPT4V, COCO-Caption, and BLIP-LCS. The results
+demonstrate that SynthVLM achieves the highest alignment
+and image quality.
+Datasets #
+Samples CLIPScore SSIMScore Weighted_Score
+COCO-Caption 118K
+0.31 0.73 0.67
+--- hit ---
+Table 4: We compared the average CLIPScore, SSIMScore,
+and their weighted score across our synthetic dataset,
+ShareGPT4V, COCO-Caption, and BLIP-LCS. The results
+demonstrate that SynthVLM achieves the highest alignment
+and image quality.
+Datasets #
+Samples CLIPScore SSIMScore Weighted_Score
+COCO-Caption 118K
+0.31 0.73 0.67
+BLIP-LCS 558K
+
+--- PAGE 5 TARGETED ---
+SynthVLM: Towards High-Quality and Efficient Synthesis of Image-Caption Datasets for Vision-Language Models MM ’25, October 27–31, 2025, Dublin, Ireland
+Table 5: The results on the MME benchmark demonstrate that using generated data can still maintain a leading performance in
+real-world problems, further expanding the application scope of SynthVLM.
+Mo
+dels LLM MME
+Cognition MME
+Perception
+Reasoning
+--- hit ---
+SynthVLM: Towards High-Quality and Efficient Synthesis of Image-Caption Datasets for Vision-Language Models MM ’25, October 27–31, 2025, Dublin, Ireland
+Table 5: The results on the MME benchmark demonstrate that using generated data can still maintain a leading performance in
+real-world problems, further expanding the application scope of SynthVLM.
+Mo
+dels LLM MME
+Cognition MME
+Perception
+Reasoning
+Translation Code Posters
+--- hit ---
+real-world problems, further expanding the application scope of SynthVLM.
+Mo
+dels LLM MME
+Cognition MME
+Perception
+Reasoning
+Translation Code Posters
+Celebrity Scene Landmark Artwork OCR
+LLaV
+A1.5-7B Vicuna-1.5-7B 126.4
+--- hit ---
+Mo
+dels LLM MME
+Cognition MME
+Perception
+Reasoning
+Translation Code Posters
+Celebrity Scene Landmark Artwork OCR
+LLaV
+A1.5-7B Vicuna-1.5-7B 126.4
+57.5 62.5 148.3 132.1 143.0
+--- hit ---
+Table 6: We employed GPT4-Vision and InternVL to vote
+on the match between each caption and its corresponding
+generated image and raw image. The results demonstrate that
+the generated images align more closely with the captions.
+Sample
+Model Sythetic
+Image win Web Image win
+1K
+GPT4-Vision 633
+367
+
+--- PAGE 6 FULL/EDGE ---
+MM ’25, October 27–31, 2025, Dublin, Ireland Zheng Liu et al.
+Table 8: Ablation study of visual understanding ability and pure language ability. The results demonstrate that removing either
+the data generation or data selection module results in a performance drop.
+Mo
+dels LLM SQA SQA 𝐼 MMVet VizWiz VQAv2 GQA MMB MME 𝑃 MME𝐶 PoPE MMLU
+SynthVLM-7B Vicuna-1.5-7B
+70.4 68.9 32.2 49.3 79.4 63.1 66.8 1518.5 345.7 87.0 41.2
+w/o generation Vicuna-1.5-7B 69.3 ↓ 67.0↓ 31.2↓ 46.8↓ 79.3↓ 62.9↓ 66.2↓ 1488.8↓ 327.5↓ 86.2↓ 39.1↓
+w/o selection Vicuna-1.5-7B 69.9 ↓ 67.7↓ 30.2↓ 50.2 79.1 ↓ 62.2↓ 63.5↓ 1421.7↓ 301.8↓ 87.3 40.6 ↓
+SynthVLM-13B Vicuna-1.5-13B
+74.9 72.5 35.0 55.9 80.0 63.5 68.3 1573.0 316.1 88.4 54.6
+w/o generation Vicuna-1.5-13B 73.6 ↓ 71.4↓ 33.0↓ 53.6↓ 80.0 63.4 ↓ 67.5↓ 1514.3↓ 295.7↓ 88.2↓ 53.6↓
+w/o selection Vicuna-1.5-13B 74.1 ↓ 70.5↓ 35.6 53.2 ↓ 79.7↓ 63.1↓ 67.5↓ 1512.7↓ 303.2↓ 86.9↓ 53.0↓
+Table 9: Ablation study of modality alignment. The results
+demonstrate that removing either the data generation or data
+selection module results in a performance drop.
+Mo
+dels SQA MMLU
+A
+vg STEM Humanities Social Sciences Other
+SynthVLM-7B 70.4
+41.2 31.7 37.4 47.0 50.2
+w/o
+generation 69.3↓ 39.1↓ 30.0↓ 36.6↓ 43.1↓ 47.3↓
+w/o
+selection 69.9↓ 40.6↓ 30.8↓ 37.2↓ 45.3↓ 48.9↓
+SynthVLM-13B 74.9
+54.6 45.0 49.3 64.0 62.2
+w/o
+generation 74.1↓ 53.6↓ 43.5↓ 48.2↓ 63.1↓ 61.8↓
+w/o
+selection 73.6↓ 53.0↓ 42.9↓ 46.8↓ 63.8↓ 61.3↓
+experiments were conducted on an 8x NVIDIA A100 GPU machine
+equipped with a 120-core CPU and 960GB of memory.
+4.2 Synthetic Data Achieves SOTA Performance
+To address Q1, we trained the model described in experimental set-
+tings. From Table 2, it is evident that SynthVLM model outperforms
+the Baseline across all evaluation benchmarks on both 7B and 13B.
+SynthVLM model also excels in language benchmarks, demonstrat-
+ing superior performance in SQA and MMLU, thus showcasing its
+comprehensive capabilities in both vision and language tasks.
+These results demonstrate the strong alignment capability of
+our synthetic data. Additionally, this provides a new paradigm for
+effective visual understanding model modality alignment using
+generated data. During pre-training, it is common to train on all
+available data due to uncertainty about data selection. Here, we
+offer 100k high-quality synthetic data as a benchmark for selecting
+aligned generated data efficiently.
+4.3 Efficient Vision Language Alignment
+To address Q2, we examine the computational resource usage dur-
+ing training and evaluate the data utilization efficiency for generat-
+ing image-caption pairs.
+As shown in Figure 7, by integrating a data selection module,
+our approach utilizes only 19% of the LLAVA data and 10% of the
+original synthetic data while achieving SOTA performance. This
+demonstrates that our data selection method can reduce computa-
+tional usage by more than 80%.
+4.4 Capability to Solve Real-World Problems
+A critical issue when using generated data is whether the model
+loses its ability to solve real-world problems. To address Q3, we
+utilized the MME Benchmark to assess the model’s performance in
+various real-world scenarios, such as artwork, celebrity, code rea-
+soning, landmarks, and posters. The specific results are presented
+in Table 5. Using SynthVLM-100K, our model performs consistently
+well, matching or even surpassing the baseline across most real-
+world tasks. We attribute this success to the diversity of the captions
+and the generalization ability of the Diffusion model.
+4.5 Ablation Study
+To address Q4, We conducted an ablation study where we removed
+the data generation module and the data selection module sepa-
+rately to evaluate their individual contributions to the effectiveness
+of our data generation pipeline. In this section, we controlled the
+number of samples in each experimental group to be 100K.
+Excluding Data Generation Module. The exclusion of the data
+generation module significantly impacts the model’s performance,
+as illustrated in Tables 8 and 9, labeled as "w/o generation". The vari-
+ant without this module demonstrates lower accuracy, emphasizing
+the crucial role of the data generation process in sustaining the
+high performance of the SynthVLM model. This also underscores
+SynthVLM’s potential in constructing highly aligned datasets.
+Excluding Data Selection Module. The absence of the data
+selection module similarly leads to a noticeable decline in perfor-
+mance, indicated as "w/o selection" in Tables 8 and 9. Given the
+inherent randomness of diffusion models, which inevitably gener-
+ate some low-quality images, the data selection module is crucial
+for removing these subpar elements.
+Overall, the ablation study highlights the critical role of data
+generation and data selection in SynthVLM, providing valuable
+insights into the contributions of each module.
+5 Conclusion
+We propose SynthVLM, a novel pipeline for generating high-quality
+pre-training data for VLMs. Unlike existing datasets, our synthetic
+images are free from watermar
+
+--- PAGE 7 FULL/EDGE ---
+SynthVLM: Towards High-Quality and Efficient Synthesis of Image-Caption Datasets for Vision-Language Models MM ’25, October 27–31, 2025, Dublin, Ireland
+Acknowledgments
+This work is supported by the National Key R&D Program of China
+(2024YFA1014003), National Natural Science Foundation of China
+(92470121, 62402016), and High-performance Computing Platform
+of Peking University.
+References
+[1] Jinze Bai, Shuai Bai, Shusheng Yang, Shijie Wang, Sinan Tan, Peng Wang, Junyang
+Lin, Chang Zhou, and Jingren Zhou. 2023. Qwen-vl: A versatile vision-language
+model for understanding, localization, text reading, and beyond. (2023).
+[2] Tianyi Bai, Hao Liang, Binwang Wan, Ling Yang, Bozhou Li, Yifan Wang, Bin
+Cui, Conghui He, Binhang Yuan, and Wentao Zhang. 2024. A Survey of Multi-
+modal Large Language Model from A Data-centric Perspective. arXiv preprint
+arXiv:2405.16640 (2024).
+[3] Lin Chen, Jinsong Li, Xiaoyi Dong, Pan Zhang, Conghui He, Jiaqi Wang, Feng
+Zhao, and Dahua Lin. 2023. ShareGPT4V: Improving Large Multi-Modal Models
+with Better Captions. CoRR abs/2311.12793 (2023).
+[4] Lichang Chen, Shiyang Li, Jun Yan, Hai Wang, Kalpa Gunaratna, Vikas Yadav,
+Zheng Tang, Vijay Srinivasan, Tianyi Zhou, Heng Huang, et al. 2023. Alpagasus:
+Training a better alpaca with fewer data. arXiv preprint arXiv:2307.08701 (2023).
+[5] Zui Chen, Lei Cao, and Sam Madden. 2023. Lingua manga: A generic large
+language model centric system for data curation. arXiv preprint arXiv:2306.11702
+(2023).
+[6] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen, Sen Xing, Muyan
+Zhong, Qinglong Zhang, Xizhou Zhu, Lewei Lu, et al . 2024. Internvl: Scaling
+up vision foundation models and aligning for generic visual-linguistic tasks. In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition.
+24185–24198.
+[7] Wei-Lin Chiang, Zhuohan Li, Zi Lin, Ying Sheng, Zhanghao Wu, Hao Zhang,
+Lianmin Zheng, Siyuan Zhuang, Yonghao Zhuang, Joseph E. Gonzalez, Ion Stoica,
+and Eric P. Xing. 2023. Vicuna: An Open-Source Chatbot Impressing GPT-4 with
+90%* ChatGPT Quality. https://lmsys.org/blog/2023-03-30-vicuna/
+[8] Qianlong Du, Chengqing Zong, and Jiajun Zhang. 2023. Mods: Model-oriented
+data selection for instruction tuning. arXiv preprint arXiv:2311.15653 (2023).
+[9] Run-Ze Fan, Xuefeng Li, Haoyang Zou, Junlong Li, Shwai He, Ethan Chern,
+Jiewen Hu, and Pengfei Liu. 2024. Reformatted Alignment. CoRR abs/2402.12219
+(2024).
+[10] Raul Castro Fernandez, Aaron J Elmore, Michael J Franklin, Sanjay Krishnan, and
+Chenhao Tan. 2023. How large language models will disrupt data management.
+Proceedings of the VLDB Endowment 16, 11 (2023), 3302–3309.
+[11] Chaoyou Fu, Peixian Chen, Yunhang Shen, Yulei Qin, Mengdan Zhang, Xu Lin,
+Jinrui Yang, Xiawu Zheng, Ke Li, Xing Sun, Yunsheng Wu, and Rongrong Ji. 2024.
+MME: A Comprehensive Evaluation Benchmark for Multimodal Large Language
+Models. arXiv:2306.13394 [cs.CV] https://arxiv.org/abs/2306.13394
+[12] Samir Yitzhak Gadre, Gabriel Ilharco, Alex Fang, Jonathan Hayase, Georgios
+Smyrnis, Thao Nguyen, Ryan Marten, Mitchell Wortsman, Dhruba Ghosh, Jieyu
+Zhang, Eyal Orgad, Rahim Entezari, Giannis Daras, Sarah M. Pratt, Vivek Ra-
+manujan, Yonatan Bitton, Kalyani Marathe, Stephen Mussmann, Richard Vencu,
+Mehdi Cherti, Ranjay Krishna, Pang Wei Koh, Olga Saukh, Alexander J. Ratner,
+Shuran Song, Hannaneh Hajishirzi, Ali Farhadi, Romain Beaumont, Sewoong Oh,
+Alex Dimakis, Jenia Jitsev, Yair Carmon, Vaishaal Shankar, and Ludwig Schmidt.
+2023. DataComp: In search of the next generation of multimodal datasets. In
+Advances in Neural Information Processing Systems 36: Annual Conference on
+Neural Information Processing Systems 2023, NeurIPS 2023, New Orleans, LA, USA,
+December 10 - 16, 2023.
+[13] Ya Gao, Jing Yang, Minghui Wu, Chenxu Zhao, Anyang Su, Jie Song, and Zitong
+Yu. 2025. DTIA: Disruptive Text-Image Alignment for Countering Text-to-Image
+Diffusion Model Personalization. Data Sci. Eng. 10, 1 (2025), 12–23. https:
+//doi.org/10.1007/S41019-024-00272-9
+[14] Danna Gurari, Qing Li, Abigale J. Stangl, Anhong Guo, Chi Lin, Kristen Grauman,
+Jiebo Luo, and Jeffrey P. Bigham. 2018. VizWiz Grand Challenge: Answering
+Visual Questions from Blind People. arXiv:1802.08218 [cs.CV] https://arxiv.org/
+abs/1802.08218
+[15] Pengcheng He, Xiaodong Liu, Jianfeng Gao, and Weizhu Chen. 2020. DEBERTA:
+DECODING-ENHANCED BERT WITH DISENTANGLED ATTENTION. In Inter-
+national Conference on Learning Representations.
+[16] Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn
+Song, and Jacob Steinhardt. 2021. Measuring Massive Multitask Language Un-
+derstanding. arXiv:2009.03300 [cs.CY] https://arxiv.org/abs/2009.03300
+[17] Jack Hessel, Ari Holtzman, Maxwell Forbes, Ronan Le Bras, and Yejin Choi.
+2021. CLIPScore: A Reference-free Evaluation Metric for Image Captioning. In
+Proceedings of the 2021 Conference on Empirical Methods in Natural Language
+Processing, EMNLP 2021, Virtual Event / Punta Cana, Dominican Republic, 7-11
+November, 2021
+
+--- PAGE 8 FULL/EDGE ---
+MM ’25, October 27–31, 2025, Dublin, Ireland Zheng Liu et al.
+[42] Zhou Wang, Alan C. Bovik, Hamid R. Sheikh, and Eero P. Simoncelli. 2004. Image
+quality assessment: from error visibility to structural similarity.IEEE Trans. Image
+Process. 13, 4, 600–612.
+[43] Jiayang Wu, Wensheng Gan, Zefeng Chen, Shicheng Wan, and Philip S Yu. 2023.
+Multimodal large language models: A survey. arXiv preprint arXiv:2311.13165
+(2023).
+[44] Yang Xu, Yongqiang Yao, Yufan Huang, Mengnan Qi, Maoquan Wang, Bin Gu,
+and Neel Sundaresan. 2023. Rethinking the Instruction Quality: LIFT is What
+You Need. arXiv:2312.11508 [cs.CL]
+[45] Weihao Yu, Zhengyuan Yang, Linjie Li, Jianfeng Wang, Kevin Lin, Zicheng Liu,
+Xinchao Wang, and Lijuan Wang. 2024. MM-Vet: Evaluating Large Multimodal
+Models for Integrated Capabilities. arXiv:2308.02490 [cs.AI] https://arxiv.org/
+abs/2308.02490
+[46] Wayne Xin Zhao, Kun Zhou, Junyi Li, Tianyi Tang, Xiaolei Wang, Yupeng Hou,
+Yingqian Min, Beichen Zhang, Junjie Zhang, Zican Dong, et al. 2023. A survey
+of large language models. arXiv preprint arXiv:2303.18223 (2023).
+[47] Xuanhe Zhou, Zhaoyan Sun, and Guoliang Li. 2024. DB-GPT: Large Language
+Model Meets Database. Data Sci. Eng. 9, 1 (2024), 102–111. https://doi.org/10.
+1007/S41019-023-00235-6
+[48] Changhao Zhu, Junzhe Li, Ziyue Zhong, Cong Yue, and Meihui Zhang. 2023.
+A Survey on the Integration of Blockchains and Databases. Data Sci. Eng. 8, 2
+(2023), 196–219. https://doi.org/10.1007/S41019-023-00212-Z
+[49] Jingyu Zhu, Xintong Zhao, Yu Sun, Shaoxu Song, and Xiaojie Yuan. 2025. Rela-
+tional Data Cleaning Meets Artificial Intelligence: A Survey. Data Sci. Eng. 10, 2
+(2025), 147–174. https://doi.org/10.1007/S41019-024-00266-7
+12814

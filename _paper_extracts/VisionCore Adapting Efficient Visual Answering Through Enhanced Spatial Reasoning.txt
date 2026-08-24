@@ -1,0 +1,618 @@
+
+
+--- PAGE 1 ---
+VisionCore: Adapting Eﬃcient Visual 
+Answering Through Enhanced Spatial 
+Reasoning 
+Ufuk Ozkul1(B) , Levent Karacan2 , and Cemil Zalluhoglu 1 
+1 Department of Computer Engineering, Hacettepe University, Ankara, Turkey 
+ufukozkul@hacettepe.edu.tr, cemil@cs.hacettepe.edu.tr 
+2 Department of Computer Engineering, Gaziantep University, Gaziantep, Turkey 
+lkaracan@gantep.edu.tr 
+Abstract. Integrating spatially aware instruction tuning with Low-
+Rank Adaptation (LoRA) in pre-trained small-scale models unlocks 
+enhanced performance in vision-language tasks. Although such models 
+excel on general-domain data, they frequently lack the precise spatial 
+reasoning and computational eﬃciency observed in large-scale architec-
+tures. Despite generating detailed textual descriptions, these models fre-
+quently struggle with tasks that require fundamental spatial reasoning 
+abilities–such as distinguishing left from right or accurately discerning 
+the relative positions of objects within a given context. This work investi-
+gates how integrating image-space coordinate annotations from the GQA 
+dataset enhances spatial awareness in the Deep Seek 1.3B Visual Lan-
+guage Model (VLM). By freezing pre-trained weights and introducing 
+specialized, trainable low-rank matrices through LoRA, only an addi-
+tional 15 million parameters (1.15% of the overall model) and 60MB of 
+memory are required, yielding a 16% performance improvement. Experi-
+mental evaluations reveal that this combined approach achieves an accu-
+racy of 60.3%, surpassing comparable small-scale models and approach-
+ing the performance of large-scale architectures (63.5% accuracy) despite 
+utilizing only 1.3B parameters–ﬁve times fewer than its larger counter-
+parts. This eﬃciency-performance trade-oﬀ highlights the achievability 
+of lightweight adaptation for the capability gap between small- and large-
+scale architectures in vision-language tasks. 
+1 Introduction 
+Human-like visual understanding in vision-language tasks requires spatial 
+awareness–the ability to infer object positions, and relationships [ 18]. While large 
+vision-language models (VLMs, e.g., 7B+ parameters) excel at spatial reason-
+ing, their computational demands hinder real-world deployment [ 3]. Small-scale 
+VLMs (1.3B parameters) address eﬃciency but suﬀer from critical limitations: 
+c©IFIP International Federation for Information Processing 2025 
+Published by Springer Nature Switzerland AG 2025 
+I. Maglogiannis et al. (Eds.): AIAI 2025, IFIP AICT 755, pp. 221–234, 2025. 
+https://doi.org/10.1007/978-3-031-96239-4
+_16
+
+--- PAGE 2 ---
+222 U. Ozkul et al.
+Limited Reasoning: Small-scale models exhibit deﬁciencies in spatial com-
+prehension and structural analysis, hindering their ability to interpret intricate 
+scene conﬁgurations. Challenges persist in tasks requiring relational reasoning, 
+such as identifying object positions (e.g., left/right dependencies) or parsing 
+multi-object interactions [ 20]. 
+Limited Language Capabilities: Compact VLMs often misinterpret linguis-
+tic complexity and lack contextual depth, leading to semantically inconsistent 
+or hallucinated outputs [ 25]. Deﬁciencies in semantic accuracy and discourse 
+coherence further widen the performance gap with larger architectures [ 28]. 
+Fig. 1. Example of spatial-material reasoning: The base model misclassiﬁes the fence 
+material and omits spatial details. After LoRA tuning, Vision Core corrects both errors, 
+localizing the aluminum fence with coordinates and directional cues. 
+Recent advances in vision-language models (VLMs) such as MiniGPT-4 [ 29], 
+Gemini 1.5 [ 22], and LocVLM-L [ 20] have demonstrated human-like understand-
+ing and response capabilities in linguistic tasks, nearly fulﬁlling the demands of 
+the Visual Question Answering (VQA) ﬁeld. However, these models continue 
+to face notable constraints. For instance, when presented with an image of a 
+kitchen scene containing a microwave to the left of a coﬀee maker and asked, ‘Is 
+the microwave to the left or right of the coﬀee maker?’, MiniGPT-4 incorrectly 
+answers, ‘The microwave is on the right side,’ while Gemini 1.5 generates, ‘The 
+microwave is placed above the coﬀee maker.’ In contrast, LocVLM-L correctly 
+identiﬁes the spatial relationship: ‘The microwave is positioned to the left of the 
+coﬀee maker.’ However, LocVLM-L requires 3× more GPU memory (24GB vs. 
+8GB) for inference compared to MiniGPT-4, highlighting its computational inef-
+ﬁciency. These challenges underscore a broader issue in the design of large-scale 
+language vision models: achieving a balance between computational eﬃciency
+
+--- PAGE 3 ---
+VisionCore 223
+and description accuracy. Typically, larger models (with parameters exceed-
+ing 7 billion) can generate accurate visual answers and detailed image captions 
+by eﬀectively handling complex visual tasks, but this performance comes with 
+increased demands for computational power and memory. In contrast, small-scale 
+vision-language models oﬀer reduced resource requirements and faster training 
+speeds; however, their limited parameter capacity often results in suboptimal 
+performance in spatial reasoning and precise visual description. Addressing this 
+gap is crucial for advancing VLMs that are both eﬃcient and capable of robust 
+spatial understanding. 
+The dual challenges of language capability degradation and limited spatial 
+reasoning in small-scale VLMs are addressed through parameter-eﬃcient train-
+ing (PEFT) with Low-Rank Adaptation (LoRA) [ 
+6]. The GQA dataset [ 7]i s 
+integrated to enhance standard annotations with spatial metadata–including 
+bounding box coordinates (x, y, width, height) and directional relationships (e.g., 
+left/right)–thereby injecting explicit spatial priors. LoRA optimizes this process 
+by selectively updating low-rank matrices (1.15% of parameters, 15M/1.3B), 
+preserving the base model’s pre-trained knowledge while reducing computa-
+tional overhead. To further align visual and textual reasoning, structured 
+prompts derived from GQA’s scene descriptions are introduced, encoding spatial 
+directions (e.g., above/below) and object coordinates. This combined strategy 
+achieves 60.3% accuracy on the GQA benchmark–closing 72% of the perfor-
+mance gap with 7B, enabling robust spatial understanding with minimal resource 
+requirements (2.5 days on 2×V100 GPUs) compared to full-scale retraining. 
+2 Literature Review 
+Prior Approaches in Image Captioning: Initial image captioning mod-
+els utilized encoder decoder designs, employing Convolutional Neural Networks 
+(CNNs) for the encoding part, and for the decoding phase, the common archi-
+tecture was Recurrent Neural Networks (RNNs) or Long Short-Term Memory 
+(LSTM) networks [ 
+4]. These have constraints like information bottlenecks and 
+insuﬃcient detailed visual comprehension. 
+Localization in Vision Language Models: BLIP [ 11] and other foundation 
+vision-language models (VLMs) have prompted substantial research of local-
+ization in pictures under supervision (bounding box) [ 
+12, 17, 21, 27] and under 
+the reinforcement [ 9] technique. The recovery of explicit localization informa-
+tion from model representations has allowed for more resilient performance on 
+numerous challenges [ 
+20, 26]. Recent advances in LLM-based generative predic-
+tion enable explicit location integration into language modalities, enhancing 
+VLM performance [ 
+2, 5, 13][ 15, 16, 22, 24]. 
+Vision Language Models: The introduction of attention resulted in consid-
+erable improvements in image captioning. Many works; LLava [ 14], MetaVl [ 19], 
+LLamaVid [ 12]presented attention-based approaches to dynamically focus on
+
+--- PAGE 4 ---
+224 U. Ozkul et al.
+important parts of images during caption development. However, these mod-
+els frequently failed with spatial thinking, which is essential for understanding 
+complicated scenarios. Ranasinghe et al. [ 
+20] addressed this gap by introduc-
+ing coordinate-based embeddings and spatially aware training datasets. Their 
+ﬁndings highlight that models like BLIP-2 and LLaVA fail to localize objects 
+accurately, particularly in spatially dependent tasks. This underscores the impor-
+tance of incorporating explicit spatial reasoning in VLMs. MiniGPT-4 uses tech-
+niques like a linear adapter layer and ﬁne-tuning on chosen datasets to provide 
+extensive visual discussion [ 
+29]. Similarly, DeepSeek-VL [ 16] incorporates cross-
+attention algorithms to align visual and textual information, thereby enhancing 
+performance on standards like COCO. On the other hand, Combining LLMs 
+with visual encoders presents issues such as multimodal alignment and com-
+putational ineﬃciency, especially when expanding to huge datasets [ 
+26]. Also, 
+instruction adjusting has been revealed as an important approach for matching 
+VLMs to human-like task guidelines. That method uses GPT-4 to create mul-
+timodal instruction datasets, allowing models to react successfully to various 
+speciﬁc tasks [ 
+15]. VILA [ 13] highlights the relevance of employing interleaved 
+datasets to promote modality alignment and retain text only capability of LLM. 
+FERRET [ 
+5] addresses issues in ﬁne-grained visual grounding and spatial think-
+ing, with the latter reducing object hallucination via hybrid area representa-
+tions yet constraints continue in dealing with abstract notions and processing 
+eﬃciency. Furthermore, Low-Rank adaption (LoRa) [ 6] has become an eﬀective 
+ﬁne-tuning approach, allowing for rapid adaption of huge pre-trained models 
+with few parameter changes. LoRa’s implementation in vision-language activi-
+ties provides scalability without losing quality [ 13]. 
+Although models like MiniGPT-4, LLava, and Gemini 1.5 have advanced 
+vision-language tasks, they fall short in ﬁne-grained spatial reasoning due to 
+coarse feature extraction and a heavy reliance on large-scale architectures. In 
+contrast, the proposed approach departs from these methods by employing 
+parameter eﬃcient training and rank adaptation instead of full model retraining, 
+and by leveraging a complex dataset that integrates spatial location data with 
+relative object positions. Speciﬁcally, precise image-space coordinate instruc-
+tions from the GQA dataset are injected into a compact Deep Seek 1.3B model, 
+and by integrating Low-Rank Adaptation (LoRA), enhanced spatial reasoning 
+is achieved with only a 1.15% increase in parameters–delivering robust visual 
+question-answering performance while signiﬁcantly reducing computational and 
+memory requirements compared to large-scale architectures. 
+3 Methodology 
+While large-scale models like LLava [ 14], CogVLM [ 24], and QwenVL [ 2]a c h i e v e 
+strong performance on standardized benchmarks such as VQAv2 (Table 4), 
+their ability to articulate ﬁne-grained spatial relationships remains limited. For 
+instance, when queried about a scene containing “a ﬂower vase in front of cur-
+tains and atop a dinner table next to plates,” these models often provide generic
+
+--- PAGE 5 ---
+VisionCore 225
+descriptions (e.g., “The vase is on the table”) without specifying directional rela-
+tionships (“in front of”) or precise object adjacency (“next to the plates”). This 
+underscores a critical gap: while large models excel at answering what ques-
+tions (e.g., object identiﬁcation), they struggle with where and how questions 
+requiring relational reasoning. To evaluate spatial nuances, results are reported 
+on the VQAv2 validation set (Val), as test labels are restricted to blind evalua-
+tion servers–a common practice in VQA research [ 
+1, 23]. The proposed method 
+addresses these limitations by explicitly encoding spatial metadata (e.g., bound-
+ing boxes, directional cues) through parameter-eﬃcient adaptation. For example, 
+Vision Core generates precise descriptions such as “The vase (x = 120, y = 45) 
+is in front of the curtains and adjacent to the plates,” resolving ambiguities 
+inherent in large-scale models while maintaining computational eﬃciency. 
+Fig. 2. Left: The overall architecture of the model where only the added parameters 
+to the adapter layer and language model, are trainable. Right: the LoRA methodology 
+[ 6]: standard LoRA using low-rank decomposition matrices. The only trained portions 
+are A and B. 
+3.1 Model Architecture 
+The Vision Core model uses the architecture of the Deep Seek [ 16] VLM, consists 
+of 3 parts namely; Vision Encoder, Adapter Layer, and Language Model. 
+Vision Encoder of the Deep Seek 1.3B uses the SigLIP [ 27] structure, 
+vision-only self-supervised encoders, for improving the image processing capabil-
+ities that are required in the multi-modality vision tasks. This SigLIP encoder 
+formed from the Sam-B [ 16] vision encoder and SigLIP-L where the Sam-B 
+encoder processes low-level attributes while accepting high deﬁnition images 
+(1024 × 1024) and SigLIP-L for the lower resolution images such as 384×384. 
+So this joint SigLIP vision encoder eﬀectively encodes the images while preserv-
+ing its high-quality features extracted from the input image. During the training,
+
+--- PAGE 6 ---
+226 U. Ozkul et al.
+the vision encoder part is frozen and it won’t receive gradient update. In detail, 
+the input image is rescaled to 1024 × 1024 format and the Sam-B part gives 
+64 × 64 × 256 sized information. After that information appends to 96 × 96 × 
+256 inside of the joint vision structure, then 2 layers of convolution operation 
+resulting in 24 × 24 × 1024 output which then resized to the 576 × 1024 ﬁnal 
+format by the Sam-B encoder. At the same time, the SigLIP-L also processes the 
+input image to provide a 576 × 1024 low-resolution map which ﬁnally combined 
+with the high-resolution output of the Sam-B (576 × 1024) and resulting 576 × 
+2048 attributes (576 tokens with R
+2048 dimension) for demonstrating the input 
+image. In sum, the SigLIP encoder processes the input image to a 576 × 2048 
+format to eﬀectively represent and maintain the high and low-resolution features 
+where the number 576 symbolizes the tokens with the dimension of 2048. Then 
+this eventual map is passed to the Projector (Adapter) layer. 
+Adapter Layer consists of a two-layer joint MLP (multi-layer perceptron) 
+that acts like a bridge between the vision encoder and the language model. The 
+ﬁrst layer processes the high-resolution information and the second layer handles 
+the low-resolution input retrieved from the vision encoder part, and those high 
+and low-resolution features merge to the dimension. Then the fused features 
+transferred to the language part with help of the another MLP. The hybrid 
+projector consists of two parallel linear transformations followed by GELU acti-
+vation, with the output concatenation formulated as: 
+h
+high = GELU (Whighx + bhigh) 
+hlow = GELU (Wlowx + blow) (1) 
+where x ∈ R dinput is the input vector, W {high,low} ∈ R(dembed/2)×dinput 
+Language Model is Deep Seek LLM which has a similar architecture as 
+the LLama model. Explicitly the Deep Seek 1.3B VL model uses the Deep Seek 
+1.3B model which is trained with corpus size 500B. For the processing part, the 
+input text where the text and the image place-holder token are combined and 
+tokenized before fused with the image features. 
+3.2 Fine T uning 
+Experimental results demonstrate that concise prompts outperform verbose 
+instructions. For example, on the GQA test-dev split (Table 
+2), the ‘brief answer’ 
+prompt achieves an overall accuracy of 44.3%, outperforming detailed prompts 
+like ‘Analyze object attributes...’ (40.3%) and ‘Describe key attributes...’ 
+(39.8%). Notably, the ‘brief’ prompt improves performance in compare-type 
+questions by 9.6% (from 30.6% to 40.2%) and verify-type questions by 7.2% 
+(from 50.1% to 57.3%). Conversely, overly complex prompts reduce accuracy 
+in logical reasoning tasks by up to 8.2%, suggesting that brevity aligns better 
+with the model’s capacity for spatial reasoning. To enhance complex visual rea-
+soning and address challenges associated with query-type questions, additional 
+parameters are injected into selected layers. Given that full ﬁne-tuning is com-
+putationally prohibitive for small-scale models, a parameter-eﬃcient ﬁne-tuning 
+(PEFT) strategy–speciﬁcally Low-Rank Adaptation (LoRA)–is employed.
+
+--- PAGE 7 ---
+VisionCore 227
+LoRA updates only the trainable low-rank decomposition matrices (denoted 
+as A and B in Fig. 2) within transformer layers while freezing all other parame-
+ters. In this implementation, LoRA is applied across seven layers: four within the 
+language model (i.e., “q_proj”, “k_proj”, “v_proj”, “o_proj”) and three within 
+the adapter layer (i.e., “gate_proj”, “up_proj”, “down_proj”). These modiﬁca-
+tions introduce an additional 15 million parameters (only 1.15% of the total), 
+while the inclusion of the hyperparameter “Rank” (r) controls the dimension-
+ality of the decomposition matrices. This approach accelerates ﬁne-tuning and 
+eﬃciently adapts the model for complex spatial reasoning tasks without incur-
+ring the high computational costs of full-scale training. 
+For dataset preparation and tokenization, the GQA dataset is utilized along 
+with its detailed scene descriptions, which provide bounding box information and 
+relative spatial directions for objects. The questions and ground truth answers 
+are merged with these scene descriptions; however, this combined input often 
+exceeds the context length limit. To address this, the scene description is trun-
+cated to 1024 characters, resulting in a training text length of approximately 
+1150–1250 characters per entry. 
+4 Experiments 
+4.1 Baseline and Instruction T uning 
+To understand the base model capacity and reasoning level, several experiments 
+have been made. The initial experiments evaluate how prompting strategies inﬂu-
+ence model performance, adopting methodologies from prior work [ 
+8] on task-
+speciﬁc instruction tuning. Then model’s chain of thought capacity is measured 
+based on the iterative thinking methodology [ 
+26]. The default system prompt 
+(You are a helpful language and vision assistant. You can understand the visual 
+content that the user provides, and assist the user with a variety of tasks using 
+natural language) has been used and it merged with the input text and used in 
+all the experiments. Baseline evaluations utilize the GQA test-dev split, compris-
+ing 12,578 spatially oriented visual questions categorized into ﬁve types: choose, 
+compare, logical, query, and verify. 
+The corresponding details are; the choose type has 1129 questions, the com-
+pare type has 589 questions, the logical type has 1803 questions, the query type 
+has 6805 questions and the verify type has 2252 questions. For example, the 
+choose type questions with two possibilities, such as “Is it white or black?”, the 
+compare type for comparison such as “Which animal is taller?”, the logical type 
+involves reasoning/inferences such as “Are there more apples than oranges on 
+the plate?”. The query type involves all open questions like “What color is the 
+car left of the tree?” and lastly the verify type for yes/no questions. Training is 
+conducted using an 8-bit quantized model with LoRA parameters set to Rank 
+16, LoRA Alpha 32, a learning rate of 2e-4, and the AdamW optimizer. The 
+initial baseline tables are below. 
+In light of the result of Table 1 model’s hyperparameters have been ﬁxed to 
+false since the desired format of the experiments is zero shot where the model
+
+--- PAGE 8 ---
+228 U. Ozkul et al.
+Ta b l e 1 . Results of Changing Hyper-Parameters of Model with GQA Test-Dev Split 
+Use Cache Use Sampling Accuracy (%) 
+Yes No 41.9 
+Yes Yes 34.9 
+No No 41.9 
+faces the inputs the ﬁrst time, to enable that use the cache parameter to set the 
+false. For that reason the experiments have decided to conduct on the model’s 
+parameters do sample and use cache where both of them are false due to resulting 
+higher accuracy on the GQA test dev split. 
+Ta b l e 2 . Combined Results with Integrated Punctuation Corrections for Prompting 
+and Iterative Thinking Experiments on GQA Test-Dev Split 
+Prompt/Iterative Thinking Prompt Overall 
+Score Structural Accuracy 
+(%) Chs Cmp Log Qry Vrf 
+Prompting Experiment 
+No Prompt 41.9 65.5 30.6 40.8 36.5 50.1 
+Provide brief answer (No punct. correct) 44.2 63.7 40.2 49.4 35.6 57.3 
+Provide brief answer (With punct. correct) 44.3↑ 63.7 40.2 49.4 35.8↑ 57.3 
+Analyze attributes, materials, contrast 40.3 63.2 27.7 32.6 38.9 42.3 
+Describe attributes, analyze relevance 39.8 64.0 23.4 32.7 38.3 42.2 
+Iterative Thinking 
+Review and provide detailed answer 31.1 55.5 22.0 18.4 35.2 19.1 
+Focus on size, color, texture, position 22.1 69.4 20.4 14.8 18.2 16.5 
+Focus details, brief answer, review 35.1 62.4 23.8 27.5 35.2 30.2 
+Final Model Results 
+Final Vision Core 60.3 78.7 53.8 68.4 50.1 76.9 
+The results have been listed with only 1 full forward pass in both the prompt-
+ing experiments (2 full forward in the iterative thinking experiment). Table 2 
+evaluates the untuned DeepSeek 1.3B model’s spatial reasoning capabilities, 
+demonstrating why architectural enhancements (via LoRA and spatial instruc-
+tion tuning) are critical for closing the performance gap with large-scale models. 
+The “Provide a brief answer to that question” prompt has the best overall accu-
+racy (44.2%) and improved compare type score (40.2%), exceeding both the 
+no-prompt baseline (41.9%) and other detailed prompts. On the other hand, the 
+detailed prompts (fourth and ﬁfth rows) have surpassed the baseline and the best 
+accuracy prompts in the context of Query type questions (∼3% improvement) 
+
+--- PAGE 9 ---
+VisionCore 229 
+however they outdistanced by the baseline and the best prompt in compare, logi-
+cal and verify type questions. So this demonstrates that overly detailed prompts 
+block the model’s capability. Also, the chosose type is negatively aﬀected by 
+2% however it stays constant around 63–65% indicating robustness against the 
+prompting strategy, in contrast prompting technique has a signiﬁcant eﬀect on 
+the other types. The brief answer prompt has heavily (7–10%) increased the 
+scores of the compare, logical, and verify types where the most cases the expected 
+answer is short besides that, it fails to reach the complex prompt scores in the 
+query type which requires detailed reasoning to answer correctly, and the com-
+plex prompts satisﬁes that condition. In sum, the prompting technique faces the 
+problem of Simplicity and Speciﬁcity trade-oﬀ. The brief prompt’s performance 
+demonstrates that less detailed instructions can succeed better at the questions 
+that need less attention. In contrast, too detailed instruction may misdirect 
+and confuse the model. Moreover, performance varies dramatically by question 
+type (+9% gain for Compare type with the brief answer prompt vs. -3% for 
+Query type). This underlines that task-speciﬁc prompt is a must for systems 
+that are designed for specialized areas like spatial awareness. Lastly, the query 
+type becomes a challenge since it cannot even reach the 40% and has the lowest 
+score in the entire experiment. 
+In the iterative thinking experiment conducted on the 2-iteration thinking 
+method where the model generates the answer in the ﬁrst iteration with the high-
+est score prompt in the prompting experiment and then the generated answer is 
+combined with the iterative thinking prompt listed in Table 
+2 and passed to the 
+model to generate a new answer. Due to the nature of the 2-step thinking the 
+time needed for conducting the experiments doubles compared to the prompt 
+experiment. The goal of this experiment is to adapt the model to complex rea-
+soning tasks while preserving its capability in simple questions. 
+The third prompt “Focus on the question details. Try to provide a brief 
+answer. You can review your answer” has reached the highest score (35.1%) 
+among the other iterative prompts even though these scores are still far behind 
+the scores listed in the prompting experiment. The second prompt in the iter-
+ative thinking experiment which focuses on the image details including size, 
+color, and texture, has surpassed the choose type questions and reached a 69.4% 
+score. This shows that visual details tend to help in object selection and dis-
+crimination tasks where it is required in the choose type questions. The second 
+prompt reached the highest choose score among the experiments but achieved 
+the lowest overall accuracy. This case once again proves that the overly com-
+plex instructions distract the model in the context of task-speciﬁc reasoning. 
+In conclusion of these experiments, the observed situation is the “Choose” type 
+tasks that require visual indicators, whereas Logical/Verify tasks need deeper, 
+context-aware thinking. Even the highest-performing prompt (35.1%) has great 
+potential for improvement, highlighting the need for more advanced reasoning 
+techniques. 
+By the result of all the experiments, the brief prompt derived from the prompt 
+experiment has marked to apply training using it and the training mainly focuses 
+
+--- PAGE 10 ---
+230 U. Ozkul et al. 
+on improving its lowest score “query” type which forms the majority (54.1%) of 
+GQA test dev split. The main reason is that it achieves the highest overall accu-
+racy and it has room for improving the query type score (35.6%). Also, the 
+other dataset VQAv2 [ 
+1] oﬀers a punctuation correction method to eﬃciently 
+measure the results of the model. The punctuation correction converts all the 
+numbers into letters and eliminates the punctuation marks from the answer 
+to prevent any mismatch between the predicted answer and the ground truth 
+answer. When the punctuation method was applied to the highest accuracy score 
+“brief” prompt, a slight improvement (0.2%) happened in the query type ques-
+tions and a tiny improvement (0.1%) in overall accuracy where the original GQA 
+evaluation method confused at the letter version of numbers. The punctuation 
+method wasn’t applied to previous results and the “brief” prompt was selected 
+to use in the training part as a baseline. Also, the baseline scores 53.2% in the 
+VQAv2 Val dataset [ 
+1] in zero-shot evaluation. 
+4.2 Ablation Study 
+To demonstrate the impact of LoRA-based spatial instruction tuning, consider 
+a test case where the model is queried: “Is the fence made of cement or alu-
+minum? Then describe the scene objects by their spatial information.” The 
+untrained DeepSeek 1.3B VLM incorrectly responds: “The fence is made of 
+cement.” Notably, it omits spatial descriptions of scene objects entirely, reﬂecting 
+its inability to jointly reason about material properties and object localization. 
+After LoRA ﬁne-tuning with spatial coordinate instructions, the model answers 
+(Fig. 
+1): “The fence is made of aluminum and the metal, chain-link fence located 
+at x = 0, y = 23, w = 377, h = 380 and in front of the tree which located...” 
+This example highlights two critical improvements: 
+Correct Material Identiﬁcation: The model now distinguishes ﬁne-grained 
+material attributes (cement vs. aluminum), reducing hallucination. 
+Spatial Precision: Quantitative coordinate references (e.g., “x = 0, y = 23, w 
+= 377, h = 380”) and directional relationships (e.g., “in front of”) demonstrate 
+learned spatial reasoning, aligning with the GQA dataset’s explicit positional 
+annotations. These qualitative results corroborate quantitative improvements in 
+Table 
+2, where the trained model achieves a 16% accuracy gain on query-type 
+questions requiring joint material and spatial reasoning. The base model’s fail-
+ure to localize objects or infer materials underscores the limitations of vanilla 
+VLMs in ﬁne-grained visual scene understanding, while Vision Core’s perfor-
+mance illustrates the eﬃcacy of low-rank spatial adaptation. 
+The results have been presented to show how to additional 1.15% parameters 
+aﬀect the accuracy and handle the “query” type question challenge and LoRA 
+technique for addressing the limited computational power in the training phase 
+where LoRA parameters are only needed 60 MB (59.18) memory to store. 
+
+--- PAGE 11 ---
+VisionCore 231 
+Ta b l e 3 . Trained Lora Results with Diﬀerent Dataset Sizes to Detect Catastrophic 
+Forgetting using the GQA Test-Dev Split 
+Dataset Size Halo Quest [ 25] Overall Accuracy Structural Type Accuracy 
+Choose Compare Logical Query Verify 
+10K No 57.7 78.4 48.2 65.7 47.3 75 
+50K No 58.9 76.7 53.3 67.3 48.2 77.3 
+50K Yes 55.6 73.3 58.1 66.1 44.6 71 
+100K No 60.3 78.7 53.8 68.4 50.1 76.9 
+100K Yes 57.2 77.7 54.3 66 46.7 72.7 
+132K No 59.4 75.7 58.4 68.2 48.6 76.9 
+132K Yes 56.6 73.5 56 65.6 46 73.2 
+The parameter size of the Vision Core which uses the Deep Seek-VL 1.3B as 
+a backbone, is compact. Since the language model is small-scaled and combined 
+with the lightweight LoRA parameters at the last layer in the architecture is 
+vulnerable to catastrophic forgetting, which weakens its ability to remember 
+previously acquired knowledge in the ﬁne-tuning process. The ratios are changing 
+across diﬀerent models and it is not always clear to detect. For example, in the 
+LocVLM model, the authors decide to use the 200K dataset for the 7B model. For 
+detecting the catastrophic forgetting and ﬁnding the suitable dataset size for the 
+small-scale Vision Core model the catastrophic forgetting experiment has been 
+conducted. As seen in Table 
+3, the overall accuracy improves when the dataset 
+size increases up to 100K (57% − > 60%). However, after that, the accuracy 
+drops (0.9%) in the 132K dataset showing that the model has been aﬀected 
+by the forgetting. The performance degradation at 132K samples (vs. 100K) 
+highlights a critical limitation of small-scale models (1.3B parameters): limited 
+capacity to scale with dataset size. Unlike larger architectures (e.g., 7B+). Also, 
+the method “negative prediction” introduced in LocVLM claims that putting the 
+instructions that ask questions about the non-existent objects in the image will 
+improve the performance of them odel [ 
+20]. By inspiring from that explanation, 
+an additional dataset Halo Quest [ 25] which consists of 7K questions about non-
+existing objects, has combined with the previously prepared dataset resulting 
+additional 7K entries and scores have been listed in Table 
+3. The trained Halo 
+models change their answer structure from “chair is short” to “chair is not tall” 
+illustrating that models have learned the negative prediction. Despite this models 
+trained with additional Halo Quest data underperform in the context of overall 
+accuracy. This indicates that Halo Quest may produce noise that negatively 
+impacts generalizability. On the other hand, Halo Quest enhances the “Compare” 
+accuracy, which can help models understand comparative distinctions but at 
+the price of overall performance. Furthermore, the “query” challenge result has 
+improved (35.8% to 50.1%) indicating that additional LoRA parameters have 
+increased the reasoning capability of the model. 
+
+--- PAGE 12 ---
+232 U. Ozkul et al. 
+Ta b l e 4 . Comparison of Models by Scale based on GQA Test-Dev and VQAv2 Val 
+Accuracy Results 
+Small-Scale Models (LLM Parameter Size <7B) 
+Model LLM Parameter Size GQA T est-Dev VQA v2-Val 
+MetaVL [ 19] 375M 32 33.1 
+FEWVLMlarge [ 8] 740M 35.7 51.1 
+UniﬁedQAv2 [ 23] 738M 38.4 57.5 
+VIT-L OPT1.3B OpenFlamingo [ 10] 2B 39.1 61.1 
+UniﬁedQAv2 [ 23] 2.9B 42.3 62.1 
+VIT-G InstructBLIP OPT1.3B [ 10] 2.4B 43.6 70.7 
+ViT-L BLIP-2 FlanT5XL [ 11] 3.4B 44.4 62.6 
+VIT-G InstructBLIP FlanT5XL [ 10] 4.2B 48.6 72.6 
+Vision Core (proposed) 1.3B (+15M LoRA) 60.3 63.3 
+Large-Scale Models (LLM Parameter Size ≥7B) 
+Model LLM Parameter Size GQA T est-Dev VQA v2-Val 
+MiniGPT-4 [ 29] 13B 33.4 – 
+MiniGPT-4 (Finetune Vicuna) [ 29] 13B 43.5 – 
+HYDRA [ 9] – 47.9 – 
+Qwen-VL [ 28] 7B 59.3 78.8 
+LLaVA-v1.5 [ 20] 7B 62 78.1 
+LocVLM-L [ 20] 7B 63.5 78.2 
+The Vision Core model, using the Deep Seek-VL 1.3B VLM backbone with 
+15M LoRA parameters, was evaluated on GQA and VQAv2. On GQA Test-
+Dev, it achieves 60.3%, outperforming larger models (MiniGPT-4 at 43.5% 
+and UniﬁedQAv2-2.9B at 42.3%) and approaching state-of-the-art 7B models 
+(LLaVA-v1.5 at 62% and LocVLM-L at 63.5%). However, on VQAv2-Val it 
+reaches 63.3%, trailing models like Qwen-VL (78.8%), which suggests a trade-oﬀ 
+between parameter eﬃciency and generalization. 
+5 Conclusion 
+This paper introduces the Vision Core model to address two critical challenges in 
+computational eﬃciency and limited spatial reasoning. By leveraging the small-
+scale DeepSeek 1.3B backbone and integrating LoRA-based parameter-eﬃcient 
+training, the model eﬀectively reduces the computational burden while enhancing 
+spatial understanding. The approach involves freezing the pre-trained model’s 
+layers, except for the 15M LoRA parameters (1.15% of the model), which require 
+only 60MB of additional memory. Furthermore, the incorporation of spatial scene 
+descriptions derived from the GQA dataset enables the model to develop a more 
+holistic understanding of object localization and spatial relationships (e.g., left, 
+right, above, and below). 
+
+--- PAGE 13 ---
+VisionCore 233 
+As a result, Vision Core achieves 60.3% accuracy on the GQA dataset, outper-
+forming other small-scale models and approaching the performance of 7B-scale 
+models such as LocVLM-L (63.5%), despite using 5× fewer parameters. This 
+study demonstrates that combining compact architectures, parameter-eﬃcient 
+ﬁne-tuning, and spatial scene augmentation can yield competitive results in 
+visual question-answering tasks, paving the way for more accessible and scalable 
+vision-language solutions, particularly in resource-constrained environments. 
+5.1 Limitations 
+The limitation of the proposed Vision Core, utilizes LoRA-based ﬁne-tuning, is 
+its reduced ﬂexibility in handling diverse input and output instructions. This 
+issue arises because the additional parameters, located at the end of the trans-
+former layers, are ﬁne-tuned using a single conversation format. Consequently, 
+the model becomes overly specialized to that speciﬁc wording and syntax, dimin-
+ishing its ability to generalize to alternative or unfamiliar instruction styles. 
+Such overﬁtting to a particular instruction pattern may undermine the model’s 
+robustness in real-world applications where input variability is common. 
+5.2 F uture W ork 
+Future research will focus on expanding the model’s adaptability to diverse 
+instruction styles by incorporating multi-style prompt augmentation during 
+training, which may help mitigate overﬁtting to a single prompt format. Also, 
+exploring adaptive ﬁne-tuning strategies that dynamically adjust parameter 
+updates based on task complexity could further enhance generalization and per-
+formance. 
+References 
+1. Agrawal, A., et al.: VQA: Visual question answering (2016). https://arxiv.org/ 
+abs/1505.00468 
+2. Bai, J., et al.: Qwen-VL: A versatile vision-language model for understanding, 
+localization, text reading, and beyond (2023). https://arxiv.org/abs/2308.12966 
+3. Chen, K., et al.: Shikra: Unleashing multimodal LLM’s referential dialogue magic 
+(2023). https://arxiv.org/abs/2306.15195 
+4. Ghandi, T., Pourreza, H., Mahyar, H.: Deep learning approaches on image cap-
+tioning: a review. ACM Comput. Surv. 56(3), 1–39 (2023). http://dx.doi.org/10. 
+1145/3617592 
+5. Ghosh, A., et al.: Exploring the frontier of vision-language models: A survey of 
+current methodologies and future directions (2024). https://arxiv.org/abs/2404. 
+07214 
+6. Hu, E.J., et al.: LoRA: Low-rank adaptation of large language models (2021). 
+https://arxiv.org/abs/2106.09685 
+7. Hudson, D.A., Manning, C.D.: GQA: A new dataset for real-world visual reasoning 
+and compositional question answering (2019). https://arxiv.org/abs/1902.09506 
+
+--- PAGE 14 ---
+234 U. Ozkul et al. 
+8. Jin, W., et al.: A good prompt is worth millions of parameters: Low-resource 
+prompt-based learning for vision-language models (2022). https://arxiv.org/abs/ 
+2110.08484 
+9. Ke, F., et al.: HYDRA: A hyper agent for dynamic compositional visual reasoning 
+(2024). https://arxiv.org/abs/2403.12884 
+10. Lee, J., et al.: Visual question answering instruction: Unlocking multimodal large 
+language model to domain-speciﬁc visual multitasks (2024). https://arxiv.org/abs/ 
+2402.08360 
+11. Li, J., et al.: BLIP-2: Bootstrapping language-image pre-training with frozen image 
+encoders and large language models (2023). https://arxiv.org/abs/2301.12597 
+12. Li, Y., Wang, C., Jia, J.: LLaMA-VID: An image is worth 2 tokens in large language 
+models (2023). https://arxiv.org/abs/2311.17043 
+13. Lin, J., et al.: VILA: On pre-training for visual language models (2024). https:// 
+arxiv.org/abs/2312.07533 
+14. Liu, H., Li, C., Li, Y., Lee, Y.J.: Improved baselines with visual instruction tuning 
+(2024). https://arxiv.org/abs/2310.03744 
+15. Liu, H., et al.: Visual instruction tuning (2023). https://arxiv.org/abs/2304.08485 
+16. Lu, H., et al.: DeepSeek-VL: Towards real-world vision-language understanding 
+(2024). https://arxiv.org/abs/2403.05525 
+17. Luo, M., et al.: ‘just because you are right, doesn’t mean i am wrong’: Overcoming 
+a bottleneck in the development and evaluation of open-ended visual question 
+answering (VQA) tasks (2022). https://arxiv.org/abs/2103.15022 
+18. Marr, D.: Vision: A Computational Investigation into the Human Representation 
+and Processing of Visual Information. The MIT Press (2010) 
+19. Monajatipoor, M., et al.: MetaVL: Transferring in-context learning ability from 
+language models to vision-language models (2023). https://arxiv.org/abs/2306. 
+01311 
+20. Ranasinghe, K., et al.: Learning to localize objects improves spatial reasoning in 
+visual-LLMs (2024). https://arxiv.org/abs/2404.07449 
+21. Shen, Y., Xu, Z., Wang, Q., Cheng, Y., Yin, W., Huang, L.: Multimodal instruction 
+tuning with conditional mixture of LoRA (2024). https://arxiv.org/abs/2402.15896 
+22. Team, G., Georgiev, P., et al.: Gemini 1.5: Unlocking multimodal understanding 
+across millions of tokens of context (2024). https://arxiv.org/abs/2403.05530 
+23. Tiong, A.M.H., et al.: Plug-and-play VQA: Zero-shot VQA by conjoining large 
+pretrained models with zero training (2023). https://arxiv.org/abs/2210.08773 
+24. Wang, W., et al.: CogVLM: Visual expert for pretrained language models (2024). 
+https://arxiv.org/abs/2311.03079 
+25. Wang, Z., et al.: HaloQuest: A visual hallucination dataset for advancing multi-
+modal reasoning (2024). https://arxiv.org/abs/2407.15680 
+26. Wu, P., Xie, S.: V*: Guided visual search as a core mechanism in multimodal LLMs 
+(2023). https://arxiv.org/abs/2312.14135 
+27. Zhai, X., Mustafa, B., Kolesnikov, A., Beyer, L.: Sigmoid loss for language image 
+pre-training (2023). https://arxiv.org/abs/2303.15343 
+28. Zhang, D., et al.: MM-LLMs: Recent advances in multimodal large language models 
+(2024). https://arxiv.org/abs/2401.13601 
+29. Zhu, D., et al.: MiniGPT-4: Enhancing vision-language understanding with 
+advanced large language models (2023). https://arxiv.org/abs/2304.10592 

@@ -1,0 +1,2396 @@
+FILE: A comprehensive survey of Vision_Language Models Pretrained models_ fine_tuning_ prompt engineering_ adapters_ and bench.txt
+
+
+--- PAGE 1 FULL/EDGE ---
+ 
+Contents lists available at ScienceDirect
+Information Fusion
+journal homepage: www.elsevier.com/locate/inffus  
+A comprehensive survey of Vision–Language Models: Pretrained models, 
+fine-tuning, prompt engineering, adapters, and benchmark datasets
+Sufyan Danish a
+ , Abolghasem Sadeghi-Niaraki b, Samee Ullah Khan c, L. Minh Dang d,e,f, 
+Lilia Tightiz a, Hyeonjoon Moon a,∗
+a Department of Computer Science and Engineering, Sejong University, Seoul, 05006, South  Korea
+b Department of Computer Science and Engineering, XR Research Center, Sejong University, Seoul, 05006, South  Korea
+c Advanced Research and Innovation Center (ARIC), Khalifa University of Science and Technology, Abu Dhabi, 127788, Abu  Dhabi, United Arab Emirates
+d The Institute of Research and Development, Duy Tan University, Da Nang, 550000, Viet  Nam
+e Faculty of Information Technology, Duy Tan University, Da Nang, 550000, Viet  Nam
+f Department of Information and Communication Engineering and Convergence Engineering for Intelligent Drone, Seoul, 05006, Republic  of Korea
+A R T I C L E  I N F O
+Keywords:
+Vision language model
+Pre-trained model
+Prompt engineering
+Fine tuning
+Adapter
+Dataset
+Multi-language model survey
+Foundation model
+ A B S T R A C T
+Vision Language Models (VLMs) have significantly advanced multimodal tasks like image captioning, visual 
+question answering, and multimodal retrieval. This survey presents a systematic review of 115 published 
+papers from 2018 to 2025. It focuses key VLM components including fine-tuning strategies, prompt engineering 
+techniques, pre-trained models, adapter modules, and benchmarking datasets. For each component, we present 
+taxonomies and summarize comparative findings across standard VLM benchmarks. The survey emphasizes 
+the role of lightweight, parameter-efficient adaptation methods in reducing computational overhead while 
+maintaining strong task performance, particularly in real-world deployment contexts. It further examines the 
+strengths and limitations of prompt-based learning, dataset-specific tuning strategies, and architectural trade-
+offs. Finally, the paper identifies open challenges in scalability, generalization, and bias, and explores emerging 
+research directions including symbolic reasoning, multilingual adaptation, and energy-efficient VLM design. To 
+our best knowledge, this is the first comprehensive survey to integrate these critical components into a single, 
+cohesive survey paper, intended to serve as a foundational resource for researchers and practitioners striving to 
+optimize VLMs for diverse real-world scenarios. The highlights of the review are available at GitHub directory.
+1. Introduction
+Artificial Intelligence (AI) has made significant developments in 
+recent years, with impressive advancements in domains such as Natural 
+Language Processing (NLP) and Computer Vision (CV). The integration 
+of these two domains into Vision Language Model (VLMs) represents 
+one of the most significant breakthroughs in enabling machines to 
+process and generate multimodal information that involves both vision 
+and language. These models aim to connect the gap between the visual 
+world and textual understanding, allowing for a more refined and 
+comprehensive approach to tasks that involve both modalities. The 
+success of VLMs is mainly driven by the utilization of large scale 
+pretrained models and SOTA deep learning methodologies, such as 
+transformers which have contributed to considerable advancements in 
+both accuracy and generalization in various tasks [1].
+VLMs have a wide range of practical applications, including image 
+captioning, Visual Question Answering (VQA), multimodal retrieval, 
+∗ Corresponding author.
+E-mail address: hmoon@sejong.ac.kr (H. Moon).
+visual reasoning, and other related domains [2–4]. To enhance the 
+sophistication and effectiveness of these applications, it is essential 
+to develop efficient techniques for fine-tuning and prompt engineer-
+ing. These methods are crucial for developing pretrained models that 
+respond more to particular tasks or fields, improving their efficiency 
+while maintaining computational efficiency [5,6]. However, despite the 
+impressive capabilities of VLM, its deployment still faces challenges, 
+especially in fine-tuning and task-specific adaptation. Fine-tuning large-
+scale models remains a significant challenge, particularly due to the 
+substantial computational resources required and the difficulty in main-
+taining generalization across diverse domains [7]. Techniques such as 
+prompt engineering, adapter-based methods, and the use of special-
+ized datasets have emerged as effective approaches to address these 
+challenges, enabling more precise refinement of model applications for 
+specific use cases [6,8].
+https://doi.org/10.1016/j.inffus.2025.103623
+Received 25 March 2025; Received in revised form 4 August 2025; Accepted 7 August 2025
+Information Fusion 126 (2026) 103623 
+Available online 26 August 2025 
+1566-2535/© 2025 Els
+
+--- PAGE 2 FULL/EDGE ---
+S. Danish et al.
+Fig. 1. Conceptual model of the paper, where VLMs unify NLP and CV by jointly interpreting text and images to enable tasks such as image captioning, visual question answering, 
+and image/video retrieval.
+The primary motivation for conducting this survey lies in the need 
+for a comprehensive review of optimization techniques and their appli-
+cation to VLMs. While substantial progress has been made in enhancing 
+the foundational architectures of multimodal models [9], this paper 
+specifically focuses on the methods that enable these models to be effec-
+tively adapted and fine-tuned for real-world applications. In particular, 
+we examine fine-tuning strategies, prompt engineering, adapter-based 
+approaches, and the role of datasets as critical components in boosting 
+the performance and versatility of VLMs. Fig.  1 provides a graphical 
+representation of the VLM concept.
+1.1. Background and motivation
+The field of VLMs has witnessed groundbreaking advancements in 
+recent years, fueled by progress in deep learning and the growing 
+availability of large-scale multimodal datasets. Early models, such as 
+image-captioning systems, focused on aligning image features with tex-
+tual descriptions [10]. However, more sophisticated architectures such 
+as LLaVA [11] and PaliGemma 2 [12] have significantly transformed 
+the landscape. These models leverage transformers and other advanced 
+neural architectures to construct robust joint representations of vision 
+and language, enabling them to perform complex tasks like zero-shot 
+learning and cross-model retrieval with remarkable effectiveness.
+Apart from the impressive success of these pre-trained models and 
+their efficient application to particular tasks often demands substantial 
+computational resources and expertise. Fine-tuning, which involves 
+adjustment of parameters within a pre-trained model using smaller 
+datasets to task specific, is highly effective but resource intensive [13]. 
+Techniques such as Low-Rank Adaptation (LoRA) and bit-fitting have 
+been developed to tackle this challenge, thus increasing the efficiency 
+of fine-tuning [14]. Task-specific prompt engineering has demonstrated 
+significant efficacy in optimizing VLMs, enhancing performance in tasks 
+like VQA and image captioning through the strategic guidance of model 
+outputs through meticulously designed [8]. Adapter-based methodolo-
+gies further streamline fine-tuning by adjusting smaller model com-
+ponents or incorporating task specific modules, avoiding extensive 
+retraining. Datasets play a vital role in VLM development. The variety 
+and caliber of datasets not only exert influence over the training 
+progress but also affect the evaluation and benchmarking of the models 
+themselves. Datasets such as MMVP-VLM [15], GEOBench-VLM [16], 
+MammoVLM [17] and MMT-Bench [18] have played a crucial role in 
+extending the limits of what VLM can accomplish. However, challenges 
+related to dataset bias, annotation quality, and adaptation to domain-
+specific remain important challenges that need to be resolve in order 
+to improve model robustness and fairness [19].
+In summary, there is a pressing need for a thorough understanding 
+of the techniques that enable VLMs to be effectively fine-tuned and op-
+timized for specific tasks. This survey addresses that need by providing 
+a comprehensive review of fine-tuning strategies, prompt engineering, 
+adapter-based methods, pretrained VLM architectures, and datasets. It 
+offers an in-depth analysis of State-of-The-Art (SOTA) methodologies 
+while identifying existing challenges, critical gaps, and emerging re-
+search directions that hold the potential to drive further advancements 
+in the field.
+1.2. Scope and objectives
+The scope and objectives of this survey encompass a comprehensive 
+exploration of optimization techniques applied in VLMs, focusing on 
+their design, adaptation, and performance enhancement. The survey 
+outlines on the following core concepts:
+1. Various fine-tuning methodologies are examined that adapt pre-
+trained VLMs to specific downstream tasks, including full fine-
+tuning, parameter-efficient tuning, and task-aware finetuning 
+mechanisms.
+2. This survey analyzes the role of prompt formulation in zero-shot 
+and few-shot learning scenarios, reviewing manual, automatic, 
+and soft prompting techniques that enable efficient adaptation 
+without modifying the model’s core parameters.
+3. A lightweight approaches such as adapters, prefix tuning, and 
+LoRA, are investigate which aim to minimize computational 
+complexity and storage costs while preserving competitive per-
+formance across multiple tasks.
+4. A structured overview is provide that influential pretrained 
+VLMs, highlighting their architectural designs, training objec-
+tives, and core capabilities that serve as a foundation for down-
+stream applications.
+5. The review covers a range of large-scale and task-specific
+datasets used for pretraining and evaluation, including image–
+tex
+
+--- PAGE 3 FULL/EDGE ---
+S. Danish et al.
+Fig. 2. Conceptual model of the paper.
+methods, dynamic prompt tuning, multimodal data augmen-
+tation, and the integration of VLMs with real-world deploy-
+ment considerations such as edge efficiency and cross-lingual 
+generalization.
+This survey aims to provide a comprehensive review of these es-
+sential components, highlighting their contributions to the SOTA in 
+VLM research. By systematically reviewing and synthesizing key ad-
+vancements in these areas, the paper will present achievements and 
+identify promising new directions for further exploration, thereby guid-
+ing future research and technological development in Vision–Language 
+Models. Fig.  2 illustrates the conceptual model presented in the paper.
+1.3. Main contributions
+The goal of this survey is to provide concrete contributions to un-
+derstanding and optimizing Vision Language Models in several aspects, 
+specifically fine-tuning prompt engineering, adapters, pretraining ob-
+jectives, pre-trained models and datasets. To the best of our knowledge, 
+no prior work has integrated all these aspects into a single, unified 
+and comprehensive survey. The major contributions of this paper are 
+as follows:
+1. We provides a comprehensive review of fine-tuning techniques 
+within the context of VLMs. It delves into the associated com-
+putational and temporal challenges, evaluating strategies to en-
+hance efficiency and effectiveness in fine-tuning processes. This 
+analysis aims to identify best practices for optimizing perfor-
+mance while minimizing resource demands.
+2. We investigate the emerging area of prompt engineering a cru-
+cial strategy for leveraging pretrained models in novel appli-
+cations with minimal additional training. The survey evaluates 
+the effectiveness of prompt engineering across various scenar-
+ios, presenting a systematic framework for its application and 
+highlighting innovative use cases in VLMs.
+3. The use of adapters is assessed as a flexible solution for cus-
+tomizing pretrained models to novel tasks. This study systemati-
+cally reviews diverse adapter variants, discusses their integration 
+approaches and evaluates their influence on the performance 
+of VLMs efficacy, contributing to a deeper understanding of 
+adapter-based model customization.
+4. Examines the innovations and ongoing development of pre-
+trained models in the field of Vision–Language Models. It covers 
+how these models are developed, continually updated and opti-
+mized providing insights into their crucial role and potential for 
+future enhancements.
+5. We assess the role of multimodal datasets in the development 
+and performance of VLMs, delving into their crucial characteris-
+tics, inherent challenges, and prospective pathways for dataset 
+refinement including mitigating annotation reliance and aug-
+menting diversity.
+1.4. Conceptual overview
+To explain the fundamental concepts covered in this survey paper, 
+we present a conceptual overview of the major components involved 
+in optimizing VLMs.
+Fine-Tuning: Fine-tuning constitutes adapting a pretrained VLM to 
+specialized tasks through additional training on limited, application-
+specific datasets. This approach adjusts the model parameters to op-
+timize performance for target applications while utilizing generalized 
+knowledge acquired during pre-training.
+Pre-trained Models: Pre-trained VLMs are foundational architec-
+tures trained on extensive multimodal datasets (e.g., image–text pairs) 
+to develop generalized cross-modal representations. These models es-
+tablish versatile computational frameworks that allow efficient knowl-
+edge transfer for specialized applications without demanding extensive 
+annotated data.
+Prompt Engineering: Prompt engineering involves the strategic 
+formulation of input structures and designing that incorporates textual 
+queries, contextual descriptions or multimodal instructions to opti-
+mize Vision–Language Model performance for specific objectives. This 
+technique utilizes model pre-acquired knowledge by carefully crafting 
+inputs to generate accurate and task relevant outputs.
+Adapters: Adapters represent modular, task-specific architectural 
+components integrated into pretrained VLMs. These components fa-
+cilitate efficient adaptation to novel applications through supplemen-
+tary trainable layers that focus on target objectives while preserv-
+ing the model’s foundational competencies, all without comprehensive 
+modification of core parameters.
+VLM Datasets: VLM datasets comprise paired multimodal data that 
+include image caption or video–text datasets that provide aligned visual 
+and textual information. These datasets are crucial for both pretraining 
+and fine tuning Vision Language Models, enabling the models to cap-
+ture the complex relationships between visual and linguistic modalities 
+across a diverse range of domains.
+Information Fusion 126 (2026) 103623 
+3 
+
+--- PAGE 4 TARGETED ---
+a thorough and unbiased literature review on Vision–Language Models 
+with a particular focus on fine-tuning methods, pertaining models, 
+prompt engineering, adapter techniques and VLM benchmark dataset 
+as demonstrated in Fig.  5. The selection process is detailed below:
+1.5.1. Search strategy
+We conducted an extensive search in several well-established and 
+recognized electronic databases. The main terminologies employed 
+in the search included Vision Language Model, Prompt Engineering, 
+Adapter, Fine-Tuning, Pretraining Model and VLM Datasets. These 
+terms were meticulously chosen according to the relevance to main 
+--- hit ---
+recognized electronic databases. The main terminologies employed 
+in the search included Vision Language Model, Prompt Engineering, 
+Adapter, Fine-Tuning, Pretraining Model and VLM Datasets. These 
+terms were meticulously chosen according to the relevance to main 
+features of the survey and their relation to recent developments in the 
+domain. The following databases were prioritized for the search:
+• Science Direct
+• Springer
+• Scopus
+• Web of Science
+--- hit ---
+1.5.2. Selection criteria
+• Relevance: Many papers directly related to VLM fine tuning, 
+prompt engineering, adapter methods pretrained models and 
+benchmark datasets were prioritized. Such studies that were 
+merely indirectly related or exhibited a limited scope were sys-
+tematically excluded.
+• Publication Type: We considered peer-reviewed journal articles, 
+conference proceedings and well-recognized preprints from arXiv.
+• Language: With the language, only English language publications 
+were considered in the process of selection due to the linguistic 
+--- hit ---
+• Relevance: Many papers directly related to VLM fine tuning, 
+prompt engineering, adapter methods pretrained models and 
+benchmark datasets were prioritized. Such studies that were 
+merely indirectly related or exhibited a limited scope were sys-
+tematically excluded.
+• Publication Type: We considered peer-reviewed journal articles, 
+conference proceedings and well-recognized preprints from arXiv.
+• Language: With the language, only English language publications 
+were considered in the process of selection due to the linguistic 
+predominance within the research society and the emphasis on 
+--- hit ---
+The filtering process was conducted in several stages:
+• Initial Screening: The first step was to scan through the titles of 
+the papers, abstract and keywords for the presence of the specified 
+keywords. At this stage, repeated entries and articles that did not 
+meet the relevance criteria were identified and eliminated. This 
+step narrowed it down from 600 articles to just 305 articles at the 
+first selection criterion alone.
+• Abstract Review: The rest of the papers were subjected to an 
+abstract level analysis and critique accordingly. Studies that were 
+found irrelevant or presented with minor detail were omitted 
+
+--- PAGE 5 TARGETED ---
+S. Danish et al.
+Fig. 3. We selected papers based on their relevance to vision–language models, focusing on key areas such as pretrained architectures, fine-tuning, prompt engineering, adapters, 
+and benchmarks. Priority was given to technically significant and widely cited works from top-tier conferences and journals.
+Fig. 4. Schematic overview of the survey design highlighting optimization strategies in VLM. The figure categorizes key components covered in the paper, including fine-tuning 
+techniques, prompt engineering, adapter and pretraining model. Each component is critically analyzed to provide comprehensive insights into current trends, challenges, and future 
+research directions in VLM optimization.
+visual contexts. Beyond these foundational functions, these models 
+demonstrate indispensable utility in specialized domains: In health-
+care diagnostics [26], they enhance precision through interpretative 
+--- hit ---
+S. Danish et al.
+Fig. 3. We selected papers based on their relevance to vision–language models, focusing on key areas such as pretrained architectures, fine-tuning, prompt engineering, adapters, 
+and benchmarks. Priority was given to technically significant and widely cited works from top-tier conferences and journals.
+Fig. 4. Schematic overview of the survey design highlighting optimization strategies in VLM. The figure categorizes key components covered in the paper, including fine-tuning 
+techniques, prompt engineering, adapter and pretraining model. Each component is critically analyzed to provide comprehensive insights into current trends, challenges, and future 
+research directions in VLM optimization.
+visual contexts. Beyond these foundational functions, these models 
+demonstrate indispensable utility in specialized domains: In health-
+care diagnostics [26], they enhance precision through interpretative 
+analysis of medical imagery synergized with clinical narratives. Sim-
+--- hit ---
+and benchmarks. Priority was given to technically significant and widely cited works from top-tier conferences and journals.
+Fig. 4. Schematic overview of the survey design highlighting optimization strategies in VLM. The figure categorizes key components covered in the paper, including fine-tuning 
+techniques, prompt engineering, adapter and pretraining model. Each component is critically analyzed to provide comprehensive insights into current trends, challenges, and future 
+research directions in VLM optimization.
+visual contexts. Beyond these foundational functions, these models 
+demonstrate indispensable utility in specialized domains: In health-
+care diagnostics [26], they enhance precision through interpretative 
+analysis of medical imagery synergized with clinical narratives. Sim-
+ilarly, autonomous systems employ them for environmental naviga-
+tion and contextually informed determinations through multimodal 
+--- hit ---
+Consequently, given their capacity for synergistic multimodal fusion, 
+Vision–Language Models have emerged as a foundational substrate 
+for addressing challenges in fields requiring integrated multimodal 
+intelligence.
+2.1. Historical development and key milestones
+The trajectory of Vision–Language Models demonstrates accelerated 
+development, transitioning from rudimentary architectures to com-
+plex frameworks. Initial multimodal frameworks such as proposed by 
+J.Mao at.el, [28], are simple models linking images with text, typi-
+cally employing manual-crafted features, which demonstrated limited 
+--- hit ---
+images and texts into a unified representational space, substantially 
+improving cross-modal retrieval efficacy. These developments estab-
+lished the foundation for end-to-end trainable architectures, includ-
+ing Recurrent Neural Networks (RNNs) and Long Short-Term Memory 
+(LSTM) models that improved capabilities in image captioning and vi-
+sual question answering [30]. The true innovation in Vision–Language 
+Models came with the development of large-scale pre-trained mod-
+els, specifically CLIP (Contrastive Language–Image Pretraining) [5], 
+which used a contrastive learning approach, and achieved remarkable 
+zero-shot generalization across diverse downstream applications using 
+
+--- PAGE 6 TARGETED ---
+S. Danish et al.
+Fig. 5. Illustration of the search engine and databank system used for systematic paper selection. This process involves querying multiple academic databases using predefined 
+keywords related to VLMs, followed by filtering based on relevance, publication venue, and methodological contribution. The resulting databank serves as the foundation for 
+building the comprehensive literature review presented in this survey.
+enhanced functional capacities across multimodal tasks, establishing 
+SOTA VLMs as prevailing methodological paradigms within vision 
+language models.
+Impact of Large-Scale Pre-Trained Models: The rise of large-scale 
+pre-trained models has fundamentally transformed the landscape of 
+Vision–Language Models. These models, trained on billions of image–
+--- hit ---
+SOTA VLMs as prevailing methodological paradigms within vision 
+language models.
+Impact of Large-Scale Pre-Trained Models: The rise of large-scale 
+pre-trained models has fundamentally transformed the landscape of 
+Vision–Language Models. These models, trained on billions of image–
+text pairs, exhibit unprecedented capabilities in zero-shot and few-shot 
+learning, eliminating the need for extensive labeled data for new tasks. 
+Key contributions of pre-trained Vision–Language Models include:
+• Scalability: The ability to handle a wide range of downstream 
+tasks with minimal task-specific adjustments [35,36].
+--- hit ---
+language models.
+Impact of Large-Scale Pre-Trained Models: The rise of large-scale 
+pre-trained models has fundamentally transformed the landscape of 
+Vision–Language Models. These models, trained on billions of image–
+text pairs, exhibit unprecedented capabilities in zero-shot and few-shot 
+learning, eliminating the need for extensive labeled data for new tasks. 
+Key contributions of pre-trained Vision–Language Models include:
+• Scalability: The ability to handle a wide range of downstream 
+tasks with minimal task-specific adjustments [35,36].
+• Generalization: Strong zero-shot [37] and few-shot [38] capa-
+--- hit ---
+Impact of Large-Scale Pre-Trained Models: The rise of large-scale 
+pre-trained models has fundamentally transformed the landscape of 
+Vision–Language Models. These models, trained on billions of image–
+text pairs, exhibit unprecedented capabilities in zero-shot and few-shot 
+learning, eliminating the need for extensive labeled data for new tasks. 
+Key contributions of pre-trained Vision–Language Models include:
+• Scalability: The ability to handle a wide range of downstream 
+tasks with minimal task-specific adjustments [35,36].
+• Generalization: Strong zero-shot [37] and few-shot [38] capa-
+bilities allow models to perform well on unseen datasets and 
+--- hit ---
+text pairs, exhibit unprecedented capabilities in zero-shot and few-shot 
+learning, eliminating the need for extensive labeled data for new tasks. 
+Key contributions of pre-trained Vision–Language Models include:
+• Scalability: The ability to handle a wide range of downstream 
+tasks with minimal task-specific adjustments [35,36].
+• Generalization: Strong zero-shot [37] and few-shot [38] capa-
+bilities allow models to perform well on unseen datasets and 
+tasks.
+• Efficiency: Pre-training reduces the dependency on task-specific 
+data and computational resources, paving the way for scalable 
+
+--- PAGE 7 TARGETED ---
+Fig. 6. General hierarchical framework of vision–language models.
+Table 1
+Technique-based comparison of the VLMs composed of various attributes including adapter, dataset, fine-tuning, pre-trained.
+ Year/Paper Category FT PE Pre-TT Adapter Pre-TM Dataset 
+ 2022 [52] General VL Tasks and 
+Methods
+3 7 3 7 3 3  
+ 2022 [53] VLM pre-Training 7 7 3 7 3 3  
+ 2023 [54] Prompt Engineering 
+Techniques
+--- hit ---
+Table 1
+Technique-based comparison of the VLMs composed of various attributes including adapter, dataset, fine-tuning, pre-trained.
+ Year/Paper Category FT PE Pre-TT Adapter Pre-TM Dataset 
+ 2022 [52] General VL Tasks and 
+Methods
+3 7 3 7 3 3  
+ 2022 [53] VLM pre-Training 7 7 3 7 3 3  
+ 2023 [54] Prompt Engineering 
+Techniques
+7 3 3 7 3 3  
+--- hit ---
+Methods
+3 7 3 7 3 3  
+ 2022 [53] VLM pre-Training 7 7 3 7 3 3  
+ 2023 [54] Prompt Engineering 
+Techniques
+7 3 3 7 3 3  
+ 2024 [3] Medical VLM 7 7 3 7 3 3  
+ 2024 [7] VLPM Architecture 7 7 3 7 3 3  
+ 2024 [21] Methodologies and 
+Future Directions
+--- hit ---
+ 2024 [7] VLPM Architecture 7 7 3 7 3 3  
+ 2024 [21] Methodologies and 
+Future Directions
+3 7 3 7 3 3  
+ 2024 [50] Autonomous Driving 7 7 3 3 3 3  
+ 2024 [51] Geospatial VLM 7 7 3 7 3 3  
+ 2024 [55] Trustworthiness of 
+Vision–Language 
+Models
+3 7 7 7 3 3  
+--- hit ---
+ 2025 [59] Edge Devices 3 7 3 7 3 3  
+ 2025 [60] Synthetic Data & VLMs 3 7 3 7 3 3  
+ 2025 [61] VQA 3 7 3 7 3 3  
+ our survey paper Comprehensive 
+Overview
+3 3 3 3 3 3  
+existing surveys often address specific components of Vision–Language 
+Models in isolation, providing valuable but fragmented insights. Several 
+surveys excel in detailing pre-trained models, fine-tuning techniques, 
+and prompt engineering, which are central to the methodology of 
+
+--- PAGE 8 TARGETED ---
+Table 2
+Summary of vision–language model surveys: Strengths and weaknesses.
+ Paper/Year Strengths Limitations/Weaknesses  
+ 2022 [52] ∙ In-depth review of VLM tasks and representation learning.
+∙ Covers large models and their uses.
+∙ Lacks detailed coverage of fine-tuning and adapter techniques.
+∙ Limited focus on datasets.
+ 
+ 2022 [49] ∙ Thorough discussion of pre-trained models.
+∙ Covers architectures and pre-training techniques.
+--- hit ---
+∙ Covers large models and their uses.
+∙ Lacks detailed coverage of fine-tuning and adapter techniques.
+∙ Limited focus on datasets.
+ 
+ 2022 [49] ∙ Thorough discussion of pre-trained models.
+∙ Covers architectures and pre-training techniques.
+∙ Limited coverage of fine-tuning or adapter techniques.
+∙ Focus on pre-trained models may not be as practical for real-world scenarios.
+ 
+ 2022 [58] ∙ Provides insights into emerging multimodal research trends.
+--- hit ---
+∙ Limited focus on datasets.
+ 
+ 2022 [49] ∙ Thorough discussion of pre-trained models.
+∙ Covers architectures and pre-training techniques.
+∙ Limited coverage of fine-tuning or adapter techniques.
+∙ Focus on pre-trained models may not be as practical for real-world scenarios.
+ 
+ 2022 [58] ∙ Provides insights into emerging multimodal research trends.
+∙ Focus on integrating vision and language.
+∙ Does not focus on fine-tuning or pre-training techniques.
+--- hit ---
+ 
+ 2022 [49] ∙ Thorough discussion of pre-trained models.
+∙ Covers architectures and pre-training techniques.
+∙ Limited coverage of fine-tuning or adapter techniques.
+∙ Focus on pre-trained models may not be as practical for real-world scenarios.
+ 
+ 2022 [58] ∙ Provides insights into emerging multimodal research trends.
+∙ Focus on integrating vision and language.
+∙ Does not focus on fine-tuning or pre-training techniques.
+∙ Limited discussion of pre-trained models.
+--- hit ---
+∙ Covers architectures and pre-training techniques.
+∙ Limited coverage of fine-tuning or adapter techniques.
+∙ Focus on pre-trained models may not be as practical for real-world scenarios.
+ 
+ 2022 [58] ∙ Provides insights into emerging multimodal research trends.
+∙ Focus on integrating vision and language.
+∙ Does not focus on fine-tuning or pre-training techniques.
+∙ Limited discussion of pre-trained models.
+ 
+ 2023 [54] ∙ Detailed coverage of prompt engineering techniques.
+
+--- PAGE 9 TARGETED ---
+Despite the wealth of insights provided by existing surveys and 
+research in the Vision–Language Model domain, several critical gaps 
+remain in the literature. These gaps represent promising areas for future 
+research, particularly in the following aspects:
+2.4.1. Fine-tuning methods
+Although significant progress has been made in fine-tuning (FT) 
+pre-trained models for vision–language tasks, computationally efficient 
+fine-tuning techniques remain unexplored. Current approaches, espe-
+cially those involving large-scale models, often demand extensive com-
+putational resources, making them less accessible for researchers with 
+--- hit ---
+2.4.1. Fine-tuning methods
+Although significant progress has been made in fine-tuning (FT) 
+pre-trained models for vision–language tasks, computationally efficient 
+fine-tuning techniques remain unexplored. Current approaches, espe-
+cially those involving large-scale models, often demand extensive com-
+putational resources, making them less accessible for researchers with 
+limited infrastructure. The development of low-resource fine-tuning 
+strategies and transfer learning methods is particularly scarce, rep-
+resenting an important avenue for further investigation [63]. Future 
+work should focus on minimizing the computational cost while main-
+--- hit ---
+limited infrastructure. The development of low-resource fine-tuning 
+strategies and transfer learning methods is particularly scarce, rep-
+resenting an important avenue for further investigation [63]. Future 
+work should focus on minimizing the computational cost while main-
+taining the performance of Vision–Language Models across various 
+applications.
+2.4.2. Pre-trained models
+Pre-trained models such as CLIP [64], Flamingo [9], and ViL-
+BERT [65] have become foundational for many vision–language appli-
+cations. However, there is limited exploration of optimization strategies 
+--- hit ---
+taining the performance of Vision–Language Models across various 
+applications.
+2.4.2. Pre-trained models
+Pre-trained models such as CLIP [64], Flamingo [9], and ViL-
+BERT [65] have become foundational for many vision–language appli-
+cations. However, there is limited exploration of optimization strategies 
+tailored to specific tasks. Although these models are pre-trained on mas-
+sive datasets, their adaptability to diverse task-specific requirements 
+remains insufficiently addressed. Additionally, domain-specific pre-
+training, which could enhance the models’ performance on specialized 
+--- hit ---
+applications.
+2.4.2. Pre-trained models
+Pre-trained models such as CLIP [64], Flamingo [9], and ViL-
+BERT [65] have become foundational for many vision–language appli-
+cations. However, there is limited exploration of optimization strategies 
+tailored to specific tasks. Although these models are pre-trained on mas-
+sive datasets, their adaptability to diverse task-specific requirements 
+remains insufficiently addressed. Additionally, domain-specific pre-
+training, which could enhance the models’ performance on specialized 
+tasks, has not been extensively studied [66]. Further research is needed 
+
+--- PAGE 10 TARGETED ---
+the design, optimization, and interpretability of discrete prompts 
+in VLMs.
+• Continuous Prompts: Continuous prompts [88] employ trainable 
+parameter embeddings integrated within model inputs, enabling 
+dynamic task-specific adaptation. These prompts provide richer 
+forms of input that allows the model to adjust the model based on 
+task-specific requirements. Their continuous nature renders them 
+especially effective for complex, context dependent operations 
+requiring complex flexibility [89].
+This approach substantially enhances cross-modal generalization 
+--- hit ---
+metrics through continuous prompt implementation. These tech-
+niques enable robust generalization across diverse multimodal 
+contexts with minimal task-specific training. Complementary re-
+search by Nguyen et al. [92] and Bai et al. [93] further explore 
+computational efficiency gains and enhanced task transferability 
+by continuous prompts.
+The methodology continues to evolve, exhibiting significant po-
+tential for advancing generalization capacity and robustness in 
+Vision Language Models. Additional studies [94–100] have also 
+explored various aspects of continuous prompts, collectively val-
+--- hit ---
+Models to perform tasks with minimal or no task-specific data. These 
+paradigms leverage the generality of the prompts and the model’s 
+pre-trained knowledge to enable effective task execution [103].
+Zero-shot Learning: In zero-shot learning, Vision–Language Models 
+are expected to perform tasks without being explicitly trained on task-
+specific data. Instead, the model generalizes its pre-trained knowledge 
+by interpreting the natural language prompt. The effectiveness of zero-
+shot learning heavily relies on the design of the prompt, as it must 
+provide enough context for the model to infer the correct task de-
+spite having never encountered specific examples during training [5]. 
+--- hit ---
+pre-trained knowledge to enable effective task execution [103].
+Zero-shot Learning: In zero-shot learning, Vision–Language Models 
+are expected to perform tasks without being explicitly trained on task-
+specific data. Instead, the model generalizes its pre-trained knowledge 
+by interpreting the natural language prompt. The effectiveness of zero-
+shot learning heavily relies on the design of the prompt, as it must 
+provide enough context for the model to infer the correct task de-
+spite having never encountered specific examples during training [5]. 
+Well-crafted prompts thus become a powerful tool for transferring 
+knowledge across diverse tasks without the need for additional labeled 
+--- hit ---
+Zero-shot Learning: In zero-shot learning, Vision–Language Models 
+are expected to perform tasks without being explicitly trained on task-
+specific data. Instead, the model generalizes its pre-trained knowledge 
+by interpreting the natural language prompt. The effectiveness of zero-
+shot learning heavily relies on the design of the prompt, as it must 
+provide enough context for the model to infer the correct task de-
+spite having never encountered specific examples during training [5]. 
+Well-crafted prompts thus become a powerful tool for transferring 
+knowledge across diverse tasks without the need for additional labeled 
+data. Recent studies have demonstrated the effectiveness of prompt en-
+
+--- PAGE 11 TARGETED ---
+effective task execution.
+Soft Prompts: Soft prompts are learnable prompts that are not pre-
+defined but instead learned during the training process as continuous 
+vectors. This approach allows the model to adapt the prompt based 
+on the task, enhancing its flexibility and performance. Soft prompts 
+have demonstrated superior performance over discrete prompts in tasks 
+that require greater adaptability, as they enable the model to adjust its 
+approach to better suit the task’s requirements [102]. This technique is 
+particularly effective in zero-shot and few-shot learning settings, where 
+the model must generalize from minimal data. Some recent research 
+--- hit ---
+efficient substitute to conventional fine-tuning. This approach prepends 
+learned parametric prefixes to input embeddings, directing task inter-
+pretation without full model retraining. By focusing only on a small 
+portion of the model parameters (the prefix), this approach decreases 
+computational overhead while achieving targeted optimization [152]. 
+Empirical studies confirm performance enhancements with minimal 
+resource expenditure, making it an attractive option for resource-
+constrained environments [153]. Ground breaking research studies on 
+prefix tuning are [154–157].
+Hybrid Methods: Hybrid methodologies synergistically integrate 
+--- hit ---
+Empirical studies confirm performance enhancements with minimal 
+resource expenditure, making it an attractive option for resource-
+constrained environments [153]. Ground breaking research studies on 
+prefix tuning are [154–157].
+Hybrid Methods: Hybrid methodologies synergistically integrate 
+discrete and continuous prompting engineering. These strategies lever-
+age complementary strengths through combined textual prompts (dis-
+crete prompts) and trainable continuous vectors (soft prompts), creat-
+ing flexible adaptation frameworks. Consequently, VLMs achieve ex-
+panded functional scope with heightened efficacy across multimodal 
+--- hit ---
+discrete and continuous prompting engineering. These strategies lever-
+age complementary strengths through combined textual prompts (dis-
+crete prompts) and trainable continuous vectors (soft prompts), creat-
+ing flexible adaptation frameworks. Consequently, VLMs achieve ex-
+panded functional scope with heightened efficacy across multimodal 
+applications. This integrative approach enables more resource efficient 
+and adaptable task execution across heterogeneous domains [158–
+162].
+Table  3 summarizes key prompt engineering techniques for Vision–
+Language Models, including discrete, continuous, and structured
+--- hit ---
+prompt based fine-tuning and few-shot learning, and their applications 
+in domains such as image captioning, object detection, and visual 
+question answering (VQA). Collectively, these approaches enhance 
+model versatility and operational efficiency in both specialized and 
+generalized contexts.
+3.1.4. Challenges and open problems
+Prompt engineering represents a paramount optimization strategy 
+for Vision Language Models, yet several challenges must be addressed 
+to advance multimodal learning efficacy [80]. A principal limitation 
+concerns cross-domain transferability. prompts frequently demonstrate 
+
+--- PAGE 12 TARGETED ---
+ Year Method Type Description Publication Code 
+ 2021 CLIP [5] Hard-Prompt Introduced contrastive language–image 
+pre-training.
+ICML 2021 Link  
+ 2022 CoOp [126] Soft-Prompt Context optimization for prompt tuning 
+using learnable embeddings.
+IJCV 2022 Link  
+ 2022 CPT [127] Hard-Prompt Task-specific fine-tuning in 
+vision–language tasks.
+– Link  
+--- hit ---
+information extraction. DoCo highlights the utility of precise alignment 
+for generalizing across complex, text-heavy scenarios but also encoun-
+ters challenges like noise in datasets and high computational demands. 
+Beyond DoCo, contrastive learning encompasses several key methods 
+tailored to specific aspects of vision–language tasks:
+Image CL: Image CL focuses on learning robust image represen-
+tations by contrasting positive and negative pairs. This approach is 
+particularly effective in scenarios with limited labeled data, as it en-
+hances the model’s ability to discern patterns within unlabeled data. 
+For instance, in hyperspectral image prediction, contrastive learning 
+--- hit ---
+For instance, in hyperspectral image prediction, contrastive learning 
+has been shown to improve classification performance even with re-
+duced training data, by enabling the encoder to adapt to features 
+identified by the classifier [172]. In medical imaging, contrastive learn-
+ing frameworks like counterfactual contrastive learning have been 
+developed to create positive pairs that capture relevant domain vari-
+ations, such as scanner differences, thereby improving robustness to 
+acquisition shifts and enhancing downstream performance [173].
+Image–Text CL: Image–text contrastive learning aligns visual and 
+textual data by minimizing the distance between semantically similar 
+
+--- PAGE 13 TARGETED ---
+instruction tuning, content correlated VLIT data generation via con-
+trastive learning (C3L) has been proposed to enhance content relevance 
+between VLIT data and images, addressing challenges like exposure 
+bias and improving model generalization to unseen inputs [177].
+Contrastive learning has significantly advanced VLM capabilities 
+e.g [178] utilizes image–text contrastive learning to align image snip-
+pets with text, enhancing gene identification and pathway curation. 
+Similarly, [179] employs CLIP-based prompts to improve geo-
+localization through enhanced visual feature generalization, but chal-
+lenges such as noisy data alignment, reliance on limited data augmen-
+--- hit ---
+Contrastive learning has significantly advanced VLM capabilities 
+e.g [178] utilizes image–text contrastive learning to align image snip-
+pets with text, enhancing gene identification and pathway curation. 
+Similarly, [179] employs CLIP-based prompts to improve geo-
+localization through enhanced visual feature generalization, but chal-
+lenges such as noisy data alignment, reliance on limited data augmen-
+tation strategies, and high computational costs persist, requiring future 
+research into scalable methods and robust augmentation techniques for 
+diverse applications.
+3.2.2. Alignments strategies
+--- hit ---
+localization through enhanced visual feature generalization, but chal-
+lenges such as noisy data alignment, reliance on limited data augmen-
+tation strategies, and high computational costs persist, requiring future 
+research into scalable methods and robust augmentation techniques for 
+diverse applications.
+3.2.2. Alignments strategies
+Alignment strategies aim to learn joint representations of visual 
+and textual modalities that allow models to effectively reason about 
+the interactions between them [180]. One common technique is cross-
+attention, where separate visual and textual streams are processed 
+--- hit ---
+language tasks. Unlike earlier approaches that depend on pre-extracted 
+visual features, these models permit real-time processing by dynami-
+cally aligning visual and textual representations during training. The 
+alignment procedures in vision–language models mainly concentrate on 
+two approaches: Image–Text Matching and Region-Word Matching
+Image–Text Matching: Image–text matching is a fundamental task 
+in VLM research, involving the precise alignment of visual content 
+with linguistic descriptors to enable applications such as automated 
+caption generation and cross-modal retrieval. Several recent advance-
+ments have refined this process. For instance, the CLIP-based model 
+--- hit ---
+tively, integrating them into a shared vector space to measure seman-
+tic similarity. This framework enhances computational efficiency dur-
+ing training and demonstrates state-of-the-art performance on bench-
+mark datasets including WuKong and Flickr30k [183]. Similarly, the 
+FAAR method focuses on local similarity levels between visual ele-
+ments and textual, employing a filtered attention module to remove 
+meaningless comparison and an adaptive regulator to adjust atten-
+tion weights. This approach improves alignment accuracy on datasets 
+such as Flickr30K and MSCOCO [184]. The BOOM network further 
+advances image–text matching by imposing bidirectional consistency 
+
+--- PAGE 14 TARGETED ---
+S. Danish et al.
+Table 4
+Pre-training techniques for vision–language models.
+ Pre-training technique Description Models Applications Challenges  
+ Contrastive Objectives Contrastive learning aligns 
+vision and language 
+embeddings by mapping 
+similar vision–language pairs 
+close together in the 
+embedding space.
+--- hit ---
+Table 4
+Pre-training techniques for vision–language models.
+ Pre-training technique Description Models Applications Challenges  
+ Contrastive Objectives Contrastive learning aligns 
+vision and language 
+embeddings by mapping 
+similar vision–language pairs 
+close together in the 
+embedding space.
+CLIP, ALIGN Cross-modal retrieval, Image 
+--- hit ---
+Visual search
+difficulty in scaling to large 
+datasets, Need for high-quality 
+pairs of data
+ 
+ Alignment Strategies Focuses on cross-modal 
+representation learning, where 
+vision and language models 
+are jointly trained to align 
+their representations in a 
+--- hit ---
+representation learning, where 
+vision and language models 
+are jointly trained to align 
+their representations in a 
+shared space.
+VLP, ViLBERT, UNITER Visual Question Answering 
+(VQA), Multimodal 
+representation learning
+Balancing alignment across 
+domains, Complex loss 
+--- hit ---
+shared space.
+VLP, ViLBERT, UNITER Visual Question Answering 
+(VQA), Multimodal 
+representation learning
+Balancing alignment across 
+domains, Complex loss 
+functions
+ 
+ Generative Pre-training Pre-trains models to generate 
+text or images, with the 
+
+--- PAGE 15 TARGETED ---
+S. Danish et al.
+Fig. 9. Illustrate Pretraining (a) and Finetuning (b) of MISS framework [193].
+maintaining the integrity of the foundation model. The main advantage 
+of this modular technique is that it facilitates task-oriented adaptation 
+without involving extensive computational power for complete model 
+retraining. Adapter-BERT is a prominent example of modular adapters. 
+It incorporates modular adapter layers into a pretrained BERT model, 
+improving its efficiency across tasks such as entity name recognition 
+and sentiment analysis [197]. This modular technique retaining fixed 
+--- hit ---
+of this modular technique is that it facilitates task-oriented adaptation 
+without involving extensive computational power for complete model 
+retraining. Adapter-BERT is a prominent example of modular adapters. 
+It incorporates modular adapter layers into a pretrained BERT model, 
+improving its efficiency across tasks such as entity name recognition 
+and sentiment analysis [197]. This modular technique retaining fixed 
+pretrained parameters facilitates more efficient adaptation, offering a 
+distinct advantage over conventional fine-tuning techniques requiring 
+updates to all model parameters. In the domain of VLM modular 
+adapters allow models to focus on specific tasks such as VQA or image 
+--- hit ---
+without involving extensive computational power for complete model 
+retraining. Adapter-BERT is a prominent example of modular adapters. 
+It incorporates modular adapter layers into a pretrained BERT model, 
+improving its efficiency across tasks such as entity name recognition 
+and sentiment analysis [197]. This modular technique retaining fixed 
+pretrained parameters facilitates more efficient adaptation, offering a 
+distinct advantage over conventional fine-tuning techniques requiring 
+updates to all model parameters. In the domain of VLM modular 
+adapters allow models to focus on specific tasks such as VQA or image 
+captioning while retaining the broad knowledge learned from extensive 
+--- hit ---
+improving its efficiency across tasks such as entity name recognition 
+and sentiment analysis [197]. This modular technique retaining fixed 
+pretrained parameters facilitates more efficient adaptation, offering a 
+distinct advantage over conventional fine-tuning techniques requiring 
+updates to all model parameters. In the domain of VLM modular 
+adapters allow models to focus on specific tasks such as VQA or image 
+captioning while retaining the broad knowledge learned from extensive 
+diverse datasets. These adapters significantly reduce computational 
+costs and are more straightforward to implement presenting them as a 
+preferred option for various practical applications [198]. Furthermore, 
+--- hit ---
+distinct advantage over conventional fine-tuning techniques requiring 
+updates to all model parameters. In the domain of VLM modular 
+adapters allow models to focus on specific tasks such as VQA or image 
+captioning while retaining the broad knowledge learned from extensive 
+diverse datasets. These adapters significantly reduce computational 
+costs and are more straightforward to implement presenting them as a 
+preferred option for various practical applications [198]. Furthermore, 
+recent research that has used the concept of modular adapters includes 
+VL-Adapter [199], MDL [200], and Q-Adapter [201].
+3.3.2. Multi-modal adapters
+
+--- PAGE 16 TARGETED ---
+unimodal features needs enhancement. Second, they are valuable 
+for efficient unimodal task performance, where the VLM’s pre-
+trained knowledge is leveraged for tasks that are fundamentally 
+unimodal, such as using the visual branch for fine-grained image 
+classification or object detection, or the language branch for text 
+summarization or sentiment analysis. Third, non-fusion adapters 
+can serve as pre-fusion enhancement modules even in multimodal 
+tasks like VQA or image captioning. For example, a visual adapter 
+might make the image encoder more robust to noisy inputs, 
+leading to better downstream performance, even though it does 
+--- hit ---
+summarization or sentiment analysis. Third, non-fusion adapters 
+can serve as pre-fusion enhancement modules even in multimodal 
+tasks like VQA or image captioning. For example, a visual adapter 
+might make the image encoder more robust to noisy inputs, 
+leading to better downstream performance, even though it does 
+not directly participate in the fusion logic.
+Both fusion and non-fusion adapters give unique advantages. Fusion 
+adapters are particularly efficient for tasks that require a unified un-
+derstanding of vision and language information, whereas non-fusion 
+adapters allow more specialized, domain and task-oriented adjustments 
+--- hit ---
+multiple task-specific adapters, enhancing multi-task generalization. 
+Parallel Adapters [210] run alongside the main layers, allowing for 
+modular and joint training. Finally, LLaMA-Adapter v2 [211] is tailored 
+for large-scale models, integrating adapters into attention and MLP 
+blocks for scalable instruction tuning. Together, these methods offer a 
+rich design space for adapting VLMs to diverse downstream tasks with 
+minimal computational cost. The Table  5 summarizes key aspects such 
+as integration points within the model architecture, model alteration 
+extent, proportion of trainable parameters, primary advantages and 
+limitations, and best-suited use cases. This addition clarifies the distinct 
+--- hit ---
+minimal computational cost. The Table  5 summarizes key aspects such 
+as integration points within the model architecture, model alteration 
+extent, proportion of trainable parameters, primary advantages and 
+limitations, and best-suited use cases. This addition clarifies the distinct 
+characteristics and practical implications of each method, enhancing 
+the theoretical depth and practical relevance of the discussion.
+3.3.4. Discussion
+Adapters are generally compared to conventional fine-tuning tech-
+niques that require changing all parameters of a model during the 
+training process. Although fine-tuning can achieve high performance 
+--- hit ---
+as integration points within the model architecture, model alteration 
+extent, proportion of trainable parameters, primary advantages and 
+limitations, and best-suited use cases. This addition clarifies the distinct 
+characteristics and practical implications of each method, enhancing 
+the theoretical depth and practical relevance of the discussion.
+3.3.4. Discussion
+Adapters are generally compared to conventional fine-tuning tech-
+niques that require changing all parameters of a model during the 
+training process. Although fine-tuning can achieve high performance 
+on specific tasks, it is resource-intensive and demands large amounts 
+
+--- PAGE 17 TARGETED ---
+Table 5
+Comparative overview of prominent adapter-based tuning methods in vision–language models. The table highlights integration points, extent of model modification, number of 
+trainable parameters, strengths, limitations, and best used cases.
+ Method Integration point Model change Trainable 
+params (%)
+Pros Cons/Limitations Best use cases  
+ LoRA [14] Attention layers Minimal ∼0.5% to 2% Efficient, 
+scalable, strong 
+for both 
+generation and 
+--- hit ---
+Comparative overview of prominent adapter-based tuning methods in vision–language models. The table highlights integration points, extent of model modification, number of 
+trainable parameters, strengths, limitations, and best used cases.
+ Method Integration point Model change Trainable 
+params (%)
+Pros Cons/Limitations Best use cases  
+ LoRA [14] Attention layers Minimal ∼0.5% to 2% Efficient, 
+scalable, strong 
+for both 
+generation and 
+understanding
+--- hit ---
+ Method Integration point Model change Trainable 
+params (%)
+Pros Cons/Limitations Best use cases  
+ LoRA [14] Attention layers Minimal ∼0.5% to 2% Efficient, 
+scalable, strong 
+for both 
+generation and 
+understanding
+May 
+underperform 
+--- hit ---
+required
+Captioning, 
+VQA, Pretrained 
+LLM alignment
+ 
+ BitFit [206] Only bias terms 
+of linear layers
+Extremely 
+minimal
+∼0.03% Fast, extremely 
+--- hit ---
+performance, 
+modular and 
+well-tested
+Adds latency 
+and trainable 
+parameters
+VQA, 
+Captioning, 
+Transfer 
+Learning
+
+--- PAGE 18 TARGETED ---
+greatly reduces computational requirements, facilitating faster adap-
+tation to new tasks while maintaining the effectiveness of the model 
+on its original pretrained objectives. Partial fine-tuning is frequently 
+used in transfer learning contexts, where pretrained models must adapt 
+to new domains with insufficient data and computational resources. 
+However, it may not consistently achieve the same performance level 
+as full fine tuning, especially for tasks that are extremely complex or 
+specialized. For example, [217] developed the ClipFit technique that 
+fine-tunes CLIP by adjusting only specific bias terms and normalization 
+layers, thus enhancing its zero-shot capabilities. Similarly, [220] intro-
+--- hit ---
+tation to new tasks while maintaining the effectiveness of the model 
+on its original pretrained objectives. Partial fine-tuning is frequently 
+used in transfer learning contexts, where pretrained models must adapt 
+to new domains with insufficient data and computational resources. 
+However, it may not consistently achieve the same performance level 
+as full fine tuning, especially for tasks that are extremely complex or 
+specialized. For example, [217] developed the ClipFit technique that 
+fine-tunes CLIP by adjusting only specific bias terms and normalization 
+layers, thus enhancing its zero-shot capabilities. Similarly, [220] intro-
+duced the SVFit parameter-efficient fine-tuning (PEFT) approach that 
+--- hit ---
+layers, thus enhancing its zero-shot capabilities. Similarly, [220] intro-
+duced the SVFit parameter-efficient fine-tuning (PEFT) approach that 
+uses singular value decomposition to reduce the number of trainable 
+parameters by a factor of 16 compared to LoRA. This allows for 
+prompt domain adaptation in resource constrained situations while 
+maintaining robust domain specific performance.
+3.4.2. Remapping tuning
+Efficient fine-tuning techniques aim to decrease the computational 
+cost and memory demands of fine tuning while maintaining or even 
+potentially enhancing domain specific performance. Several techniques 
+--- hit ---
+uses singular value decomposition to reduce the number of trainable 
+parameters by a factor of 16 compared to LoRA. This allows for 
+prompt domain adaptation in resource constrained situations while 
+maintaining robust domain specific performance.
+3.4.2. Remapping tuning
+Efficient fine-tuning techniques aim to decrease the computational 
+cost and memory demands of fine tuning while maintaining or even 
+potentially enhancing domain specific performance. Several techniques 
+have been introduced to optimize this process:
+• LoRA (Low-Rank Adaptation): LoRA aims to improve compu-
+--- hit ---
+of parameters requiring optimization during fine-tuning [221]. 
+This approach enables efficient adaptation while retaining the 
+pre-trained knowledge and minimizing resource allocation.
+• BitFit: BitFit is a lightweight fine-tuning technique that focuses 
+entirely on adjusting the bias terms within the model layers, while 
+keeping the weight parameters fixed. This approach significantly 
+reduces the number of trainable parameters and has shown the 
+ability to deliver competitive performance across diverse tasks 
+with only minimal fine-tuning. It proves particularly helpful in 
+situations where computational resources are limited or when 
+
+--- PAGE 19 TARGETED ---
+Table 6
+Fine-tuning techniques comparison.
+ Fine-tuning method Description Example models Applications Challenges and 
+considerations
+ 
+ Full Fine-Tuning Fine-tuning the entire 
+pre-trained model for a 
+specific downstream 
+task, including all 
+parameters.
+--- hit ---
+ 
+ Full Fine-Tuning Fine-tuning the entire 
+pre-trained model for a 
+specific downstream 
+task, including all 
+parameters.
+CLIP, Flamingo, 
+ViLBERT
+Task-specific 
+optimization, Domain 
+--- hit ---
+A method that adapts 
+only low-rank matrices 
+in pre-trained models, 
+significantly reducing 
+training costs.
+GPT-3, ViT + LoRA Parameter-efficient 
+fine-tuning, Scaling to 
+large models
+Needs careful low-rank 
+matrix design, Limited 
+--- hit ---
+in pre-trained models, 
+significantly reducing 
+training costs.
+GPT-3, ViT + LoRA Parameter-efficient 
+fine-tuning, Scaling to 
+large models
+Needs careful low-rank 
+matrix design, Limited 
+flexibility for complex 
+tasks
+--- hit ---
+PaLI-Gemma2 is an advance version of Google Pathways Language 
+and Image (PaLI) model, expanding its capacity for multilingual and 
+multimodal pretraining. Employing optimized transformer layers and 
+cross-attention mechanisms. The model concurrently processes textual 
+and visual data, making it especially appropriate for tasks such as mul-
+tilingual image captioning, cross-lingual visual question answering, and 
+global content analysis. By integrating region-based visual embeddings 
+with multilingual corpora, PaLI-Gemma2 efficiently encapsulates fine-
+grained semantic associations across languages and visual inputs [12]. 
+Despite its strong capabilities, the model faces some challenges and 
+
+--- PAGE 20 TARGETED ---
+advancements over earlier foundational models like CLIP [5], ViL-
+BERT [65], VisualBERT [233], Flamingo [9], SimVLM [234], and 
+ALIGN [235]. Innovations are evident in architecture, pretraining 
+strategies, and fine-tuning methodologies, as well as in the use of 
+training data and scale for advancing multimodal tasks.
+4.6.1. Architectural innovations
+Recent VLMs have introduced sophisticated architectural enhance-
+ments to better integrate vision and language. For example, models 
+such as BLIP-3, Gemini, and Claude 3 leverage advanced cross-attention 
+and sparse transformer mechanisms, along with Mixture-of-Experts 
+--- hit ---
+ALIGN [235]. Innovations are evident in architecture, pretraining 
+strategies, and fine-tuning methodologies, as well as in the use of 
+training data and scale for advancing multimodal tasks.
+4.6.1. Architectural innovations
+Recent VLMs have introduced sophisticated architectural enhance-
+ments to better integrate vision and language. For example, models 
+such as BLIP-3, Gemini, and Claude 3 leverage advanced cross-attention 
+and sparse transformer mechanisms, along with Mixture-of-Experts 
+(MoE) designs, to enable efficient large-scale training. In contrast, ear-
+lier models like ViLBERT and VisualBERT [233] employed dual-stream 
+--- hit ---
+such as BLIP-3, Gemini, and Claude 3 leverage advanced cross-attention 
+and sparse transformer mechanisms, along with Mixture-of-Experts 
+(MoE) designs, to enable efficient large-scale training. In contrast, ear-
+lier models like ViLBERT and VisualBERT [233] employed dual-stream 
+or early-fusion transformers that lacked the scalability and precision 
+of recent models. GPT-4o and Claude 3 further push the frontier with 
+decoder-style multimodal transformers capable of real-time multimodal 
+interaction, including audio and video.
+4.6.2. Training scale and datasets
+Another significant shift is the use of more extensive, diverse 
+--- hit ---
+decoder-style multimodal transformers capable of real-time multimodal 
+interaction, including audio and video.
+4.6.2. Training scale and datasets
+Another significant shift is the use of more extensive, diverse 
+datasets. While pre-2023 models such as CLIP and ALIGN relied on 
+large but noisy image–text datasets (e.g., web-scale English-centric 
+corpora), post-2023 models like Gemini, PaliGemma 2, and Qwen 2.5 
+VL are trained on highly curated multilingual and synthetic datasets. 
+These include vision–language pairs across image, video, audio, and 
+document modalities, enabling better generalization and real-world 
+--- hit ---
+4.6.2. Training scale and datasets
+Another significant shift is the use of more extensive, diverse 
+datasets. While pre-2023 models such as CLIP and ALIGN relied on 
+large but noisy image–text datasets (e.g., web-scale English-centric 
+corpora), post-2023 models like Gemini, PaliGemma 2, and Qwen 2.5 
+VL are trained on highly curated multilingual and synthetic datasets. 
+These include vision–language pairs across image, video, audio, and 
+document modalities, enabling better generalization and real-world 
+applicability.
+4.6.3. Fine-tuning flexibility
+
+--- PAGE 21 TARGETED ---
+Table 7
+Comparative overview of vision–language models (Pre-2023 vs Post-2023).
+ Model Year Fine-tuning strategy Architecture Pretraining objective Pretrained backbone 
+model
+Vision 
+Encoder/Tokenizer
+Parameters Training data Key innovations  
+ ViLBERT [65] 2019 Full fine-tuning Two-stream 
+Transformer
+Image–text alignment 
+--- hit ---
+Vision 
+Encoder/Tokenizer
+Parameters Training data Key innovations  
+ ViLBERT [65] 2019 Full fine-tuning Two-stream 
+Transformer
+Image–text alignment 
+with co-attentional 
+modules
+BERT Object-based features 
+(Faster R-CNN)
+--- hit ---
+BERT Object-based features 
+(Faster R-CNN)
+110M COCO, Conceptual 
+Captions
+Co-attentional 
+streams for 
+image–text fusion
+ 
+ VisualBERT 
+[233]
+--- hit ---
+BERT Object-based features 
+(Faster R-CNN)
+110M COCO, VQA Shared encoder for 
+text and image 
+inputs
+ 
+ CLIP [5] 2021 Zero-shot inference Encoder–decoder Contrastive 
+image–text learning
+Pretrained from 
+scratch
+--- hit ---
+ CLIP [5] 2021 Zero-shot inference Encoder–decoder Contrastive 
+image–text learning
+Pretrained from 
+scratch
+ViT/ ResNet 63M-355M 400M web 
+image–text pairs
+Contrastive learning 
+with dual encoders; 
+broad generalization 
+via natural language 
+
+--- PAGE 22 TARGETED ---
+S. Danish et al.
+Fig. 11. Image A illustrates a sample from the VQA dataset [244], while Image B presents an example from the CLEVR dataset. The associated questions in CLEVR are crafted to 
+assess various aspects of visual reasoning, such as attribute identification, counting, comparative analysis, multi-focus attention, and logical operations [247]. Image C showcases 
+a sample from the Cityscapes dataset [248], while Image D displays a sample from the Open Images dataset [249].
+Visual Genome: A dataset with over 100,000 images annotated 
+with object level information and relationships between objects. It is 
+valuable for tasks such as scene graph generation and captioning.
+Applications: Image–text alignment, scene graph generation, object 
+relationships.
+--- hit ---
+Fig. 11. Image A illustrates a sample from the VQA dataset [244], while Image B presents an example from the CLEVR dataset. The associated questions in CLEVR are crafted to 
+assess various aspects of visual reasoning, such as attribute identification, counting, comparative analysis, multi-focus attention, and logical operations [247]. Image C showcases 
+a sample from the Cityscapes dataset [248], while Image D displays a sample from the Open Images dataset [249].
+Visual Genome: A dataset with over 100,000 images annotated 
+with object level information and relationships between objects. It is 
+valuable for tasks such as scene graph generation and captioning.
+Applications: Image–text alignment, scene graph generation, object 
+relationships.
+5.1.3. Segmentation datasets
+Segmentation datasets focus on pixel-level tasks, such as semantic 
+--- hit ---
+assess various aspects of visual reasoning, such as attribute identification, counting, comparative analysis, multi-focus attention, and logical operations [247]. Image C showcases 
+a sample from the Cityscapes dataset [248], while Image D displays a sample from the Open Images dataset [249].
+Visual Genome: A dataset with over 100,000 images annotated 
+with object level information and relationships between objects. It is 
+valuable for tasks such as scene graph generation and captioning.
+Applications: Image–text alignment, scene graph generation, object 
+relationships.
+5.1.3. Segmentation datasets
+Segmentation datasets focus on pixel-level tasks, such as semantic 
+segmentation and instance segmentation, where the goal is to assign 
+--- hit ---
+Applications: Image–text alignment, scene graph generation, object 
+relationships.
+5.1.3. Segmentation datasets
+Segmentation datasets focus on pixel-level tasks, such as semantic 
+segmentation and instance segmentation, where the goal is to assign 
+each pixel of an image to a specific category.
+ADE20K: A semantic segmentation dataset with 20,000 images, 
+covering various scene categories. It includes dense annotations for 
+both objects and parts, making it useful for detailed scene understand-
+ing [258].
+--- hit ---
+relationships.
+5.1.3. Segmentation datasets
+Segmentation datasets focus on pixel-level tasks, such as semantic 
+segmentation and instance segmentation, where the goal is to assign 
+each pixel of an image to a specific category.
+ADE20K: A semantic segmentation dataset with 20,000 images, 
+covering various scene categories. It includes dense annotations for 
+both objects and parts, making it useful for detailed scene understand-
+ing [258].
+Applications: Semantic segmentation, scene parsing, image seg-
+
+--- PAGE 23 TARGETED ---
+S. Danish et al.
+Fig. 12. Sample of the GMAI Dataset (Medical related) [267].
+Fig. 13. Data sample of the RS5M (Remote sensing Dataset) [254].
+Information Fusion 126 (2026) 103623 
+23 
+--- hit ---
+S. Danish et al.
+Fig. 12. Sample of the GMAI Dataset (Medical related) [267].
+Fig. 13. Data sample of the RS5M (Remote sensing Dataset) [254].
+Information Fusion 126 (2026) 103623 
+23 
+
+--- PAGE 24 TARGETED ---
+S. Danish et al.
+Table 8
+Dataset audit table: Overview of key datasets used in Vision–Language research.
+ Dataset Size Modalities Language(s) Category diversity Known 
+Biases/Limitations
+ 
+ MS COCO [69] 328K images Image–Text English 91 object categories Western-centric content; 
+limited cultural 
+diversity; object-centric 
+focus
+--- hit ---
+Table 8
+Dataset audit table: Overview of key datasets used in Vision–Language research.
+ Dataset Size Modalities Language(s) Category diversity Known 
+Biases/Limitations
+ 
+ MS COCO [69] 328K images Image–Text English 91 object categories Western-centric content; 
+limited cultural 
+diversity; object-centric 
+focus
+ 
+--- hit ---
+Dataset audit table: Overview of key datasets used in Vision–Language research.
+ Dataset Size Modalities Language(s) Category diversity Known 
+Biases/Limitations
+ 
+ MS COCO [69] 328K images Image–Text English 91 object categories Western-centric content; 
+limited cultural 
+diversity; object-centric 
+focus
+ 
+ VQAv2 [244] 204K images; 
+--- hit ---
+Biases/Limitations
+ 
+ MS COCO [69] 328K images Image–Text English 91 object categories Western-centric content; 
+limited cultural 
+diversity; object-centric 
+focus
+ 
+ VQAv2 [244] 204K images; 
+1.1M Q&A 
+pairs
+--- hit ---
+focus
+ 
+ VQAv2 [244] 204K images; 
+1.1M Q&A 
+pairs
+Image-QA English Everyday scenes with 
+varied Q&A
+Language bias; answer 
+priors; question 
+redundancy
+
+--- PAGE 25 TARGETED ---
+S. Danish et al.
+Table 9
+Datasets for vision–language models.
+ Dataset type Dataset 
+name
+Description Applications  
+ Detection
+Datasets
+COCO [69] Contains 330k images with annotations for object 
+detection and segmentation.
+--- hit ---
+Table 9
+Datasets for vision–language models.
+ Dataset type Dataset 
+name
+Description Applications  
+ Detection
+Datasets
+COCO [69] Contains 330k images with annotations for object 
+detection and segmentation.
+Object detection, instance segmentation, image 
+--- hit ---
+Description Applications  
+ Detection
+Datasets
+COCO [69] Contains 330k images with annotations for object 
+detection and segmentation.
+Object detection, instance segmentation, image 
+captioning.
+ 
+ Open
+Images 
+--- hit ---
+ Detection
+Datasets
+COCO [69] Contains 330k images with annotations for object 
+detection and segmentation.
+Object detection, instance segmentation, image 
+captioning.
+ 
+ Open
+Images 
+[249]
+--- hit ---
+captioning.
+ 
+ Open
+Images 
+[249]
+A large-scale dataset with over 9 million annotated 
+images for object detection.
+Object detection, image captioning, visual 
+relationship detection.
+ 
+
+--- PAGE 26 TARGETED ---
+S. Danish et al.
+Table 9 (continued).
+ Dataset type Dataset 
+name
+Description Applications  
+ RS5M [254] The RS5M dataset contains 5 million remote sensing 
+images with English descriptions, created by filtering 
+and captioning existing datasets. It bridges the gap 
+between general pre-trained Vision–Language Models 
+(VLMs) and domain-specific remote sensing tasks
+--- hit ---
+name
+Description Applications  
+ RS5M [254] The RS5M dataset contains 5 million remote sensing 
+images with English descriptions, created by filtering 
+and captioning existing datasets. It bridges the gap 
+between general pre-trained Vision–Language Models 
+(VLMs) and domain-specific remote sensing tasks
+Remote Sensing Classification, Cross-Modal Retrieval, 
+Semantic Localization,Domain-Specific Fine-Tuning.
+ 
+--- hit ---
+ RS5M [254] The RS5M dataset contains 5 million remote sensing 
+images with English descriptions, created by filtering 
+and captioning existing datasets. It bridges the gap 
+between general pre-trained Vision–Language Models 
+(VLMs) and domain-specific remote sensing tasks
+Remote Sensing Classification, Cross-Modal Retrieval, 
+Semantic Localization,Domain-Specific Fine-Tuning.
+ 
+ Visual
+Semantic
+--- hit ---
+images with English descriptions, created by filtering 
+and captioning existing datasets. It bridges the gap 
+between general pre-trained Vision–Language Models 
+(VLMs) and domain-specific remote sensing tasks
+Remote Sensing Classification, Cross-Modal Retrieval, 
+Semantic Localization,Domain-Specific Fine-Tuning.
+ 
+ Visual
+Semantic
+Role
+--- hit ---
+Multimodal
+Reasoning 
+Datasets
+CLEVR 
+[247]
+A synthetic dataset for visual reasoning and 
+answering compositional questions.
+Visual reasoning, question answering, synthetic data 
+generation.
+ 
+
+--- PAGE 27 TARGETED ---
+S. Danish et al.
+Table 10
+Overview of the VLM datasets for Medical domain.
+ Dataset name Image–Text 
+pairs
+QA pairs Description Application  
+ VQA-Med 2020 
+[271]
+7 3 VQA-Med-2020 is a dataset for Visual 
+Question Answering (VQA) and Visual 
+--- hit ---
+Table 10
+Overview of the VLM datasets for Medical domain.
+ Dataset name Image–Text 
+pairs
+QA pairs Description Application  
+ VQA-Med 2020 
+[271]
+7 3 VQA-Med-2020 is a dataset for Visual 
+Question Answering (VQA) and Visual 
+Question Generation (VQG) tasks in the 
+--- hit ---
+pairs
+QA pairs Description Application  
+ VQA-Med 2020 
+[271]
+7 3 VQA-Med-2020 is a dataset for Visual 
+Question Answering (VQA) and Visual 
+Question Generation (VQG) tasks in the 
+medical domain, specifically for radiology 
+images. It includes training, validation, and 
+test sets for answering questions about 
+--- hit ---
+ VQA-Med 2020 
+[271]
+7 3 VQA-Med-2020 is a dataset for Visual 
+Question Answering (VQA) and Visual 
+Question Generation (VQG) tasks in the 
+medical domain, specifically for radiology 
+images. It includes training, validation, and 
+test sets for answering questions about 
+medical abnormalities and generating 
+questions from images captioning.
+--- hit ---
+[271]
+7 3 VQA-Med-2020 is a dataset for Visual 
+Question Answering (VQA) and Visual 
+Question Generation (VQG) tasks in the 
+medical domain, specifically for radiology 
+images. It includes training, validation, and 
+test sets for answering questions about 
+medical abnormalities and generating 
+questions from images captioning.
+Medical Diagnosis,Clinical Decision Support, 
+
+--- PAGE 28 TARGETED ---
+S. Danish et al.
+Table 10 (continued).
+ Dataset name Image–Text 
+pairs
+QA pairs Description Application  
+ 3D-RAD [279] 7 3 3D-RAD is a large-scale dataset for 3D 
+Medical VQA using **over 4,000 radiology 
+CT scans** and **more than 12,000 QA 
+pairs**. It encompasses diverse VQA tasks, 
+including anomaly detection, medical 
+--- hit ---
+pairs
+QA pairs Description Application  
+ 3D-RAD [279] 7 3 3D-RAD is a large-scale dataset for 3D 
+Medical VQA using **over 4,000 radiology 
+CT scans** and **more than 12,000 QA 
+pairs**. It encompasses diverse VQA tasks, 
+including anomaly detection, medical 
+computation, existence detection, and 
+multi-temporal analysis, addressing 
+limitations of 2D Med-VQA.
+--- hit ---
+QA pairs Description Application  
+ 3D-RAD [279] 7 3 3D-RAD is a large-scale dataset for 3D 
+Medical VQA using **over 4,000 radiology 
+CT scans** and **more than 12,000 QA 
+pairs**. It encompasses diverse VQA tasks, 
+including anomaly detection, medical 
+computation, existence detection, and 
+multi-temporal analysis, addressing 
+limitations of 2D Med-VQA.
+3D Medical VQA, Multi-temporal Diagnosis, 
+--- hit ---
+Medical VQA using **over 4,000 radiology 
+CT scans** and **more than 12,000 QA 
+pairs**. It encompasses diverse VQA tasks, 
+including anomaly detection, medical 
+computation, existence detection, and 
+multi-temporal analysis, addressing 
+limitations of 2D Med-VQA.
+3D Medical VQA, Multi-temporal Diagnosis, 
+Clinical Decision Support, 3D Medical Image 
+Understanding.
+--- hit ---
+computation, existence detection, and 
+multi-temporal analysis, addressing 
+limitations of 2D Med-VQA.
+3D Medical VQA, Multi-temporal Diagnosis, 
+Clinical Decision Support, 3D Medical Image 
+Understanding.
+ 
+ ImageCLEFmed-
+MEDVQA-GI 
+[280]
+
+--- PAGE 29 TARGETED ---
+S. Danish et al.
+Table 11
+Comparison of models across Image Captioning, VQA, and Retrieval tasks.
+ Model Task Dataset Metric Score  
+ Unified VLP [287] Image Captioning COCO, 
+Flickr30K
+BLEU-4/CIDEr 36.5/116.9 (COCO), 
+30.1/67.4 (Flickr)
+ 
+ VinVL [288] Image Captioning COCO BLEU-4/CIDEr 40.9/140.9  
+--- hit ---
+Table 11
+Comparison of models across Image Captioning, VQA, and Retrieval tasks.
+ Model Task Dataset Metric Score  
+ Unified VLP [287] Image Captioning COCO, 
+Flickr30K
+BLEU-4/CIDEr 36.5/116.9 (COCO), 
+30.1/67.4 (Flickr)
+ 
+ VinVL [288] Image Captioning COCO BLEU-4/CIDEr 40.9/140.9  
+ SimVLM [289] Image Captioning COCO BLEU-4/CIDEr 40.3/143.3  
+--- hit ---
+Comparison of models across Image Captioning, VQA, and Retrieval tasks.
+ Model Task Dataset Metric Score  
+ Unified VLP [287] Image Captioning COCO, 
+Flickr30K
+BLEU-4/CIDEr 36.5/116.9 (COCO), 
+30.1/67.4 (Flickr)
+ 
+ VinVL [288] Image Captioning COCO BLEU-4/CIDEr 40.9/140.9  
+ SimVLM [289] Image Captioning COCO BLEU-4/CIDEr 40.3/143.3  
+ BLIP [34] Image Captioning COCO BLEU-4/CIDEr 41.7/143.5  
+--- hit ---
+ Model Task Dataset Metric Score  
+ Unified VLP [287] Image Captioning COCO, 
+Flickr30K
+BLEU-4/CIDEr 36.5/116.9 (COCO), 
+30.1/67.4 (Flickr)
+ 
+ VinVL [288] Image Captioning COCO BLEU-4/CIDEr 40.9/140.9  
+ SimVLM [289] Image Captioning COCO BLEU-4/CIDEr 40.3/143.3  
+ BLIP [34] Image Captioning COCO BLEU-4/CIDEr 41.7/143.5  
+ RegionCLIP [290] Image Captioning COCO BLEU-4/CIDEr 40.5/139.2  
+--- hit ---
+ Unified VLP [287] Image Captioning COCO, 
+Flickr30K
+BLEU-4/CIDEr 36.5/116.9 (COCO), 
+30.1/67.4 (Flickr)
+ 
+ VinVL [288] Image Captioning COCO BLEU-4/CIDEr 40.9/140.9  
+ SimVLM [289] Image Captioning COCO BLEU-4/CIDEr 40.3/143.3  
+ BLIP [34] Image Captioning COCO BLEU-4/CIDEr 41.7/143.5  
+ RegionCLIP [290] Image Captioning COCO BLEU-4/CIDEr 40.5/139.2  
+ BLIP-2 [237] Image Captioning COCO, NoCaps BLEU-4/CIDEr 43.7/123.7 (COCO), – 
+
+--- PAGE 30 TARGETED ---
+S. Danish et al.
+Table 12
+Comprehensive overview of benchmark datasets for vision language models.
+ Dataset name Description Data information  
+ SEEDBench Series [305] Image captioning and multi-modal reasoning tasks. 73K images/questions  
+ VLM4Bio [255] Evaluates the effectiveness of vision–language models in 
+answering biologically relevant questions using images of fishes, 
+birds, and butterflies across five tasks.
+469K QA pairs, 30K images  
+ MM-Vet [306] Visual reasoning tasks for VLMs –  
+--- hit ---
+Table 12
+Comprehensive overview of benchmark datasets for vision language models.
+ Dataset name Description Data information  
+ SEEDBench Series [305] Image captioning and multi-modal reasoning tasks. 73K images/questions  
+ VLM4Bio [255] Evaluates the effectiveness of vision–language models in 
+answering biologically relevant questions using images of fishes, 
+birds, and butterflies across five tasks.
+469K QA pairs, 30K images  
+ MM-Vet [306] Visual reasoning tasks for VLMs –  
+ MMBench Series [307] MMbenchmark is the collection of datasets. It is designed to 
+--- hit ---
+Comprehensive overview of benchmark datasets for vision language models.
+ Dataset name Description Data information  
+ SEEDBench Series [305] Image captioning and multi-modal reasoning tasks. 73K images/questions  
+ VLM4Bio [255] Evaluates the effectiveness of vision–language models in 
+answering biologically relevant questions using images of fishes, 
+birds, and butterflies across five tasks.
+469K QA pairs, 30K images  
+ MM-Vet [306] Visual reasoning tasks for VLMs –  
+ MMBench Series [307] MMbenchmark is the collection of datasets. It is designed to 
+evaluate the fine-grained capabilities of Vision–Language 
+--- hit ---
+469K QA pairs, 30K images  
+ MM-Vet [306] Visual reasoning tasks for VLMs –  
+ MMBench Series [307] MMbenchmark is the collection of datasets. It is designed to 
+evaluate the fine-grained capabilities of Vision–Language 
+Models (VLMs) across multi-modal tasks.
+6.4 k samples  
+ MME [308] Robustness testing for multi-modal tasks. –  
+ MMVet V2 [309] MM-Vet v2 is a benchmark dataset for integrated multimodal 
+reasoning, challenging VLMs with diverse tasks in real-world 
+and abstract scenarios to advance vision–language 
+--- hit ---
+Models (VLMs) across multi-modal tasks.
+6.4 k samples  
+ MME [308] Robustness testing for multi-modal tasks. –  
+ MMVet V2 [309] MM-Vet v2 is a benchmark dataset for integrated multimodal 
+reasoning, challenging VLMs with diverse tasks in real-world 
+and abstract scenarios to advance vision–language 
+understanding.
+3K tasks with diverse multimodal questions  
+  [310] A diagnostic benchmark for evaluating large vision–language 
+models on entangled language hallucination and visual illusion, 
+
+--- PAGE 31 TARGETED ---
+S. Danish et al.
+Table 12 (continued).
+ Dataset name Description Data information  
+ MMInA [320] Benchmark for evaluating VLMs and LLM agents on multihop 
+reasoning tasks involving multimodal data (images + text) 
+across multiple domains (e.g., webpages, Wikipedia, shopping).
+1,050 tasks, 6 subfolders  
+ MileBench [321] Benchmarks VLMs on multimodal long-context tasks requiring 
+comprehension and generation, using 6,440 samples with an 
+average of 15.2 images and 422.3 words per sample.
+--- hit ---
+Table 12 (continued).
+ Dataset name Description Data information  
+ MMInA [320] Benchmark for evaluating VLMs and LLM agents on multihop 
+reasoning tasks involving multimodal data (images + text) 
+across multiple domains (e.g., webpages, Wikipedia, shopping).
+1,050 tasks, 6 subfolders  
+ MileBench [321] Benchmarks VLMs on multimodal long-context tasks requiring 
+comprehension and generation, using 6,440 samples with an 
+average of 15.2 images and 422.3 words per sample.
+6,440 samples  
+--- hit ---
+across multiple domains (e.g., webpages, Wikipedia, shopping).
+1,050 tasks, 6 subfolders  
+ MileBench [321] Benchmarks VLMs on multimodal long-context tasks requiring 
+comprehension and generation, using 6,440 samples with an 
+average of 15.2 images and 422.3 words per sample.
+6,440 samples  
+• ROUGE (Recall-Oriented Understudy for Gisting Evaluation):
+ROUGE evaluates the overlap of textual units, such as n-grams, 
+word sequences, or sentence pairs, between the generated and 
+reference text. Although it is used primarily for text summariza-
+--- hit ---
+average of 15.2 images and 422.3 words per sample.
+6,440 samples  
+• ROUGE (Recall-Oriented Understudy for Gisting Evaluation):
+ROUGE evaluates the overlap of textual units, such as n-grams, 
+word sequences, or sentence pairs, between the generated and 
+reference text. Although it is used primarily for text summariza-
+tion, ROUGE is increasingly applied to vision language tasks that 
+require textual alignment, such as image captioning and text-to-
+image retrieval [322]. It measures recall, ensuring the model does 
+not overlook important details in reference captions.
+--- hit ---
+not overlook important details in reference captions.
+While these metrics have been instrumental in evaluating Vision–
+Language Models, they also present limitations. For example, BLEU 
+and CIDEr can overemphasize exact word matches and fail to capture 
+the broader semantic meaning of captions. SPICE, on the other hand, 
+provides richer semantic evaluation, but still has room for improvement 
+in accounting for more complex multimodal reasoning.
+6.1.1. Benchmarks
+The development of robust benchmarks has been essential for evalu-
+ating the performance of Vision Language Models across various tasks. 
+
+--- PAGE 32 TARGETED ---
+S. Danish et al.
+7.1. Key challenge
+Robustness, Bias, and Ethical Concerns in VLM Development
+One of the key challenges in developing VLMs is ensuring their ro-
+bustness and fairness across diverse environments and real time appli-
+cations. A critical issue arises from biases embedded in both training 
+datasets and model architectures, which can produce in discriminatory 
+or unreliable results. For example, widely used datasets such as MS-
+COCO [69] and VQA [260] have been found to contain biases related to 
+--- hit ---
+7.1. Key challenge
+Robustness, Bias, and Ethical Concerns in VLM Development
+One of the key challenges in developing VLMs is ensuring their ro-
+bustness and fairness across diverse environments and real time appli-
+cations. A critical issue arises from biases embedded in both training 
+datasets and model architectures, which can produce in discriminatory 
+or unreliable results. For example, widely used datasets such as MS-
+COCO [69] and VQA [260] have been found to contain biases related to 
+gender, race, and cultural representations. When these biases are incor-
+porated into VLMs, they can reinforce harmful stereotypes, particularly 
+--- hit ---
+One of the key challenges in developing VLMs is ensuring their ro-
+bustness and fairness across diverse environments and real time appli-
+cations. A critical issue arises from biases embedded in both training 
+datasets and model architectures, which can produce in discriminatory 
+or unreliable results. For example, widely used datasets such as MS-
+COCO [69] and VQA [260] have been found to contain biases related to 
+gender, race, and cultural representations. When these biases are incor-
+porated into VLMs, they can reinforce harmful stereotypes, particularly 
+when deployed in critical real time applications such as autonomous 
+healthcare, driving or law enforcement [328]. Furthermore, the eth-
+--- hit ---
+bustness and fairness across diverse environments and real time appli-
+cations. A critical issue arises from biases embedded in both training 
+datasets and model architectures, which can produce in discriminatory 
+or unreliable results. For example, widely used datasets such as MS-
+COCO [69] and VQA [260] have been found to contain biases related to 
+gender, race, and cultural representations. When these biases are incor-
+porated into VLMs, they can reinforce harmful stereotypes, particularly 
+when deployed in critical real time applications such as autonomous 
+healthcare, driving or law enforcement [328]. Furthermore, the eth-
+ical concerns surrounding the use of these models in sensitive fields 
+--- hit ---
+cations. A critical issue arises from biases embedded in both training 
+datasets and model architectures, which can produce in discriminatory 
+or unreliable results. For example, widely used datasets such as MS-
+COCO [69] and VQA [260] have been found to contain biases related to 
+gender, race, and cultural representations. When these biases are incor-
+porated into VLMs, they can reinforce harmful stereotypes, particularly 
+when deployed in critical real time applications such as autonomous 
+healthcare, driving or law enforcement [328]. Furthermore, the eth-
+ical concerns surrounding the use of these models in sensitive fields 
+where biased or inaccurate results could lead to serious consequences 
+
+--- PAGE 33 TARGETED ---
+S. Danish et al.
+Integrating Symbolic Reasoning and External Knowledge: An-
+other interesting research direction for future VLM research is the in-
+tegration of symbolic reasoning and structured knowledge. Combining 
+VLMs with neuro-symbolic modules such as Neural Module Networks or 
+knowledge graph-augmented models enables explicit logical reasoning 
+beyond surface-level correlations. Applications like scene graph-based 
+VQA or ontology-guided image captioning benefit from this synergy. 
+These systems can be effectively implemented through graph atten-
+tion networks or knowledge-injection layers within transformer-based 
+--- hit ---
+knowledge graph-augmented models enables explicit logical reasoning 
+beyond surface-level correlations. Applications like scene graph-based 
+VQA or ontology-guided image captioning benefit from this synergy. 
+These systems can be effectively implemented through graph atten-
+tion networks or knowledge-injection layers within transformer-based 
+architectures, bridging perceptual understanding with interpretable, 
+knowledge-grounded reasoning.
+8. Discussion
+The evolution of Vision–Language Models has been marked by 
+significant progress in architectural innovation, task adaptability, and 
+--- hit ---
+architectures, bridging perceptual understanding with interpretable, 
+knowledge-grounded reasoning.
+8. Discussion
+The evolution of Vision–Language Models has been marked by 
+significant progress in architectural innovation, task adaptability, and 
+multimodal representation learning. Our analysis of 115 publications 
+reveals that recent VLMs have transitioned from monolithic, fully fine-
+tuned systems toward more modular, parameter-efficient frameworks 
+driven by prompt engineering and adapter-based methods.
+A key insight from this survey is the growing preference for
+--- hit ---
+modules, which significantly reduce computational costs while main-
+taining competitive performance. These methods are particularly valu-
+able in scenarios where resource constraints limit the feasibility of 
+full model retraining. Similarly, prompt engineering has emerged as a 
+lightweight yet powerful method for steering pretrained models toward 
+task-specific behavior. Soft and hybrid prompts, in particular, have 
+shown notable improvements in low-resource and few-shot learning 
+tasks, underscoring their utility in real-world applications.
+The surveyed VLMs demonstrate increasingly strong performance 
+across a range of multimodal tasks including image captioning, VQA, 
+--- hit ---
+taining competitive performance. These methods are particularly valu-
+able in scenarios where resource constraints limit the feasibility of 
+full model retraining. Similarly, prompt engineering has emerged as a 
+lightweight yet powerful method for steering pretrained models toward 
+task-specific behavior. Soft and hybrid prompts, in particular, have 
+shown notable improvements in low-resource and few-shot learning 
+tasks, underscoring their utility in real-world applications.
+The surveyed VLMs demonstrate increasingly strong performance 
+across a range of multimodal tasks including image captioning, VQA, 
+and retrieval. However, the lack of standardization in evaluation bench-
+
+--- PAGE 34 TARGETED ---
+S. Danish et al.
+Table A.1
+Vision–Language model training configurations.
+ Model name Batch size Learning rate Epochs/Tokens Hardware Training 
+strategy
+ 
+ CLIP (e.g., 
+ViT-L/14)
+32k–65k 1e-3 (cos. 
+decay)
+--- hit ---
+Table A.1
+Vision–Language model training configurations.
+ Model name Batch size Learning rate Epochs/Tokens Hardware Training 
+strategy
+ 
+ CLIP (e.g., 
+ViT-L/14)
+32k–65k 1e-3 (cos. 
+decay)
+∼32 Epochs 
+--- hit ---
+GPUs
+Contrastive 
+pretraining on 
+image–text 
+pairs for 
+zero-shot 
+transfer
+ 
+ Flamingo 
+(9B/80B)
+--- hit ---
+ GIT 512–2048 ∼1e-4 (warm + 
+decay)
+Pretraining on 
+100B + tokens
+100s A100 
+GPUs
+Unified VL 
+modeling for 
+captioning, 
+VQA
+--- hit ---
+modeling for 
+captioning, 
+VQA
+ 
+ Med-PaLMM N/A N/A Billions of 
+tokens
+Google TPU 
+Pods
+Fine-tuned on 
+multimodal 
+
+--- PAGE 35 TARGETED ---
+[16] Muhammad Sohail Danish, Muhammad Akhtar Munir, Syed Roshaan Ali 
+Shah, Kartik Kuckreja, Fahad Shahbaz Khan, Paolo Fraccaro, Alexandre La-
+coste, Salman Khan, GEOBench-VLM: Benchmarking vision-language models for 
+geospatial tasks, 2024, arXiv preprint arXiv:2411.19325.
+[17] Zhenjie Cao, Zhuo Deng, Jie Ma, Jintao Hu, Lan Ma, MammoVLM: A generative 
+large vision-language model for mammography-related diagnostic assistance, 
+Inf. Fusion (2025) 102998.
+[18] Kaining Ying, Fanqing Meng, Jin Wang, Zhiqian Li, Han Lin, Yue Yang, Hao 
+Zhang, Wenbo Zhang, Yuqi Lin, Shuo Liu, et al., Mmt-bench: A comprehensive 
+multimodal benchmark for evaluating large vision-language models towards 
+--- hit ---
+[18] Kaining Ying, Fanqing Meng, Jin Wang, Zhiqian Li, Han Lin, Yue Yang, Hao 
+Zhang, Wenbo Zhang, Yuqi Lin, Shuo Liu, et al., Mmt-bench: A comprehensive 
+multimodal benchmark for evaluating large vision-language models towards 
+multitask agi, 2024, arXiv preprint arXiv:2404.16006.
+[19] Tomas Horych, Christoph Mandl, Terry Ruas, Andre Greiner-Petter, Bela Gipp, 
+Akiko Aizawa, Timo Spinde, The promises and pitfalls of LLM annotations in 
+dataset labeling: a case study on media bias detection, 2024, arXiv preprint 
+arXiv:2411.11081.
+[20] Florian Bordes, Richard Yuanzhe Pang, Anurag Ajay, Alexander C. Li, Adrien 
+Bardes, Suzanne Petryk, Oscar Mañas, Zhiqiu Lin, Anas Mahmoud, Bargav 
+--- hit ---
+[19] Tomas Horych, Christoph Mandl, Terry Ruas, Andre Greiner-Petter, Bela Gipp, 
+Akiko Aizawa, Timo Spinde, The promises and pitfalls of LLM annotations in 
+dataset labeling: a case study on media bias detection, 2024, arXiv preprint 
+arXiv:2411.11081.
+[20] Florian Bordes, Richard Yuanzhe Pang, Anurag Ajay, Alexander C. Li, Adrien 
+Bardes, Suzanne Petryk, Oscar Mañas, Zhiqiu Lin, Anas Mahmoud, Bargav 
+Jayaraman, et al., An introduction to vision-language modeling, 2024, arXiv 
+preprint arXiv:2405.17247.
+[21] Akash Ghosh, Arkadeep Acharya, Sriparna Saha, Vinija Jain, Aman Chadha, 
+Exploring the frontier of vision-language models: A survey of current 
+--- hit ---
+[21] Akash Ghosh, Arkadeep Acharya, Sriparna Saha, Vinija Jain, Aman Chadha, 
+Exploring the frontier of vision-language models: A survey of current 
+methodologies and future directions, 2024, arXiv preprint arXiv:2404.07214.
+[22] Nicholas Moratelli, Marcella Cornia, Lorenzo Baraldi, Rita Cucchiara, Fluent 
+and accurate image captioning with a self-trained reward model, 2024, arXiv 
+preprint arXiv:2408.16827.
+[23] Raihan Kabir, Naznin Haque, Md Saiful Islam, et al., A comprehensive survey 
+on visual question answering datasets and algorithms, 2024, arXiv preprint 
+arXiv:2411.11150.
+[24] Michihiro Yasunaga, Armen Aghajanyan, Weijia Shi, Richard James, Jure 
+--- hit ---
+methodologies and future directions, 2024, arXiv preprint arXiv:2404.07214.
+[22] Nicholas Moratelli, Marcella Cornia, Lorenzo Baraldi, Rita Cucchiara, Fluent 
+and accurate image captioning with a self-trained reward model, 2024, arXiv 
+preprint arXiv:2408.16827.
+[23] Raihan Kabir, Naznin Haque, Md Saiful Islam, et al., A comprehensive survey 
+on visual question answering datasets and algorithms, 2024, arXiv preprint 
+arXiv:2411.11150.
+[24] Michihiro Yasunaga, Armen Aghajanyan, Weijia Shi, Richard James, Jure 
+Leskovec, Percy Liang, Mike Lewis, Luke Zettlemoyer, Wen-Tau Yih, Retrieval-
+augmented multimodal language modeling, in: International Conference on 
+
+--- PAGE 36 TARGETED ---
+S. Danish et al.
+[63] Sungyeon Kim, Boseung Jeong, Donghyun Kim, Suha Kwak, Efficient and 
+versatile robust fine-tuning of zero-shot models, in: European Conference on 
+Computer Vision, Springer, 2025, pp. 440–458.
+[64] Xiaoqing Zhao, Miaomiao Xu, Wushour Silamu, Yanbing Li, CLIP-llama: A new 
+approach for scene text recognition with a pre-trained vision-language model 
+and a pre-trained language model, Sensors 24 (22) (2024) 7371.
+[65] Jiasen Lu, Dhruv Batra, Devi Parikh, Stefan Lee, Vilbert: Pretraining task-
+agnostic visiolinguistic representations for vision-and-language tasks, Adv. 
+--- hit ---
+Computer Vision, Springer, 2025, pp. 440–458.
+[64] Xiaoqing Zhao, Miaomiao Xu, Wushour Silamu, Yanbing Li, CLIP-llama: A new 
+approach for scene text recognition with a pre-trained vision-language model 
+and a pre-trained language model, Sensors 24 (22) (2024) 7371.
+[65] Jiasen Lu, Dhruv Batra, Devi Parikh, Stefan Lee, Vilbert: Pretraining task-
+agnostic visiolinguistic representations for vision-and-language tasks, Adv. 
+Neural Inf. Process. Syst. 32 (2019).
+[66] Yi Xin, Siqi Luo, Haodi Zhou, Junlong Du, Xiaohong Liu, Yue Fan, Qing Li, 
+Yuntao Du, Parameter-efficient fine-tuning for pre-trained vision models: A 
+survey, 2024, arXiv preprint arXiv:2402.02242.
+--- hit ---
+[64] Xiaoqing Zhao, Miaomiao Xu, Wushour Silamu, Yanbing Li, CLIP-llama: A new 
+approach for scene text recognition with a pre-trained vision-language model 
+and a pre-trained language model, Sensors 24 (22) (2024) 7371.
+[65] Jiasen Lu, Dhruv Batra, Devi Parikh, Stefan Lee, Vilbert: Pretraining task-
+agnostic visiolinguistic representations for vision-and-language tasks, Adv. 
+Neural Inf. Process. Syst. 32 (2019).
+[66] Yi Xin, Siqi Luo, Haodi Zhou, Junlong Du, Xiaohong Liu, Yue Fan, Qing Li, 
+Yuntao Du, Parameter-efficient fine-tuning for pre-trained vision models: A 
+survey, 2024, arXiv preprint arXiv:2402.02242.
+[67] Yang Bai, Yang Zhou, Jun Zhou, Rick Siow Mong Goh, Daniel Shu Wei Ting, 
+--- hit ---
+approach for scene text recognition with a pre-trained vision-language model 
+and a pre-trained language model, Sensors 24 (22) (2024) 7371.
+[65] Jiasen Lu, Dhruv Batra, Devi Parikh, Stefan Lee, Vilbert: Pretraining task-
+agnostic visiolinguistic representations for vision-and-language tasks, Adv. 
+Neural Inf. Process. Syst. 32 (2019).
+[66] Yi Xin, Siqi Luo, Haodi Zhou, Junlong Du, Xiaohong Liu, Yue Fan, Qing Li, 
+Yuntao Du, Parameter-efficient fine-tuning for pre-trained vision models: A 
+survey, 2024, arXiv preprint arXiv:2402.02242.
+[67] Yang Bai, Yang Zhou, Jun Zhou, Rick Siow Mong Goh, Daniel Shu Wei Ting, 
+Yong Liu, From generalist to specialist: Adapting vision language models via 
+--- hit ---
+Neural Inf. Process. Syst. 32 (2019).
+[66] Yi Xin, Siqi Luo, Haodi Zhou, Junlong Du, Xiaohong Liu, Yue Fan, Qing Li, 
+Yuntao Du, Parameter-efficient fine-tuning for pre-trained vision models: A 
+survey, 2024, arXiv preprint arXiv:2402.02242.
+[67] Yang Bai, Yang Zhou, Jun Zhou, Rick Siow Mong Goh, Daniel Shu Wei Ting, 
+Yong Liu, From generalist to specialist: Adapting vision language models via 
+task-specific visual instruction tuning, 2024, arXiv preprint arXiv:2410.06456.
+[68] Fan Liu, Tianshu Zhang, Wenwen Dai, Chuanyi Zhang, Wenwen Cai, Xiaocong 
+Zhou, Delong Chen, Few-shot adaptation of multi-modal foundation models: A 
+survey, Artif. Intell. Rev. 57 (10) (2024) 268.
+
+--- PAGE 37 TARGETED ---
+[111] Jameel Abdul Samadh, Mohammad Hanan Gani, Noor Hussein, Muham-
+mad Uzair Khattak, Muhammad Muzammal Naseer, Fahad Shahbaz Khan, 
+Salman H Khan, Align your prompts: Test-time prompting with distribution 
+alignment for zero-shot generalization, Adv. Neural Inf. Process. Syst. 36 
+(2024).
+[112] Maxime Zanella, Ismail Ben Ayed, Low-rank few-shot adaptation of vision-
+language models, in: Proceedings of the IEEE/CVF Conference on Computer 
+Vision and Pattern Recognition, 2024, pp. 1593–1603.
+[113] Dongjun Lee, Seokwon Song, Jihee Suh, Joonmyeong Choi, Sanghyeok Lee, 
+Hyunwoo J. Kim, Read-only prompt optimization for vision-language few-
+--- hit ---
+[116] Marius Mosbach, Tiago Pimentel, Shauli Ravfogel, Dietrich Klakow, Yanai 
+Elazar, Few-shot fine-tuning vs. in-context learning: A fair comparison and 
+evaluation, 2023, arXiv preprint arXiv:2305.16938.
+[117] Linhao Qu, Dingkang Yang, Dan Huang, Qinhao Guo, Rongkui Luo, Shaoting 
+Zhang, Xiaosong Wang, Pathology-knowledge enhanced multi-instance prompt 
+learning for few-shot whole slide image classification, in: European Conference 
+on Computer Vision, Springer, 2025, pp. 196–212.
+[118] Shounak Sural, Ragunathan Rajkumar, et al., ContextVLM: Zero-shot and few-
+shot context understanding for autonomous driving using vision language 
+models, 2024, arXiv preprint arXiv:2409.00301.
+--- hit ---
+[123] Yinghui Xing, Qirui Wu, De Cheng, Shizhou Zhang, Guoqiang Liang, Peng 
+Wang, Yanning Zhang, Dual modality prompt tuning for vision-language 
+pre-trained model, IEEE Trans. Multimed. (2023).
+[124] Muhammad Uzair Khattak, Hanoona Rasheed, Muhammad Maaz, Salman Khan, 
+Fahad Shahbaz Khan, Maple: Multi-modal prompt learning, in: Proceedings of 
+the IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2023, 
+pp. 19113–19122.
+[125] Eulrang Cho, Jooyeon Kim, Hyunwoo J. Kim, Distribution-aware prompt tuning 
+for vision-language models, in: Proceedings of the IEEE/CVF International 
+Conference on Computer Vision, 2023, pp. 22004–22013.
+--- hit ---
+Vision and Pattern Recognition, CVPR, 2022.
+[127] Yuan Yao, Ao Zhang, Zhengyan Zhang, Zhiyuan Liu, Tat-Seng Chua, Maosong 
+Sun, Cpt: Colorful prompt tuning for pre-trained vision-language models, AI 
+Open 5 (2024) 30–38.
+[128] Yongming Rao, Wenliang Zhao, Guangyi Chen, Yansong Tang, Zheng Zhu, 
+Guan Huang, Jie Zhou, Jiwen Lu, Denseclip: Language-guided dense prediction 
+with context-aware prompting, in: Proceedings of the IEEE/CVF Conference on 
+Computer Vision and Pattern Recognition, 2022, pp. 18082–18091.
+[129] Woojeong Jin, Yu Cheng, Yelong Shen, Weizhu Chen, Xiang Ren, A good 
+prompt is worth millions of parameters: Low-resource prompt-based learning 
+--- hit ---
+[127] Yuan Yao, Ao Zhang, Zhengyan Zhang, Zhiyuan Liu, Tat-Seng Chua, Maosong 
+Sun, Cpt: Colorful prompt tuning for pre-trained vision-language models, AI 
+Open 5 (2024) 30–38.
+[128] Yongming Rao, Wenliang Zhao, Guangyi Chen, Yansong Tang, Zheng Zhu, 
+Guan Huang, Jie Zhou, Jiwen Lu, Denseclip: Language-guided dense prediction 
+with context-aware prompting, in: Proceedings of the IEEE/CVF Conference on 
+Computer Vision and Pattern Recognition, 2022, pp. 18082–18091.
+[129] Woojeong Jin, Yu Cheng, Yelong Shen, Weizhu Chen, Xiang Ren, A good 
+prompt is worth millions of parameters: Low-resource prompt-based learning 
+for vision-language models, 2021, arXiv preprint arXiv:2110.08484.
+
+--- PAGE 38 TARGETED ---
+generation-based event extraction, in: International Conference on Knowledge 
+Science, Engineering and Management, Springer, 2023, pp. 374–386.
+[163] Qinglong Cao, Yuntian Chen, Lu Lu, Hao Sun, Zhenzhong Zeng, Xiaokang Yang, 
+Dongxiao Zhang, Promoting AI equity in science: Generalized domain prompt 
+learning for accessible VLM research, 2024, arXiv preprint arXiv:2405.08668.
+[164] Xiaohong Liu, Guoxing Yang, Yulin Luo, Jiaji Mao, Xiang Zhang, Ming Gao, 
+Shanghang Zhang, Jun Shen, Guangyu Wang, Expert-level vision-language 
+foundation model for real-world radiology and comprehensive evaluation, 2024, 
+arXiv preprint arXiv:2409.16183.
+[165] Ji Lin, Hongxu Yin, Wei Ping, Pavlo Molchanov, Mohammad Shoeybi, Song 
+--- hit ---
+[164] Xiaohong Liu, Guoxing Yang, Yulin Luo, Jiaji Mao, Xiang Zhang, Ming Gao, 
+Shanghang Zhang, Jun Shen, Guangyu Wang, Expert-level vision-language 
+foundation model for real-world radiology and comprehensive evaluation, 2024, 
+arXiv preprint arXiv:2409.16183.
+[165] Ji Lin, Hongxu Yin, Wei Ping, Pavlo Molchanov, Mohammad Shoeybi, Song 
+Han, Vila: On pre-training for visual language models, in: Proceedings of the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2024, pp. 
+26689–26699.
+[166] Rongyu Zhang, Zefan Cai, Huanrui Yang, Zidong Liu, Denis Gudovskiy, To-
+moyuki Okuno, Yohei Nakata, Kurt Keutzer, Baobao Chang, Yuan Du, et al., 
+--- hit ---
+arXiv preprint arXiv:2409.16183.
+[165] Ji Lin, Hongxu Yin, Wei Ping, Pavlo Molchanov, Mohammad Shoeybi, Song 
+Han, Vila: On pre-training for visual language models, in: Proceedings of the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2024, pp. 
+26689–26699.
+[166] Rongyu Zhang, Zefan Cai, Huanrui Yang, Zidong Liu, Denis Gudovskiy, To-
+moyuki Okuno, Yohei Nakata, Kurt Keutzer, Baobao Chang, Yuan Du, et al., 
+VeCAF: Vision-language collaborative active finetuning with training objective 
+awareness, in: Proceedings of the 32nd ACM International Conference on 
+Multimedia, 2024, pp. 5451–5459.
+--- hit ---
+[166] Rongyu Zhang, Zefan Cai, Huanrui Yang, Zidong Liu, Denis Gudovskiy, To-
+moyuki Okuno, Yohei Nakata, Kurt Keutzer, Baobao Chang, Yuan Du, et al., 
+VeCAF: Vision-language collaborative active finetuning with training objective 
+awareness, in: Proceedings of the 32nd ACM International Conference on 
+Multimedia, 2024, pp. 5451–5459.
+[167] Thong Nguyen, Yi Bin, Xiaobao Wu, Xinshuai Dong, Zhiyuan Hu, Khoi Le, Cong-
+Duy Nguyen, See-Kiong Ng, Luu Anh Tuan, Meta-optimized angular margin 
+contrastive framework for video-language representation learning, in: European 
+Conference on Computer Vision, Springer, 2025, pp. 77–98.
+[168] Ali Abdollah, Amirmohammad Izadi, Armin Saghafian, Reza Vahidimajd, 
+--- hit ---
+models, 2024, arXiv preprint arXiv:2409.08206.
+[169] Ziyang Song, Qincheng Lu, He Zhu, Yue Li, Bidirectional generative pre-
+training for improving time series representation learning, 2024, arXiv preprint 
+arXiv:2402.09558.
+[170] Yi Zhang, Ce Zhang, Ke Yu, Yushun Tang, Zhihai He, Concept-guided prompt 
+learning for generalization in vision-language models, in: Proceedings of the 
+AAAI Conference on Artificial Intelligence, vol. 38, 2024, pp. 7377–7386.
+[171] Shaozhi Wu, Han Li, Xingang Liu, Dan Tian, Han Su, Class-aware patch based 
+contrastive learning for medical image segmentation, in: 2024 International 
+Joint Conference on Neural Networks, IJCNN, IEEE, 2024, pp. 1–9.
+
+--- PAGE 39 TARGETED ---
+pp. 23681–23690.
+[216] Yunan Zeng, Yan Huang, Jinjin Zhang, Zequn Jie, Zhenhua Chai, Liang Wang, 
+Investigating compositional challenges in vision-language models for visual 
+grounding, in: Proceedings of the IEEE/CVF Conference on Computer Vision 
+and Pattern Recognition, 2024, pp. 14141–14151.
+[217] Ming Li, Jike Zhong, Chenxin Li, Liuzhuozheng Li, Nie Lin, Masashi Sugiyama, 
+Vision-language model fine-tuning via simple parameter-efficient modification, 
+2024, arXiv preprint arXiv:2409.16718.
+[218] Joey Hong, Anca Dragan, Sergey Levine, Q-SFT: Q-learning for language models 
+via supervised fine-tuning, 2024, arXiv preprint arXiv:2411.05193.
+--- hit ---
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2024, pp. 
+7180–7189.
+[220] Chengwei Sun, Jiwei Wei, Yujia Wu, Yiming Shi, Shiyuan He, Zeyu Ma, 
+Ning Xie, Yang Yang, Svfit: Parameter-efficient fine-tuning of large pre-trained 
+models using singular values, 2024, arXiv preprint arXiv:2409.05926.
+[221] Reece Shuttleworth, Jacob Andreas, Antonio Torralba, Pratyusha Sharma, LoRA 
+vs full fine-tuning: An illusion of equivalence, 2024, arXiv preprint arXiv:
+2410.21228.
+[222] Yuhang Zang, Hanlin Goh, Josh Susskind, Chen Huang, Overcoming the pitfalls 
+of vision-language model finetuning for OOD generalization, 2024, arXiv 
+--- hit ---
+7180–7189.
+[220] Chengwei Sun, Jiwei Wei, Yujia Wu, Yiming Shi, Shiyuan He, Zeyu Ma, 
+Ning Xie, Yang Yang, Svfit: Parameter-efficient fine-tuning of large pre-trained 
+models using singular values, 2024, arXiv preprint arXiv:2409.05926.
+[221] Reece Shuttleworth, Jacob Andreas, Antonio Torralba, Pratyusha Sharma, LoRA 
+vs full fine-tuning: An illusion of equivalence, 2024, arXiv preprint arXiv:
+2410.21228.
+[222] Yuhang Zang, Hanlin Goh, Josh Susskind, Chen Huang, Overcoming the pitfalls 
+of vision-language model finetuning for OOD generalization, 2024, arXiv 
+preprint arXiv:2401.15914.
+--- hit ---
+Shyamal Anadkat, et al., Gpt-4 technical report, 2023, arXiv preprint arXiv:
+2303.08774.
+[227] Hugging Face, Introducing IDEFICS: An open reproduction of state-of-the-art 
+multimodal models, 2023.
+[228] OpenAI, Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge 
+Akkaya, Florencia Leoni Aleman, Diogo Almeida, Janko Altenschmidt, Sam 
+Altman, Shyamal Anadkat, Red Avila, Igor Babuschkin, Suchir Balaji, Valerie 
+Balcom, Paul Baltescu, Haiming Bao, Mohammad Bavarian, Jeff Belgum, Irwan 
+Bello, Jake Berdine, Gabriel Bernadett-Shapiro, Christopher Berner, Lenny 
+Bogdonoff, Oleg Boiko, Madelaine Boyd, Anna-Luisa Brakman, Greg Brockman, 
+--- hit ---
+[227] Hugging Face, Introducing IDEFICS: An open reproduction of state-of-the-art 
+multimodal models, 2023.
+[228] OpenAI, Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge 
+Akkaya, Florencia Leoni Aleman, Diogo Almeida, Janko Altenschmidt, Sam 
+Altman, Shyamal Anadkat, Red Avila, Igor Babuschkin, Suchir Balaji, Valerie 
+Balcom, Paul Baltescu, Haiming Bao, Mohammad Bavarian, Jeff Belgum, Irwan 
+Bello, Jake Berdine, Gabriel Bernadett-Shapiro, Christopher Berner, Lenny 
+Bogdonoff, Oleg Boiko, Madelaine Boyd, Anna-Luisa Brakman, Greg Brockman, 
+Tim Brooks, Miles Brundage, Kevin Button, Trevor Cai, Rosie Campbell, Andrew 
+Cann, Brittany Carey, Chelsea Carlson, Rory Carmichael, Brooke Chan, Che 
+
+--- PAGE 40 FULL/EDGE ---
+S. Danish et al.
+Noah A. Smith, Hannaneh Hajishirzi, Ross Girshick, Ali Farhadi, Aniruddha 
+Kembhavi, Molmo and PixMo: Open weights and open data for state-of-the-art 
+vision-language models, 2024.
+[241] Xiaokang Chen, Zhiyu Wu, Xingchao Liu, Zizheng Pan, Wen Liu, Zhenda Xie, 
+Xingkai Yu, Chong Ruan, Janus-pro: Unified multimodal understanding and 
+generation with data and model scaling, 2025, arXiv preprint arXiv:2501.17811.
+[242] Yuan Yao, Tianyu Yu, Ao Zhang, Chongyi Wang, Junbo Cui, Hongji Zhu, Tianchi 
+Cai, Haoyu Li, Weilin Zhao, Zhihui He, et al., Minicpm-v: A gpt-4v level mllm 
+on your phone, 2024, arXiv preprint arXiv:2408.01800.
+[243] Pravesh Agrawal, Szymon Antoniak, Emma Bou Hanna, Baptiste Bout, Devendra 
+Chaplot, Jessica Chudnovsky, Diogo Costa, Baudouin De Monicault, Saurabh 
+Garg, Theophile Gervet, Soham Ghosh, Amélie Héliou, Paul Jacob, Albert Q. 
+Jiang, Kartik Khandelwal, Timothée Lacroix, Guillaume Lample, Diego Las 
+Casas, Thibaut Lavril, Teven Le Scao, Andy Lo, William Marshall, Louis Martin, 
+Arthur Mensch, Pavankumar Muddireddy, Valera Nemychnikova, Marie Pellat, 
+Patrick von Platen, Nikhil Raghuraman, Baptiste Rozière, Alexandre Sablay-
+rolles, Lucile Saulnier, Romain Sauvestre, Wendy Shang, Roman Soletskyi, 
+Lawrence Stewart, Pierre Stock, Joachim Studnia, Sandeep Subramanian, Sagar 
+Vaze, Thomas Wang, Sophia Yang, Pixtral-12B, 2024.
+[244] Yash Goyal, Tejas Khot, Douglas Summers-Stay, Dhruv Batra, Devi Parikh, 
+Making the v in vqa matter: Elevating the role of image understanding in visual 
+question answering, in: Proceedings of the IEEE Conference on Computer Vision 
+and Pattern Recognition, 2017, pp. 6904–6913.
+[245] Saahil Jain, Ashwin Agrawal, Adriel Saporta, Steven Q.H. Truong, Du Nguyen 
+Duong, Tan Bui, Pierre Chambon, Yuhao Zhang, Matthew P. Lungren, An-
+drew Y. Ng, Curtis P. Langlotz, Pranav Rajpurkar, RadGraph: Extracting clinical 
+entities and relations from radiology reports, 2021.
+[246] Weixiong Lin, Ziheng Zhao, Xiaoman Zhang, Chaoyi Wu, Ya Zhang, Yanfeng 
+Wang, Weidi Xie, PMC-CLIP: Contrastive language-image pre-training using 
+biomedical documents, 2023.
+[247] Justin Johnson, Bharath Hariharan, Laurens Van Der Maaten, Li Fei-Fei, C. 
+Lawrence Zitnick, Ross Girshick, Clevr: A diagnostic dataset for composi-
+tional language and elementary visual reasoning, in: Proceedings of the IEEE 
+Conference on Computer Vision and Pattern Recognition, 2017, pp. 2901–2910.
+[248] Marius Cordts, Mohamed Omran, Sebastian Ramos, Timo Rehfeld, Markus 
+Enzweiler, Rodrigo Benenson, Uwe Franke, Stefan Roth, Bernt Schiele, The 
+cityscapes dataset for semantic urban scene understanding, in: Proc. of the IEEE 
+Conference on Computer Vision and Pattern Recognition, CVPR, 2016.
+[249] Alina Kuznetsova, Hassan Rom, Neil Alldrin, Jasper Uijlings, Ivan Krasin, 
+Jordi Pont-Tuset, Shahab Kamali, Stefan Popov, Matteo Malloci, Alexander 
+Kolesnikov, et al., The open images dataset v4: Unified image classification, 
+object detection, and visual relationship detection at scale, Int. J. Comput. Vis. 
+128 (7) (2020) 1956–1981.
+[250] Drew A. Hudson, Christopher D. Manning, Gqa: A new dataset for real-world 
+visual reasoning and compositional question answering, in: Proceedings of the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2019, pp. 
+6700–6709.
+[251] Vicente Ordonez, Girish Kulkarni, Tamara Berg, Im2text: Describing images 
+using 1 million captioned photographs, Adv. Neural Inf. Process. Syst. 24 
+(2011).
+[252] Alistair E.W. Johnson, Tom J. Pollard, Seth J. Berkowitz, Nathaniel R. Green-
+baum, Matthew P. Lungren, Chih-ying Deng, Roger G. Mark, Steven Horng, 
+MIMIC-CXR, a de-identified publicly available database of chest radiographs 
+with free-text reports, Sci. Data 6 (1) (2019) 317.
+[253] Rocktim Jyoti Das, Simeon Emilov Hristov, Haonan Li, Dimitar Iliyanov Dim-
+itrov, Ivan Koychev, Preslav Nakov, Exams-v: A multi-discipline multilingual 
+multimodal exam benchmark for evaluating vision language models, 2024, 
+arXiv preprint arXiv:2403.10378.
+[254] Zilun Zhang, Tiancheng Zhao, Yulong Guo, Jianwei Yin, RS5M and GeoRSCLIP: 
+A large scale vision-language dataset and a large vision-language model for 
+remote sensing, IEEE Trans. Geosci. Remote Sens. (2024).
+[255] M. Maruf, Arka Daw, Kazi Sajeed Mehrab, Harish Babu Manogaran, Abhilash 
+Neog, Medha Sawhney, Mridul Khurana, James Balhoff, Yasin Bakis, Bahadir 
+Altintas, et al., Vlm4bio: A benchmark dataset to evaluate pretrained vision-
+language models for trait discovery from biological images, Adv. Neural Inf. 
+Process. Syst. 37 (2024) 131035–131071.
+[256] Xiao Wang, Ibrahim Alabdulmohsin, Daniel Salz, Zhe Li, Keran Rong, Xiaohua 
+Zhai, Scaling pre-training to one hundred billion data for vision language 
+models, 2025, arXiv preprint arXiv:2502.07617.
+[257] Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, Sanjeev Satheesh, Sean 
+Ma, Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael Bernstein, et 
+al., Imagenet large scale visual r
+
+--- PAGE 41 FULL/EDGE ---
+S. Danish et al.
+[281] Alejandro Lozano, Min Woo Sun, James Burgess, Liangyu Chen, Jeffrey J. 
+Nirschl, Jeffrey Gu, Ivan Lopez, Josiah Aklilu, Austin Wolfgang Katzer, Collin 
+Chiu, Anita Rau, Xiaohan Wang, Yuhui Zhang, Alfred Seunghoon Song, Robert 
+Tibshirani, Serena Yeung-Levy, BIOMEDICA: An open biomedical image-caption 
+archive, dataset, and vision-language models derived from scientific literature, 
+2025.
+[282] Weixiong Lin, Ziheng Zhao, Xiaoman Zhang, Chaoyi Wu, Ya Zhang, Yanfeng 
+Wang, Weidi Xie, Pmc-clip: Contrastive language-image pre-training using 
+biomedical documents, 2023, arXiv preprint arXiv:2303.07240.
+[283] Yu Sun, Xingyu Qian, Weiwen Xu, Hao Zhang, Chenghao Xiao, Long Li, Yu 
+Rong, Wenbing Huang, Qifeng Bai, Tingyang Xu, ReasonMed: A 370K multi-
+agent generated dataset for advancing medical reasoning, 2025, arXiv preprint 
+arXiv:2506.09513.
+[284] Weiwen Xu, Hou Pong Chan, Long Li, Mahani Aljunied, Ruifeng Yuan, Jianyu 
+Wang, Chenghao Xiao, Guizhen Chen, Chaoqun Liu, Zhaodonghui Li, et 
+al., Lingshu: A generalist foundation model for unified multimodal medical 
+understanding and reasoning, 2025, arXiv preprint arXiv:2506.07044.
+[285] Tianbin Li, Yanzhou Su, Wei Li, Bin Fu, Zhe Chen, Ziyan Huang, Guoan Wang, 
+Chenglong Ma, Ying Chen, Ming Hu, et al., GMAI-VL & GMAI-VL-5.5 M: A 
+large vision-language model and a comprehensive multimodal dataset towards 
+general medical AI, 2024, arXiv preprint arXiv:2411.14522.
+[286] Omar Moured, Jiaming Zhang, M. Saquib Sarfraz, Rainer Stiefelhagen, AltChart: 
+Enhancing VLM-based chart summarization through multi-pretext tasks, in: 
+International Conference on Document Analysis and Recognition, Springer, 
+2024, pp. 349–366.
+[287] Luowei Zhou, Hamid Palangi, Lei Zhang, Houdong Hu, Jason Corso, Jianfeng 
+Gao, Unified vision-language pre-training for image captioning and vqa, in: 
+Proceedings of the AAAI Conference on Artificial Intelligence, vol. 34, 2020, 
+pp. 13041–13049.
+[288] Pengchuan Zhang, Xiujun Li, Xiaowei Hu, Jianwei Yang, Lei Zhang, Lijuan 
+Wang, Yejin Choi, Jianfeng Gao, Vinvl: Revisiting visual representations 
+in vision-language models, in: Proceedings of the IEEE/CVF Conference on 
+Computer Vision and Pattern Recognition, 2021, pp. 5579–5588.
+[289] Zirui Wang, Jiahui Yu, Adams Wei Yu, Zihang Dai, Yulia Tsvetkov, Yuan Cao, 
+Simvlm: Simple visual language model pretraining with weak supervision, 2021, 
+arXiv preprint arXiv:2108.10904.
+[290] Yiwu Zhong, Jianwei Yang, Pengchuan Zhang, Chunyuan Li, Noel Codella, 
+Liunian Harold Li, Luowei Zhou, Xiyang Dai, Lu Yuan, Yin Li, et al., 
+Regionclip: Region-based language-image pretraining, in: Proceedings of the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2022, pp. 
+16793–16803.
+[291] Zi-Yi Dou, Aishwarya Kamath, Zhe Gan, Pengchuan Zhang, Jianfeng Wang, 
+Linjie Li, Zicheng Liu, Ce Liu, Yann LeCun, Nanyun Peng, et al., Coarse-to-
+fine vision-language pre-training with fusion in the backbone, Adv. Neural Inf. 
+Process. Syst. 35 (2022) 32942–32956.
+[292] Runhui Huang, Yanxin Long, Jianhua Han, Hang Xu, Xiwen Liang, Chunjing Xu, 
+Xiaodan Liang, Nlip: Noise-robust language-image pre-training, in: Proceedings 
+of the AAAI Conference on Artificial Intelligence, vol. 37, 2023, pp. 926–934.
+[293] Chenyu Yang, Xizhou Zhu, Jinguo Zhu, Weijie Su, Junjie Wang, Xuan Dong, 
+Wenhai Wang, Bin Li, Jie Zhou, Yu Qiao, et al., Vision model pre-training on 
+interleaved image-text data via latent compression learning, Adv. Neural Inf. 
+Process. Syst. 37 (2024) 23912–23938.
+[294] Jinyu Yang, Jiali Duan, Son Tran, Yi Xu, Sampath Chanda, Liqun Chen, Belinda 
+Zeng, Trishul Chilimbi, Junzhou Huang, Vision-language pre-training with triple 
+contrastive learning, in: Proceedings of the IEEE/CVF Conference on Computer 
+Vision and Pattern Recognition, 2022, pp. 15671–15680.
+[295] Yikang Li, Jen-hao Hsiao, Chiuman Ho, Object prior embedded network for 
+query-agnostic image retrieval, in: Proceedings of the IEEE/CVF Conference on 
+Computer Vision and Pattern Recognition, 2022, pp. 4969–4974.
+[296] Kecheng Zheng, Yifei Zhang, Wei Wu, Fan Lu, Shuailei Ma, Xin Jin, Wei Chen, 
+Yujun Shen, Dreamlip: Language-image pre-training with long captions, in: 
+European Conference on Computer Vision, Springer, 2024, pp. 73–90.
+[297] Elmira Amirloo, Jean-Philippe Fauconnier, Christoph Roesmann, Christian Kerl, 
+Rinu Boney, Yusu Qian, Zirui Wang, Afshin Dehghan, Yinfei Yang, Zhe Gan, 
+et al., Understanding alignment in multimodal llms: A comprehensive study, 
+2024, arXiv preprint arXiv:2407.02477.
+[298] Zhenlin Xu, Yi Zhu, Siqi Deng, Abhay Mittal, Yanbei Chen, Manchen Wang, 
+Paolo Favaro, Joseph Tighe, Davide Modolo, Benchmarking zero-shot recog-
+nition with vision-language models: Challenges on granularity and specificity, 
+in: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern 
+Recognition, 2024, pp. 1827–1836.
+[299] Kai Chen, Yunxin Li, Xiwen Zhu, Wentai Zhang, Baotian Hu, A vision-language 
+model with multi-gran
+
+--- PAGE 42 FULL/EDGE ---
+S. Danish et al.
+[324] Declan Campbell, Sunayana Rane, Tyler Giallanza, Nicolò De Sabbata, Kia 
+Ghods, Amogh Joshi, Alexander Ku, Steven M. Frankland, Thomas L. Griffiths, 
+Jonathan D. Cohen, et al., Understanding the limits of vision language models 
+through the lens of the binding problem, 2024, arXiv preprint arXiv:2411.
+00238.
+[325] Chia Xin Liang, Pu Tian, Caitlyn Heqi Yin, Yao Yua, Wei An-Hou, Li Ming, 
+Tianyang Wang, Ziqian Bi, Ming Liu, A comprehensive survey and guide 
+to multimodal large language models in vision-language tasks, 2024, arXiv 
+preprint arXiv:2411.06284.
+[326] Gabriele Ruggeri, Debora Nozza, et al., A multi-dimensional study on bias 
+in vision-language models, in: Findings of the Association for Computational 
+Linguistics: ACL 2023, Association for Computational Linguistics, 2023.
+[327] Ruijie Xu, Zengzhi Wang, Run-Ze Fan, Pengfei Liu, Benchmarking benchmark 
+leakage in large language models, 2024, arXiv preprint arXiv:2404.18824.
+[328] Xiyang Wu, Ruiqi Xian, Tianrui Guan, Jing Liang, Souradip Chakraborty, Fuxiao 
+Liu, Brian M. Sadler, Dinesh Manocha, Amrit Bedi, On the safety concerns of 
+deploying llms/vlms in robotics: Highlighting the risks and vulnerabilities, in: 
+First Vision and Language for Autonomous Driving and Robotics Workshop, 
+2024.
+[329] Anetta Jedličková, Ethical approaches in designing autonomous and intelligent 
+systems: a comprehensive survey towards responsible development, AI & 
+SOCIETY (2024) 1–14.
+[330] Hao Zhang, Hongyang Li, Feng Li, Tianhe Ren, Xueyan Zou, Shilong Liu, Shijia 
+Huang, Jianfeng Gao, Chunyuan Li, Jainwei Yang, et al., Llava-grounding: 
+Grounded visual chat with large multimodal models, in: European Conference 
+on Computer Vision, Springer, 2025, pp. 19–35.
+[331] Lucas Beyer, Andreas Steiner, André Susano Pinto, Alexander Kolesnikov, 
+Xiao Wang, Daniel Salz, Maxim Neumann, Ibrahim Alabdulmohsin, Michael 
+Tschannen, Emanuele Bugliarello, et al., Paligemma: A versatile 3b vlm for 
+transfer, 2024, arXiv preprint arXiv:2407.07726.
+[332] Aditi Singh, Nirmal Prakashbhai Patel, Abul Ehtesham, Saket Kumar, Tala Talaei 
+Khoei, A survey of sustainability in large language models: Applications, 
+economics, and challenges, 2024, arXiv preprint arXiv:2412.04782.
+[333] Saman Hashemi, Integrating Qt and LLMs on the NVIDIA Jetson Board for 
+Controlling a Patient-Assisting Robot Arm, (Master’s thesis), S. Hashemi, 2024.
+[334] Wenyi Hong, Weihan Wang, Ming Ding, Wenmeng Yu, Qingsong Lv, Yan 
+Wang, Yean Cheng, Shiyu Huang, Junhui Ji, Zhao Xue, et al., Cogvlm2: Visual 
+language models for image and video understanding, 2024, arXiv preprint 
+arXiv:2408.16500.
+[335] Tanmay Gupta, Amita Kamath, Aniruddha Kembhavi, Derek Hoiem, Towards 
+general purpose vision systems: An end-to-end task-agnostic vision-language 
+architecture, in: Proceedings of the IEEE/CVF Conference on Computer Vision 
+and Pattern Recognition, 2022, pp. 16399–16409.
+[336] Dongha Choi, Jung Jae Kim, Hyunju Lee, TransferCVLM: Transferring cross-
+modal knowledge for vision-language modeling, in: Findings of the Association 
+for Computational Linguistics: EMNLP 2024, 2024, pp. 16733–16746.
+Information Fusion 126 (2026) 103623 
+42 

@@ -1,0 +1,618 @@
+
+
+--- PAGE 1 ---
+Aligning Vision Language Models 
+with Contrastive Learning 
+Kenan E. Ak (B), Jay Mohta, Dimitris Dimitriadis, Saurav Manchanda, 
+Yan Xu, and Mingwei Shen 
+Amazon.com, Seattle, USA 
+{kenanea,jaymoht,dbdim,sauravma,yanxuml,mingweis}@amazon.com 
+Abstract. In recent years, Vision Language Models (VLMs) have 
+achieved signiﬁcant advancements due to the success of large language 
+models. The common strategy for aligning vision and language models 
+involves a two-step process: an alignment (or pretraining) stage and an 
+instruction tuning stage. During the alignment stage, a projection mod-
+ule is trained to map image embeddings into the language space using 
+a paired image-text dataset. In the instruction tuning stage, the model 
+is trained to answer speciﬁc questions about the images. In this work, 
+we focus on the alignment stage and identify a signiﬁcant gap between 
+the embeddings for image and text pairs when VLMs are trained with 
+next-token prediction loss. To address this issue, we employ a contrastive 
+training strategy similar to that used by Radford et al. [
+38]a l o n g w i t h 
+next token prediction based training. Our ﬁndings indicate that this joint 
+pretraining method enhances VLM performance by approximately 2
+. %
+across various multimodal evaluations without any additional compute or 
+training data. To assess the robustness and generalizability of joint train-
+ing, we experimented with multiple large language models and observed 
+similar performance improvements. Furthermore, we explore the impor-
+tance of prompts in contrastive training with various LLM options. We 
+also provide a detailed analysis of the type of vision encoder, projection 
+layer, and LLM to use with the proposed joint training approach. 
+Keywords: Vision Language Models · Multimodal Alignment · 
+Contrastive Training 
+1 Introduction 
+Large Language Models (LLMs) have achieved state-of-the-art zero-shot per-
+formance on a variety of natural language tasks, showcasing their impressive 
+generalization capabilities [ 12,34,44]. Recently, there has been a growing eﬀort 
+to integrate image modalities with LLMs [ 1, 9,17,21,25,29,32,43], enabling these 
+models to perform tasks such as image classiﬁcation, optical character recogni-
+tion, object detection, and more in a zero-shot manner—mirroring their proﬁ-
+ciency in solving various NLP tasks without task-speciﬁc training. The primary 
+challenge in unifying vision and language models for collaborative inference lies 
+K. E. Ak and J. Mohta—Equal contribution. 
+c©The Author(s), under exclusive license to Springer Nature Switzerland AG 2025 
+A. Del Bue et al. (Eds.): ECCV 2024 Workshops, LNCS 15640, pp. 32–45, 2025. 
+https://doi.org/10.1007/978-3-031-91672-4_3
+
+--- PAGE 2 ---
+Aligning Vision Language Models with Contrastive Learning 33
+in eﬀectively  connecting  LLMs  with  vision  foundation  models.  These  models  
+are independently pretrained on their respective modalities—text for LLMs and 
+images for vision models. 
+Liu et al. [ 29] has recently proposed an eﬀective algorithm to align vision and 
+language models. Their approach involves a two-step process: a pretraining stage 
+and an instruction tuning stage. In the pretraining stage, a projection  module 
+is trained to map image embeddings into the language model’s space using an 
+image-text pair dataset. During the instruction tuning stage, the model is ﬁne-
+tuned to answer speciﬁc questions about the images, thus enhancing its ability 
+to handle multi-modal inputs. There has been various works studying the impact 
+of using diﬀerent datasets [ 32], projection modules such as C-abstractor [ 6]a n d 
+LLMs in order to improve the zero-shot multi-modal performance [ 25]. 
+(a)(a) Text and image embeddings after next 
+token prediction based pretraining. 
+(b)(b) Text and image embeddings after joint 
+pretraining. 
+Fig. 1. Figure  1a represents  t-SNE  visualization  [ 31] of  image  and  text  embeddings  
+being unaligned after the next token prediction based pretraining as done by [25,29]. 
+Figure 1b represents t-SNE visualization of image and text embeddings being aligned 
+after doing joint, contrastive and next token prediction based pretraining. 
+In this work, we identify that previously proposed pretraining strategies pri-
+marily focus on minimizing next token prediction loss, which often results in mis-
+aligned vision and language embeddings, as illustrated in Fig. 1. Notably, Fig. 1a 
+clearly demonstrates that even after pretraining, the embeddings of vision and 
+text remain disparate, contrary to the intended goal  of  aligning these  modali-
+ties. This discrepancy underscores the necessity to explore methodologies  that 
+not only performs this generative pretraining but also explicitly align vision and 
+text embeddings. 
+To address the aforementioned discrepancy, we employ an eﬃcient contrastive 
+training strategy inspired by similar approaches in [ 5,38]. This strategy aims to 
+minimize the distance between matching image-text pairs while maximizing the 
+separation between dissimilar  pairs.  We argue  that  reducing  the  gap  between
+
+--- PAGE 3 ---
+34 K. E. Ak et al.
+image and text embeddings could help enable the language model to leverage its 
+extensive pretraining for the vision modality as well. 
+In order to ensure the model’s capability in coherent question answering, we 
+concurrently minimize two losses: contrastive loss and next token prediction loss. 
+As depicted in Fig. 1b, joint training objective eﬀectively enhances the model’s 
+ability to learn aligned embeddings, where image and text embeddings exhibit 
+closer proximity. 
+Our ﬁndings show that the proposed joint pretraining enhances VLM per-
+formance by approximately 2% across various multimodal evaluations without 
+requiring additional computational resources or training data. We experimented 
+with diﬀerent LLMs to validate the robustness of joint training, observing similar 
+performance boosts over traditional next token prediction loss based pretrain-
+ing. Additionally, we conducted a detailed analysis on the type of vision encoder, 
+projection layer, and LLM to use for achieving superior results with this joint 
+training approach. 
+The rest of the paper is organized as follows: Sect. 2 provides background on 
+LLMs and similarity training. Section 3 details our approach, focusing on the 
+joint training strategy. Section 4 presents the main experimental results. Finally, 
+Sect. 5 summarizes and concludes the paper. 
+2 Background 
+2.1 Large Language Models 
+Brown et al. [ 4] showcased the impressive capabilities of GPT-3, a large language 
+model with 175 billion parameters, capable of achieving zero-shot performance 
+comparable to state-of-the-art ﬁne-tuned models. Following this milestone, sev-
+eral other language models have been developed, including PaLM [ 
+11], Llama 
+[ 45], and Falcon [ 37], among others. These models have consistently demon-
+strated outstanding zero-shot performance, often matching the performance of 
+ﬁne-tuned models across various datasets. 
+Ouyang et al. [ 36] found that although language models can achieve remark-
+able zero-shot performance on speciﬁc benchmarks, they often struggle to accu-
+rately understand and follow human instructions when prompted. To address 
+this issue, they proposed a reinforcement learning framework with ﬁne-tuning 
+guided by human feedback, leading to the development of the InstructGPT 
+model. While current LLMs perform exceptionally well on various text-based 
+benchmarks [ 
+4], they still struggle to process diﬀerent modalities, such as audio 
+and images. 
+2.2 Vision Language Models 
+Despite the success of large-scale pretraining and ﬁne-tuning in creating general-
+purpose language models, developing versatile vision-language models remains 
+challenging due to the independent training of these models. The recently intro-
+duced BLIP-2 model [ 
+24] has demonstrated ways to align these vision encoder
+
+--- PAGE 4 ---
+Aligning Vision Language Models with Contrastive Learning 35
+and LLM by introducing Query transformer (Q-Former) component, which helps 
+to map from image embedding space to language model space. 
+Building on the advancements of BLIP-2, the InstructBLIP work performs 
+comprehensive examination of ﬁne-tuning vision-language models. By training 
+on 13 diﬀerent datasets, InstructBLIP achieves state-of-the-art results in vari-
+ous vision-language tasks, outperforming both BLIP-2 and the larger Flamingo 
+models [ 
+2]. Both BLIP-2 and InstructBLIP uses Vicuna [ 10] as LLM backbone. 
+The amount of data used to pretrain and instruction-tune InstructBLIP models 
+was approximately 130 million samples. Therefore, a more eﬃcient ﬁne-tuning 
+strategy was needed to align these models with fewer samples. 
+To address this issue, LLaVa [ 29] introduces a data distillation mechanism 
+from GPT-4, resulting in a more robust and diverse instruction-tuning dataset 
+that uses signiﬁcantly fewer samples compared to the InstructBLIP instruction-
+tuning dataset. This approach achieves state-of-the-art performance on various 
+multimodal benchmarks. Recent work by Lin et al. [ 25] highlighted that pre-
+training and instruction-tuning models on both image and text data can degrade 
+performance on text-only tasks. To address this issue, they proposed interleaved 
+image and text pretraining, which enables LLMs to become multimodal while 
+retaining the performance of the original LLM on text-based tasks. 
+In most of the previous work data plays a key role in improving performance, 
+in this work we ﬁrst identify that the pretraining strategies used in most previous 
+works lead to unaligned image and text representations as demonstrated in Fig. 1. 
+To address this, we adopt a contrastive learning training strategy that enables 
+the model to explicitly learn aligned image and text embeddings. 
+2.3 Contrastive Learning 
+Contrastive learning has emerged as a powerful approach, enabling models to 
+learn representations by contrasting similar and dissimilar pairs of data points. 
+A notable example is Contrastive Language-Image Pre-Training (CLIP) [ 
+39], 
+which leverages large-scale pretraining to align textual and visual representations. 
+CLIP has demonstrated signiﬁcant improvements in zero-shot learning, setting 
+new benchmarks in various vision-language tasks. 
+In the realm of self-supervised learning for visual representations, Distillation 
+of Knowledge with No Labels (DINO) [ 5] employs a teacher-student framework 
+where the student predicts the teacher’s output, eﬀectively learning discrimina-
+tive features without labeled data. Similarly, Simple Framework for Contrastive 
+Learning of Visual Representations (SimCLR) [ 
+8] emphasizes data augmentation 
+and introduces a batch-based contrastive learning approach. 
+In Natural Language Processing (NLP), several works have successfully inte-
+grated contrastive learning with LLMs to enhance representation learning and 
+downstream task performance. One notable example is Deep Contrastive Learn-
+ing for Unsupervised Textual Representations (DeCLUTR) [ 16], which leverages 
+contrastive learning to train LLMs on large corpora without supervision. Another 
+signiﬁcant work is Simple Contrastive Learning of Sentence Embeddings (Sim-
+CSE) [ 15], which applies a simple yet eﬀective contrastive learning strategy by
+
+--- PAGE 5 ---
+36 K. E. Ak et al.
+using dropout as noise to create augmented views of the same sentence. Addi-
+tionally, PromptBERT [ 20] enhances BERT sentence embeddings by utilizing 
+prompts, improving the quality of the embeddings for various tasks. 
+In a recent study, Jiang et al. [ 19] utilized contrastive training to address 
+hallucinations in VLMs. Their approach aims to minimize the disparity between 
+non-hallucinatory and hallucinatory text, while also bridging the domain gap 
+between image and text modalities. Their ﬁndings highlight the eﬀectiveness of 
+contrastive learning in speciﬁcally mitigating hallucinations. 
+In contrast, our work speciﬁcally focuses on reducing the dissimilarity 
+between text and image embeddings to address concerns shown in Fig. 1.W e 
+show that using this joint training not only produces aligned image-text embed-
+dings but at the same time improves performance of VLM by approximately 2% 
+on diﬀerent multi-modal benchmarks. We also provide insights into how diﬀer-
+ent projection layers, contrastive training strategies, LLMs and projection layer 
+impacts the performance of this joint training strategy. 
+3 Approach 
+Following the LlaVA [ 29] framework, our approach also utilizes two stages: 1) 
+vision-language alignment and 2) instruction tuning. In this work, we focus on 
+the vision-language alignment stage to address the issue of unaligned image-text 
+embeddings, as illustrated in Fig. 1a. 
+Section 3.1 introduces the model architecture, which incorporates contrastive 
+loss training alongside next-token prediction loss to produce aligned embeddings 
+while preserving the generative capabilities of the LLM. Sections 3.2 and 3.3 
+detail the explicit loss terms minimized during pretraining to achieve aligned 
+embeddings, as depicted in Fig. 1b. In Sect. 3.4, we design a prompt-based app-
+roach for extracting text and image embeddings to enhance contrastive training. 
+3.1 Model Architecture 
+Figure 2 depicts the model architecture used during the pretraining stage. The 
+architecture demonstrates that contrastive training can be seamlessly integrated 
+without modifying the primary model structure. This allows for joint training 
+using both next-token prediction and contrastive losses. We employ projection 
+weights .wi and freeze all other parameters to align image embeddings with text 
+embeddings, eﬀectively mapping these image embeddings into a space that the 
+language model (LM) can interpret. 
+This architecture enables the eﬃcient incorporation of image modality into 
+LLMs while maintaining the integrity of the model’s existing structure. The 
+following subsection provide further details on contrastive and next-token pre-
+diction training.
+
+--- PAGE 6 ---
+Aligning Vision Language Models with Contrastive Learning 37
+Next Token 
+Prediction Loss LLM 
+LLM 
+olive oil is a healthy 
+ingredient used liberally 
+<eos> 
+<img> + <eos> + oli + ve 
++ .. + libe + really 
+copy 
+ﬁnal hidden state of 
+[eos] token 
+ﬁnal hidden state of 
+[eos] token 
+Contrastive loss 
+ViT 
+Fig. 2. Detailed  architecture of the proposed approach. This ﬁgure illustrated pretrain-
+ing for adding image modality to the language model. We follow a joint training scheme 
+that combines contrastive and generative learning approaches 
+3.2 Contrastive T raining 
+To address the signiﬁcant diﬀerences in image text embeddings, we introduce an 
+additional training scheme that employs contrastive training as demonstrated in 
+Fig. 2. The loss deﬁned below aims to align the representations of diﬀerent modal-
+ities more eﬀectively, thereby facilitating improved multimodal understanding: 
+.
+Lc = 1
+2N
+N∑
+i=1
+[
+− log exp(sim(f(g(xi)),f (yi))/τ)∑ N
+j=1 exp(sim(f(g(xi)),f (yj))/τ)
+− log exp(sim(f(yi),f (g(xi)))/τ)∑ N
+j=1 exp(sim(f(yi),f (g(xj)))/τ)
+] (1) 
+Here, . x and . y denote the image and text inputs, respectively. The function 
+.f(.) refers to the embeddings derived from the LLM’s ﬁnal hidden state at the 
+[EOS] token.  As shown in Fig. 2 for the image, we ﬁrst generate image embed-
+dings using a ViT model followed by a projection layer . wi. We then append the 
+[EOS] token  to these image embeddings. The function .g(.) refers to the embed-
+ding derived from the vision modules. The similarity between these embeddings 
+is measured  using  the  function  .sim(·), with  cosine  similarity employed for  all  
+samples in a batch of .N image-text pairs. 
+The ﬁrst term (text-to-image) computes the log probability of the similarity 
+between an image .xi and its corresponding text .yi over the sum of similarities 
+between.xi and all potential texts in the batch. This ensures that the embedding 
+of the image is closely aligned with the correct text embedding while remaining 
+distinct from unrelated text embeddings. The second term (image-to-text) per-
+forms a similar computation in reverse, determining the log probability of the 
+similarity between the text. yi and its corresponding image.xi over the sum of sim-
+ilarities between .yi and all other images in the batch. This approach reinforces 
+the alignment between image and text embeddings.
+
+--- PAGE 7 ---
+38 K. E. Ak et al.
+The constant . τ is a learnable temperature parameter that controls the sharp-
+ness of the similarity distribution. By summing these negative log probabilities 
+and averaging them across the entire batch, the loss function ensures that for 
+each image-text pair in the batch, the correct pairs are signiﬁcantly more similar 
+than the incorrect pairs. 
+3.3 Next T oken Prediction T raining 
+Similar to most VLMs [ 29,46], we incorporate a generative objective based on 
+next-token prediction. In this section, we detail the integration of the next-token 
+prediction loss, speciﬁcally implemented as the negative log-likelihood loss, a 
+widely utilized approach in sequence modeling tasks. Within the context of VLM 
+training, this task can be considered as the generative loss .Lg, formulated as the 
+negative log-likelihood of all samples in a batch consisting of .N image-text pairs: 
+.Lg =− 1
+N
+N∑
+i=1
+Ti∑
+t=1
+logP(h i
+t|hi
+1:t−1
+,X i) (2) 
+In this equation, .hi
+t represents the target token at time step . t for the .i-th 
+image-text pair, .hi
+1:t−1 denotes the preceding tokens in the sequence for the .i-th 
+pair, and.Xi corresponds to the set of image embeddings obtained from the vision 
+encoder followed by projection layer for the .i-th image-text pair. The primary 
+objective is to maximize the likelihood of predicting the correct next token for 
+all image-text pairs within the batch. This loss function eﬀectively measures the 
+conditional probability of each word in the caption, given the image features and 
+the preceding words. 
+3.4 Prompt-Based Embedding 
+We further explore the use of prompts in learning embedding representations, 
+following the methodology outlined in PromptBERT [ 20]. To represent sen-
+tences and images with prompts, we utilize a template in the following format: 
+"[X] means: [EOS]", where [X] is a placeholder for sentences or images. Based 
+on the best-performing prompt from Jiang et al. [ 20], we construct the following 
+prompts: 
+– This sentence: {. <text. >} means: [EOS] 
+– This {photo/image/picture}: {. <image. >} means: [EOS] 
+Given a { . <text. >} or { . <image. >}, we map them using the template. For 
+images, we randomly select one of the three keywords (photo, image, picture). 
+We then feed the prompted input to the language model to generate both sen-
+tence and image representations where we employ them during the contrastive 
+training.
+
+--- PAGE 8 ---
+Aligning Vision Language Models with Contrastive Learning 39
+4 Experiments 
+4.1 Implementation Details 
+Our proposed model adheres to LLaVA’s implementation for direct comparison 
+purposes [ 29]. We utilize a two-layer Multi-Layer Perceptron (MLP) to connect 
+vision embeddings to the LLM. The vision encoder is based on Open AI CLIP-
+L[ 38] with an image resolution of 336. Alongside Vicuna-7B for direct compar-
+ison, we also conduct experiments on various other LLMs, such as Mistral-7B 
+and Llama-8B, to demonstrate that contrastive training can be eﬀective inde-
+pendently of the choice of language model. 
+We follow 2-stage training as in LLaVA [ 29]. For pretraining, we use joint 
+loss of .Lg +L c with equal weights denoted as w/ cont in all the results below. 
+We pre-extract text embeddings to save computation during the ﬁrst stage. For 
+intruction tuning stage, we utilize next-token prediction loss to train the models. 
+For both stages, we utilize the same datasets that are constructed in [ 29]. 
+Stage-1 comprises a dataset of 558K text-image pairs, drawn from a combi-
+nation of the LAION [ 40], CC [ 41], and SBU [ 35] datasets. For this stage, we 
+employed a batch size of 256 with a learning rate of 2e-3 for 1 epoch. In Stage-2, 
+we ﬁne-tuned the model using a dataset that includes COCO [ 26], GQA [ 18], 
+OCR-VQA [ 33], Text-VQA [ 42], and Visual Genome [ 22], with a batch size of 32 
+and a learning rate of 2e-5 for 1 epoch. To evaluate the robustness of our meth-
+ods, we tested performance on several datasets, including MMBench (MMB) [ 30], 
+MMB.CN [ 30], MME [ 14], Seed-Bench [ 23], MM-VET [ 48], and MMMU [ 49]. 
+4.2 Comparison with State of the Art 
+T able 1. Comparison with State-of-the-Art. Since the introduction of LLaVA [ 29], 
+several works have been introduced; however, these improvements are largely attributed 
+to the use of larger datasets and more powerful language models [ 32]. We make direct 
+comparison with LLaVA-7B framework due to its eﬃcient use of dataset and model 
+size. 
+Model Name LLM PT IT MMB MMB.CN MME Seed MM-VET MMMU 
+BLIP-2 [24] Vicuna-7B 129M – – – 1293 46.4 22.4 – 
+InstructBLIP [13] Vicuna-7B 129M 1.2M 36.0 23.7 – 53.4 26.2 – 
+Qwen-VL-Chat-7B [ 3] Qwen-7B 1.4B 50M 60.6 56.7 1487 58.2 – 32.9 
+ShareGPT4V-7B [ 7] Vicuna-7B 50M 1M 68.8 62.2 1567 69.7 – 37.6 
+mPLUG-Owl2 [47] Llama-2-7B 400M 1.2M 64.5 – 1450 60.8 36.2 – 
+VILA-7B [25] Llama-2-7B 50M 1M 68.9 61.7 1533 61.1 34.9 – 
+LLaVA-NeXT-7B [28] Llama-3-8B 0.6M 0.8M 67.4 – 1519 70.2 43.9 35.8 
+LLaVA-7B [27] Vicuna-7B 0.6M 0.7M 64.8 58.3 1510 60.4 31.0 35.1 
+LLaV A-7B (ours) Vicuna-7B 0.6M 0.7M 67.2 (. ↑2.4) 60.4 (. ↑2.1) 1446 (. ↓64) 66.9 (. ↑6.5) 31.4 (. ↑0.4) 38.6 (. ↑3.5)
+
+--- PAGE 9 ---
+40 K. E. Ak et al.
+T able 2. Contrastive & prompt comparison for various LLM backbones: These exper-
+iments demonstrate that the proposed method generalizes well across various LLM 
+choices, leading to direct model improvements without the need to alter the model 
+architecture or datasets. 
+LLM Backbone MMB MMB.CN MME Seed MM-VET MMMU 
+Vicuna-7B 64.8 58.3 1510 60.4 31.0 35.0 
+Vicuna-7B w/ cont 67.2 60.4 1473 66.8 30.0 36.3 
+Vicuna-7B w/ cont + prompt 67.3 58.5 1446 66.7 31.4 38.6 
+Mistral-7B 65.4 57.3 1350 66.5 32.4 36.5 
+Mistral-7B w/ cont 67.2 60.4 1314 64.3 30.1 36.3 
+Mistral-7B w/ cont + prompt 67.8 60.5 1473 66.7 33.3 38.6 
+Llama3-8B 73.5 67.7 1525 69.7 33.4 39.7 
+Llama3-8B w/ cont 74.2 68.7 1487 69.8 36.2 41.1 
+Llama3-8B w/ cont + prompt 71.1 66.7 1493 68.4 32.1 40.5 
+We conducted a comprehensive comparison of our model against several 
+state-of-the-art models, as presented in Table 1. It is challenging to make direct 
+comparisons because each model employs diﬀerent combinations of data, image 
+encoders, and language models. However, our method, LLaVA-7B (ours), can 
+be directly compared to the baseline LLaVA-7B framework since both utilize 
+the same data and architecture, diﬀering only in the training methodology we 
+propose. Compared to other methods, LLaVA-7B performs exceptionally well 
+considering its training data size and eﬃciency, which is why we use it as our 
+baseline. 
+As illustrated in Table 1, our model demonstrates a signiﬁcant boost in 
+most benchmarks compared to LLaVA-7B while maintaining almost the same 
+training time & computation as that of LLaVA-7B. Remarkably, the proposed 
+method performs comparably to LLaVA-NeXT-7B, despite not incorporating 
+larger scale image resolutions, more advanced language model backbones and 
+superior datasets. 
+4.3 The Impact of Contrastive Pretraining and Prompts 
+Our experiments reveal that incorporating contrastive pretraining (w/ cont) sig-
+niﬁcantly boosts the performance of VLMs. As shown in Table 
+2, the use of 
+contrastive pretraining across diﬀerent LLM backbones—Vicuna-7B, Mistral-7B, 
+and Llama3-8B—results in notable performance improvements. We achieve the 
+best results with contrastive pretraining on the Llama3-8B model. 
+When we enable prompts for embedding extraction (w/ cont + prompt) as 
+described in Sect. 3.4, we observe the most improvements for the Vicuna and
+
+--- PAGE 10 ---
+Aligning Vision Language Models with Contrastive Learning 41
+Mistral backbones. However, in Llama3-8B, the use of prompts does not result in 
+a performance boost. This might be due to the fact that the constructed prompt 
+may not be well-suited for that speciﬁc backbone. We believe that an optimized 
+prompt for each language model is necessary and can have a substantial impact 
+on performance; we leave this for future work. 
+4.4 The Impact of Projection Layer 
+T able 3. Comparison of projection layers: This analysis indicates that the projection 
+layer does not signiﬁcantly impact overall performance in next token prediction based 
+pretraining (LLaVA-7B data used for all experiments). For the proposed method, there 
+is a notable performance decrease when switching from MLP to average pooling. 
+Method MMB MMB.CN MME Seed MM-VET MMMU 
+MLP 64.8 58.3 1510 60.4 31.0 35.0 
+C-abstractor [ 6] 64.3 57.9 1429 62.4 29.2 37.3 
+VILA [25] 64.6 57.9 1322 61.9 29.2 33.8 
+Avg pooling [ 32] 64.0 57.0 1380 61.7 28.3 36.0 
+MLP w/ cont 67.2 60.4 1473 66.8 30.0 36.3 
+Avg pooling [ 32] w/ cont 65.9 58.9 1401 61.8 31.2 35.8 
+Table 3 compares the performance of various projection layers. Our analysis indi-
+cates that while the choice of projection layer can inﬂuence model performance, 
+MLP projections generally maintain high performance levels across the board. 
+One of the main advantages of using projection layers other than MLP is their 
+ability to reduce the number of image embeddings to a ﬁxed number or by a 
+factor, thus optimizing memory usage in the language model and improving infer-
+ence time. This is particularly important in video processing [ 
+29] where multiple 
+images serve as inputs. 
+We observe that switching to average pooling results in a performance 
+decrease in the proposed method. Speciﬁcally, we experiment with an average 
+pooling projection layer, which applies .8×8 average pooling on the output 
+of the ViT image encoder, followed by a linear projection. Our experiments 
+show that adding contrastive training still leads to improvements across various 
+benchmarks; however, the improvement achieved with the MLP layer is more 
+signiﬁcant. Therefore, our experiments underscore that an MLP projection layer 
+should be favored in most scenarios to maintain optimal performance. 
+4.5 The Impact of Vision Encoder 
+Table 4 demonstrates that the choice of ViT encoder signiﬁcantly impacts the 
+performance of contrastive-trained models. Larger ViTs, such as the CLIP
+
+--- PAGE 11 ---
+42 K. E. Ak et al.
+T able 4. Comparison of vision encoders: The choice of Vision Transformer (ViT) plays 
+a crucial role in enhancing LLM performance. Larger ViT models generally result in 
+improved performance, and the impact of image resolution is also signiﬁcant. We use 
+our contrastive training in this ablation study. 
+Method MMB MMB.CN MME Seed MM-VET MMMU 
+CLIP ViT-B/32 55.2 46.1 1235 56.5 23.1 35.4 
+CLIP ViT-L/14 62.9 56.2 1360 65.0 28.2 36.0 
+CLIP ViT-L/14-336 67.2 60.4 1473 66.8 30.0 36.3 
+ViT-L/14, consistently outperform those using smaller encoders like the CLIP 
+ViT-B/32. This observation aligns with ﬁndings by McKinzie et al. [ 32]f o r 
+next-token prediction-based pretraining. Furthermore, higher image resolutions, 
+as implemented with CLIP ViT-L/14-336, enhance performance metrics. This 
+improvement is intuitive, as models can extract more granular information from 
+high-resolution images. 
+5 Conclusion 
+In this study, we have identiﬁed that next-token prediction-based pretraining 
+often results in unaligned image and text embeddings. To address this challenge, 
+we introduced a contrastive learning strategy alongside next token prediction 
+loss during the pretraining stage, eﬀectively aligning image-text embeddings. 
+Our experiments demonstrated notable 2
+.% improvements across various multi-
+modal evaluation benchmarks. Additionally, through rigorous ablation studies, 
+we systematically explored the impact of key factors such as the projection layer, 
+LLMs, and vision encoders on our contrastive training strategy. We found that 
+the MLP projection layer consistently outperforms other types of projection 
+layers, and stronger LLM backbones signiﬁcantly enhance performance. More-
+over, using large vision encoders that support higher resolution images proved 
+beneﬁcial for improving VLM performance. We anticipate that our ﬁndings will 
+stimulate further research aimed at enhancing the overall performance and ver-
+satility of VLMs in multimodal applications. 
+References 
+1. Ak, K.E., Lee, G.G., Xu, Y., Shen, M.: Leveraging eﬃcient training and feature 
+fusion in transformers for multimodal classiﬁcation. In: 2023 IEEE International 
+Conference on Image Processing (ICIP), pp. 1420–1424. IEEE (2023) 
+2. Alayrac, J.B., et al.: Flamingo: a visual language model for few-shot learning. Adv. 
+Neural. Inf. Process. Syst. 35, 23716–23736 (2022) 
+3. Bai, J., et al.: Qwen-vl: a versatile vision-language model for understanding, local-
+ization, text reading, and beyond. arXiv preprint arXiv:2308.12966 (2023) 
+4. Brown, T.B., et al.: Language models are few-shot learners. arXiv:abs/2005.14165 
+(2020). https://api.semanticscholar.org/CorpusID:218971783
+
+--- PAGE 12 ---
+Aligning Vision Language Models with Contrastive Learning 43
+5. Caron, M., et al.: Emerging properties in self-supervised vision transformers. In: 
+Proceedings of the IEEE/CVF International Conference on Computer Vision, pp. 
+9650–9660 (2021) 
+6. Cha, J., Kang, W., Mun, J., Roh, B.: Honeybee: locality-enhanced projector for 
+multimodal LLM. In: Proceedings of the IEEE/CVF Conference on Computer 
+Vision and Pattern Recognition, pp. 13817–13827 (2024) 
+7. Chen, L., et al.: Sharegpt4v: improving large multi-modal models with better cap-
+tions. arXiv preprint arXiv:2311.12793 (2023) 
+8. Chen, T., Kornblith, S., Norouzi, M., Hinton, G.: A simple framework for con-
+trastive learning of visual representations. In: International Conference on Machine 
+Learning, pp. 1597–1607. PMLR (2020) 
+9. Chen, Z., et al.: Internvl: scaling up vision foundation models and aligning for 
+generic visual-linguistic tasks. In: Proceedings of the IEEE/CVF Conference on 
+Computer Vision and Pattern Recognition, pp. 24185–24198 (2024) 
+10. Chiang, W.L., et al.: Vicuna: an open-source chatbot impressing GPT-4 with 90%* 
+ChatGPT quality (2023). https://lmsys.org/blog/2023-03-30-vicuna/ 
+11. Chowdhery, A., et al.: Palm: scaling language modeling with pathways. 
+arXiv:abs/2204.02311 (2022). https://api.semanticscholar.org/CorpusID: 
+247951931 
+12. Chung, H.W., et al.: Scaling instruction-ﬁnetuned language models. J. Mach. Learn. 
+Res. 25(70), 1–53 (2024) 
+13. Dai, W., et al.: Instructblip: towards general-purpose vision-language models with 
+instruction tuning (2023) 
+14. Fu, C., et al.: MME: a comprehensive evaluation benchmark for multimodal large 
+language models (2024). https://arxiv.org/abs/2306.13394 
+15. Gao, T., Yao, X., Chen, D.: SIMCSE: simple contrastive learning of sentence embed-
+dings. arXiv preprint arXiv:2104.08821 (2021) 
+16. Giorgi, J., Nitski, O., Wang, B., Bader, G.: DeCLUTR: deep contrastive learning 
+for unsupervised textual representations. arXiv preprint arXiv:2006.03659 (2020) 
+17. He, M., et al.: Eﬃcient multimodal learning from data-centric perspective. arXiv 
+preprint arXiv:2402.11530 (2024) 
+18. Hudson, D.A., Manning, C.D.: GQA: a new dataset for real-world visual reasoning 
+and compositional question answering. In: Proceedings of the IEEE/CVF Confer-
+ence on Computer Vision and Pattern Recognition, pp. 6700–6709 (2019) 
+19. Jiang, C., et al.: Hallucination augmented contrastive learning for multimodal large 
+language model. In: Proceedings of the IEEE/CVF Conference on Computer Vision 
+and Pattern Recognition, pp. 27036–27046 (2024) 
+20. Jiang, T., et al.: PromptBert: improving Bert sentence embeddings with prompts. 
+arXiv preprint arXiv:2201.04337 (2022) 
+21. Kim, T., et al.: Nice: CVPR 2023 challenge on zero-shot image captioning. In: Pro-
+ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recog-
+nition Workshop: New Frontiers for Zero-Shot Image Captioning Evaluation, pp. 
+7356–7365 (2024) 
+22. Krishna, R., et al.: Visual genome: connecting language and vision using crowd-
+sourced dense image annotations. Int. J. Comput. Vision 123, 32–73 (2017) 
+23. Li, B., et al.: Seed-bench: benchmarking multimodal large language models. In: 
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recog-
+nition, pp. 13299–13308 (2024) 
+24. Li, J., Li, D., Xiong, C., Hoi, S.: Blip: bootstrapping language-image pre-training 
+for uniﬁed vision-language understanding and generation. In: International Confer-
+ence on Machine Learning, pp. 12888–12900. PMLR (2022)
+
+--- PAGE 13 ---
+44 K. E. Ak et al.
+25. Lin, J., Yin, H., Ping, W., Molchanov, P., Shoeybi, M., Han, S.: Vila: on pre-
+training for visual language models. In: Proceedings of the IEEE/CVF Conference 
+on Computer Vision and Pattern Recognition, pp. 26689–26699 (2024) 
+26. Lin, T.-Y., et al.: Microsoft COCO: common objects in context. In: Fleet, D., 
+Pajdla, T., Schiele, B., Tuytelaars, T. (eds.) ECCV 2014. LNCS, vol. 8693, pp. 
+740–755. Springer, Cham (2014). https://doi.org/10.1007/978-3-319-10602-1 48 
+27. Liu, H., Li, C., Li, Y., Lee, Y.J.: Improved baselines with visual instruction tuning. 
+In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern 
+Recognition, pp. 26296–26306 (2024) 
+28. Liu, H., et al.: Llava-next: improved reasoning, OCR, and world knowledge (2024). 
+https://llava-vl.github.io/blog/2024-01-30-llava-next/ 
+29. Liu, H., Li, C., Wu, Q., Lee, Y.J.: Visual instruction tuning. In: Advances in Neural 
+Information Processing Systems, vol. 36 (2024) 
+30. Liu, Y., et al.: MMBench: is your multi-modal model an all-around player? arXiv 
+preprint arXiv:2307.06281 (2023) 
+31. van der Maaten, L., Hinton, G.: Visualizing data using T-SNE. J. Mach. Learn. 
+Res. 9(86), 2579–2605 (2008). http://jmlr.org/papers/v9/vandermaaten08a.html 
+32. McKinzie, B., et al.: MM1: methods, analysis & insights from multimodal LLM 
+pre-training. arXiv preprint arXiv:2403.09611 (2024) 
+33. Mishra, A., Shekhar, S., Singh, A.K., Chakraborty, A.: OCR-VQA: visual ques-
+tion answering by reading text in images. In: 2019 International Conference on 
+Document analysis and Recognition (ICDAR), pp. 947–952. IEEE (2019) 
+34. Mohta, J., Ak, K., Xu, Y., Shen, M.: Are large language models good annotators? 
+In: Advances in Neural Information Processing Systems Workshop: I Can’t Believe 
+It’s Not Better- Failure Modes in the Age of Foundation Models 
+35. Ordonez, V., Kulkarni, G., Berg, T.: Im2text: describing images using 1 million 
+captioned photographs. In: Shawe-Taylor, J., Zemel, R., Bartlett, P., Pereira, F., 
+Weinberger, K. (eds.) Advances in Neural Information Processing Systems. vol. 24. 
+Curran Associates, Inc. (2011), https://proceedings.neurips.cc/paper ﬁles/paper/ 
+2011/ﬁle/5dd9db5e033da9c6fb5ba83c7a7ebea9-Paper.pdf 
+36. Ouyang, L., et al.: Training language models to follow instructions with human feed-
+back. arXiv:abs/2203.02155 (2022). https://api.semanticscholar.org/CorpusID: 
+246426909 
+37. Penedo, G., et al.: The ReﬁnedWeb dataset for Falcon LLM: outperforming curated 
+corpora with web data, and web data only. arXiv preprint arXiv:2306.01116 (2023), 
+https://arxiv.org/abs/2306.01116 
+38. Radford, A., et al.: Learning transferable visual models from natural language 
+supervision. In: International Conference on Machine Learning, pp. 8748–8763. 
+PMLR (2021) 
+39. Radford, A., et al.: Learning transferable visual models from natural language 
+supervision. In: International Conference on Machine Learning, pp. 8748–8763. 
+PMLR (2021) 
+40. Schuhmann, C., et al.: Laion-400m: open dataset of clip-ﬁltered 400 million image-
+text pairs (2021). https://arxiv.org/abs/2111.02114 
+41. Sharma, P., Ding, N., Goodman, S., Soricut, R.: Conceptual captions: a cleaned, 
+hypernymed, image alt-text dataset for automatic image captioning. In: Gurevych, 
+I., Miyao, Y. (eds.) Proceedings of the 56th Annual Meeting of the Association 
+for Computational Linguistics (Volume 1: Long Papers), Melbourne, Australia, pp. 
+2556–2565. Association for Computational Linguistics (2018). https://doi.org/10. 
+18653/v1/P18-1238, https://aclanthology.org/P18-1238
+
+--- PAGE 14 ---
+Aligning Vision Language Models with Contrastive Learning 45
+42. Singh, A., et al.: Towards VQA models that can read. In: Proceedings of the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 8317– 
+8326 (2019) 
+43. Sukhbaatar, S., et al.: Branch-train-mix: mixing expert LLMS into a mixture-of-
+experts LLM. arXiv preprint arXiv:2403.07816 (2024) 
+44. Tay, Y., et al.: Ul2: Unifying language learning paradigms. arXiv preprint 
+arXiv:2205.05131 (2022) 
+45. Touvron, H., et al.: Llama: open and eﬃcient foundation language mod-
+els. arXiv:abs/2302.13971 (2023). https://api.semanticscholar.org/CorpusID: 
+257219404 
+46. Tsimpoukelli, M., Menick, J.L., Cabi, S., Eslami, S., Vinyals, O., Hill, F.: Multi-
+modal few-shot learning with frozen language models. Adv. Neural. Inf. Process. 
+Syst. 34, 200–212 (2021) 
+47. Ye, Q., et al.: MPLUG-owl2: revolutionizing multi-modal large language model 
+with modality collaboration (2023). https://arxiv.org/abs/2311.04257 
+48. Yu, W., et al.: MM-VET: evaluating large multimodal models for integrated capa-
+bilities (2023). https://arxiv.org/abs/2308.02490 
+49. Yue, X., et al.: MMMU: a massive multi-discipline multimodal understanding and 
+reasoning benchmark for expert AGI. In: Proceedings of the IEEE/CVF Confer-
+ence on Computer Vision and Pattern Recognition, pp. 9556–9567 (2024)

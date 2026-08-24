@@ -1,0 +1,508 @@
+FILE: KDA_Tuning Knowledge_Decoupled Adapter Tuning for Vision_Language Models.txt
+
+
+--- PAGE 1 FULL/EDGE ---
+KDA-Tuning: Knowledge-Decoupled Adapter 
+Tuning for Vision-Language Models 
+Zhengdong Zhou(B), Chenhao Ding, and Qilong Xue 
+School of Software, Xi’an Jiaotong University, Xi’an, China 
+3123358165@stu.xjtu.edu.cn 
+Abstract. Pre-trained vision-language models (VLMs) have achieved remark-
+able performance across various downstream tasks. To further enhance the perfor-
+mance of VLMs on downstream tasks, adapter tuning has emerged as an efﬁcient 
+approach, enabling effective adaptation with minimal parameter updates. How-
+ever, existing methods are susceptible to overﬁtting on task-speciﬁc data distribu-
+tions, resulting in suboptimal performance. To address this challenge, we propose 
+a novel framework, knowledge-decoupled adapter tuning (KDA-Tuning), which 
+efﬁciently adapts VLMs to downstream tasks while preserving generalizability. 
+KDA-Tuning employs a knowledge-decoupled adapter with a dual-branch struc-
+ture consisting of one branch for general knowledge and another for task-speciﬁc 
+knowledge, avoiding conﬂicts between their optimization. Additionally, we intro-
+duce corresponding supervision, including the general knowledge retention loss 
+to encourage the models to preserve general knowledge, and the task-speciﬁc 
+knowledge constraint loss to enhance cross-modal alignment for distinguish-
+able feature representations. Extensive experiments demonstrate that KDA-Tuning 
+outperforms existing methods on typical benchmarks. 
+Keywords: Knowledge-decoupled · Adapter Tuning · Vision-language Models 
+1 Introduction 
+Pre-trained vision-language models (VLMs) [1–4] have demonstrated remarkable gener-
+alization capabilities. To further enhance their performance on downstream tasks, recent 
+studies focus on efﬁcient tuning paradigms, primarily categorized into prompt tuning 
+[5–10] adapter tuning [ 11, 12]. Despite the great progress in efﬁcient tuning, exist-
+ing methods still face several challenges. Methods like CoOp [ 5] and DAPT [ 9] face 
+an optimization conﬂict: overﬁtting to downstream data distributions compromises the 
+model’s ability to generalize to unseen tasks. Moreover, methods such as CLIP-Adapter 
+[
+11] rely on rigid residual connections with ﬁxed fusion ratios, necessitating extensive 
+experiments for optimal settings across tasks, thus limiting ﬂexibility. 
+To address these challenges, we propose knowledge-decoupled adapter tuning 
+(KDA-Tuning), a novel framework that explicitly decouples general and task-speciﬁc 
+knowledge in adaptation of VLMs. Our key insight is that latent VLM representations
+© The Author(s), under exclusive license to Springer Nature Singapore Pte Ltd. 2025 
+D.-S. Huang et al. (Eds.): ICIC 2025, LNCS 15843, pp. 370–381, 2025. 
+https://doi.org/10.1007/978-981-96-9866-0_32 
+
+--- PAGE 2 FULL/EDGE ---
+KDA-Tuning 371
+contain both general semantic knowledge and task-discriminative features. Direct opti-
+mization of these intertwined components creates conﬂicting objectives, leading to either 
+over-specialization or under-adaptation. By decoupling these two components, KDA-
+Tuning enables models to retain general knowledge while effectively adapting to task-
+speciﬁc data distributions. KDA-Tuning employs a dual-branch knowledge-decoupled 
+adapter consisting of a general branch and a task-speciﬁc branch, as shown in Fig. 
+1(a). 
+The general branch preserves the inherent generalization ability of pre-trained VLMs, 
+while the task-speciﬁc branch specializes in adapting to downstream tasks. A dynamic 
+fusion module integrates the outputs of these branches through a learnable linear layer, 
+allowing the model to ﬂexibly determine the optimal adaptation pathway. 
+Fig. 1. Motivation and performance of KDA-Tuning. 
+To facilitate KDA-Tuning, we introduce corresponding supervision. (i) General 
+knowledge retention loss, which employs knowledge self-distillation to encourage the 
+general branch to mimic the frozen pre-trained model, thereby ensuring the preservation 
+of general knowledge. (ii) Task-speciﬁc knowledge constraint loss, which enforces align-
+ment between visual and textual embeddings within the task-speciﬁc branch, improving 
+modality interaction and representation discrimination, particularly in low-data settings. 
+By integrating these losses with the standard cross-entropy loss, KDA-Tuning enables 
+effective knowledge transfer while maintaining the generalization capabilities of pre-
+trained VLMs. As shown in Fig. 
+1(b), KDA-Tuning achieves superior performance on 
+various benchmarks, highlighting its effectiveness in balancing generalization and task 
+adaptation. In summary, our contributions are as follows: 
+• We propose KDA-Tuning, a novel tuning framework for VLMs that explicitly 
+decouples 
+task-speciﬁc and general knowledge, improving the adaptability of VLMs. 
+• We design a knowledge-decoupled adapter with a dual-branch structure, effectively 
+mitig
+ating conﬂicts between general and task-speciﬁc optimization and automatically 
+optimizes the combination ratio between branches. 
+• We introduce corresponding supervision to encourage models to focus on general 
+kno
+wledge and task-speciﬁc knowledge during KDA-Tuning. 
+• We conduct extensive experiments, demonstrating that KDA-Tuning achieves supe-
+rior 
+performance on few-shot learning and domain generalization tasks.
+
+--- PAGE 3 FULL/EDGE ---
+372 Z. Zhou et al.
+2 Related Work 
+Recent advances in VLMs, exempliﬁed by CLIP [ 1], ALIGN [ 2], FLIP [ 3] and Flo-
+rence [ 4] have revolutionized multimodal representation learning through large-scale 
+pretraining on image-text pairs. These models learn universal semantic alignments that 
+enable strong zero-shot transfer across diverse vision-language tasks. Traditional full-
+parameter tuning becomes impractical for large VLMs due to computational costs and 
+overﬁtting risks in few-shot settings. Recent efforts explore parameter-efﬁcient tuning 
+through two primary paradigms, prompt tuning and adapter tuning. Prompt tuning injects 
+learnable text prompts into the encoder to guide task adaptation. CoOp [
+5] pioneers con-
+tinuous prompt optimization for CLIP , while CoCoOp [6] enhances instance adaptabil-
+ity via image-conditioned prompts. Subsequent works [ 7–10] improve prompt design. 
+However, prompt tuning requires gradient propagation through the entire text encoder, 
+incurring substantial computational overhead. Adapter tuning attaches lightweight mod-
+ules to frozen VLM encoders. CLIP-Adapter [
+11] introduces residual MLPs to reﬁne 
+visual features, and Tip-Adapter [ 12] augments CLIP with a cached feature bank for 
+nearest-neighbor classiﬁcation. 
+3 Knowledge-Decoupled Adapter Tuning 
+In this section, we introduce our KDA-Tuning, which consists of knowledge-decoupled 
+adapters (KDA) and corresponding supervision, as illustrated in Fig. 
+2. 
+Fig. 2. Overview of KDA-Tuning 
+3.1 Preliminaries 
+CLIP [1] is a vision-language model trained with contrastive learning. CLIP comprises 
+two main components: a visual encoder Ev and a textual encoder Et . Given an image
+
+--- PAGE 4 TARGETED ---
+1 yn = i log pn 
+i , (3) 
+where N denotes the number of training samples, yn is the true label of the n-th sample, 
+and pn 
+i is the predicted probability for the i-th class for the n-th sample. The indicator 
+function 1 yn = i equals to 1 if yn corresponds to i-th class, and 0 otherwise. 
+3.2 Knowledge-Decoupled Adapter 
+Knowledge-decoupled adapters are the fundamental component of KDA-Tuning, 
+consisting of a dual-branch structure with a general branch and a task-speciﬁc 
+branch. Knowledge-decoupled adapters explicitly decouple knowledge with indepen-
+--- hit ---
+v , a single linear layer. Notably, 
+to mitigate the semantic gap between two modalities, particularly in scenarios with 
+limited training samples, a shared projection layer 
+W (s,r) is incorporated into the task-
+speciﬁc branches of Av(·) and At(·). This layer enables gradient propagation interaction
+
+--- PAGE 5 TARGETED ---
+where z denotes the D-dimensional input of the adapters, which can either be the visual 
+embedding f or textual embeddings {wi}C 
+i=1, both encoded by the pre-trained CLIP and 
+obtained from Eq. 1.L e t Dq denote D/4. The general branch utilizes up-projection 
+W (g,u) 
+v,t ∈ RD×Dq and down-projection W (g,d ) 
+v,t ∈ RDq×D, which encode general semantic 
+features. Similarly, the task-speciﬁc branch employs W (s,u) 
+v,t ∈ RD×Dq and W (s,d ) 
+v,t ∈ 
+--- hit ---
+i=1, are subsequently computed using Eq. 2. 
+3.3 Supervision for KDA-Tuning 
+We introduce corresponding supervision. Speciﬁcally, for the ﬁnal prediction results 
+P ={ pi}C 
+i=1, we substitute them into Eq. 3 to compute LCE . We adopt cross-entropy loss 
+LCE to optimize the adapters Av(·) and At(·) globally during tuning, enabling them to 
+adapt to downstream tasks. Considering the characteristics of our knowledge-decoupled 
+adapters, we introduce two auxiliary losses to encourage the two branches to focus 
+on their respective knowledge. The former is general knowledge retention loss 
+LGK , 
+--- hit ---
+LGK , 
+which ensures retention of the general knowledge for generalizability. The latter is task-
+speciﬁc knowledge constraint loss 
+LSK , which enhances task-speciﬁc representations. 
+Combining these losses, LFinal is deﬁned as: 
+LFinal = LCE + LGK + LSK . (8) 
+General Knowledge Retention Loss. Pre-trained CLIP , trained on large-scale image-
+text data, encapsulates universal representations. Therefore, we utilize the frozen pre-
+trained CLIP as the source of general knowledge and supervise the learning of the general 
+branch through knowledge distillation, as shown in Fig. 2(b). Speciﬁcally, we employ 
+--- hit ---
+Combining these losses, LFinal is deﬁned as: 
+LFinal = LCE + LGK + LSK . (8) 
+General Knowledge Retention Loss. Pre-trained CLIP , trained on large-scale image-
+text data, encapsulates universal representations. Therefore, we utilize the frozen pre-
+trained CLIP as the source of general knowledge and supervise the learning of the general 
+branch through knowledge distillation, as shown in Fig. 2(b). Speciﬁcally, we employ 
+the visual and textual features encoded by pre-trained CLIP , denoted as f and W , which
+--- hit ---
+General Knowledge Retention Loss. Pre-trained CLIP , trained on large-scale image-
+text data, encapsulates universal representations. Therefore, we utilize the frozen pre-
+trained CLIP as the source of general knowledge and supervise the learning of the general 
+branch through knowledge distillation, as shown in Fig. 2(b). Speciﬁcally, we employ 
+the visual and textual features encoded by pre-trained CLIP , denoted as f and W , which
+
+--- PAGE 6 TARGETED ---
+g}C 
+i=1, denoted as Pg . . Then we introduce the general knowledge 
+retention loss, which forces the general branch to mimic frozen pre-trained CLIP , and 
+is implemented by minimizing the Kullback-Leibler (KL) divergence between the two 
+prediction distributions. The general knowledge retention loss, 
+LGK , is formulated as: 
+LGK = α · 1 
+N
+N 
+n=1
+--- hit ---
+g
+, (10) 
+where N denotes the number of training samples, and C represents the number of classes. 
+p(i,n) 
+e and p(i,n) 
+g represent the probabilities of the i-th class for the n-th sample, generated 
+by the frozen pre-trained CLIP and the general branch, respectively. α is a hyperparameter 
+that controls the weight. 
+Task-Speciﬁc Knowledge Constraint Loss. VLMs align visual and textual representa-
+tions of the same class in the latent semantic space via contrastive learning. After training 
+--- hit ---
+e and p(i,n) 
+g represent the probabilities of the i-th class for the n-th sample, generated 
+by the frozen pre-trained CLIP and the general branch, respectively. α is a hyperparameter 
+that controls the weight. 
+Task-Speciﬁc Knowledge Constraint Loss. VLMs align visual and textual representa-
+tions of the same class in the latent semantic space via contrastive learning. After training 
+with large-scale image-text pairs, textual embeddings can be approximated as the centers 
+of corresponding visual features in the embedding space, effectively capturing category 
+comprehensive semantic information. However, due to the limited training samples in 
+downstream tasks, the signiﬁcant semantic gap between the visual and textual modalities 
+--- hit ---
+by the frozen pre-trained CLIP and the general branch, respectively. α is a hyperparameter 
+that controls the weight. 
+Task-Speciﬁc Knowledge Constraint Loss. VLMs align visual and textual representa-
+tions of the same class in the latent semantic space via contrastive learning. After training 
+with large-scale image-text pairs, textual embeddings can be approximated as the centers 
+of corresponding visual features in the embedding space, effectively capturing category 
+comprehensive semantic information. However, due to the limited training samples in 
+downstream tasks, the signiﬁcant semantic gap between the visual and textual modalities 
+hinders cross-modal alignment, limiting the performance of CLIP . To address this issue, 
+we impose explicit constraints on visual and textual embeddings within the task-speciﬁc 
+--- hit ---
+that controls the weight. 
+Task-Speciﬁc Knowledge Constraint Loss. VLMs align visual and textual representa-
+tions of the same class in the latent semantic space via contrastive learning. After training 
+with large-scale image-text pairs, textual embeddings can be approximated as the centers 
+of corresponding visual features in the embedding space, effectively capturing category 
+comprehensive semantic information. However, due to the limited training samples in 
+downstream tasks, the signiﬁcant semantic gap between the visual and textual modalities 
+hinders cross-modal alignment, limiting the performance of CLIP . To address this issue, 
+we impose explicit constraints on visual and textual embeddings within the task-speciﬁc 
+knowledge branch, enhancing cross-modal alignment for distinguishable feature repre-
+
+--- PAGE 7 TARGETED ---
+Ev(xi),(13) 
+where DN ={ (xi, yi)}N 
+i=1, represents the training dataset containing N samples. 
+xi denotes an image in DN , and yi is its corresponding label. The subset Dc 
+N = 
+{(xi, yi) ∈ DN | yi = c} consists of samples belonging to class c, with Dc 
+N indicating 
+the size of Dc 
+N . Due to textual embeddings representing the comprehensive semantics of 
+the category information, the parameter γ , which deﬁnes the separation margin between 
+--- hit ---
+C(C − 1) i j ||wi − wj||2, (14) 
+where η controls the margin tightness, which is typically set to 2 in practice. Finally, the 
+task-speciﬁc knowledge constraint loss LSK is deﬁned as: 
+LSK = β1 · LSKv + β2 · LSKt . (15) 
+Here, β1 and β2 are hyperparameters that control loss weights.
+4 Experiments 
+4.1 Experimental Setup 
+Table 1. Domain generalization performance of KDA-Tuning and previous SOTA methods. 
+Method Source Target Average 
+ImageNet -V2 -S -A -R 
+--- hit ---
+LSK = β1 · LSKv + β2 · LSKt . (15) 
+Here, β1 and β2 are hyperparameters that control loss weights.
+4 Experiments 
+4.1 Experimental Setup 
+Table 1. Domain generalization performance of KDA-Tuning and previous SOTA methods. 
+Method Source Target Average 
+ImageNet -V2 -S -A -R 
+CLIP 66.67 60.88 46.11 47.75 73.97 59.08 
+CoOp 71.93 64.22 47.07 47.97 74.32 60.83 
+CLIP-Adapter 72.11 62.36 47.72 46.20 75.81 61.99 
+--- hit ---
+Here, β1 and β2 are hyperparameters that control loss weights.
+4 Experiments 
+4.1 Experimental Setup 
+Table 1. Domain generalization performance of KDA-Tuning and previous SOTA methods. 
+Method Source Target Average 
+ImageNet -V2 -S -A -R 
+CLIP 66.67 60.88 46.11 47.75 73.97 59.08 
+CoOp 71.93 64.22 47.07 47.97 74.32 60.83 
+CLIP-Adapter 72.11 62.36 47.72 46.20 75.81 61.99 
+TIP-Adapter-F 72.33 63.07 48.75 47.23 76.18 61.51 
+--- hit ---
+Table 1. Domain generalization performance of KDA-Tuning and previous SOTA methods. 
+Method Source Target Average 
+ImageNet -V2 -S -A -R 
+CLIP 66.67 60.88 46.11 47.75 73.97 59.08 
+CoOp 71.93 64.22 47.07 47.97 74.32 60.83 
+CLIP-Adapter 72.11 62.36 47.72 46.20 75.81 61.99 
+TIP-Adapter-F 72.33 63.07 48.75 47.23 76.18 61.51 
+Maple 70.62 63.97 49.05 49.82 76.23 62.27 
+DAPT 72.50 64.93 48.30 48.74 75.75 62.06 
+TCP 72.28 64.50 49.12 49.69 76.53 62.42 
+
+--- PAGE 8 TARGETED ---
+KDA-Tuning 377
+Datasets and Benchmarks. We comprehensively evaluate KDA-Tuning across two 
+critical benchmarks: few-shot learning and domain generalization. For few-shot learn-
+ing, we follow standard protocols, conducting [1, 2, 4, 8, 16]-shot experiments on 11 
+diverse downstream datasets, including ImageNet, StanfordCars, Caltech101, UCF101, 
+Flowers102, Food101, DTD, EuroSA T, FGVCAircraft, OxfordPets, and SUN397. This 
+benchmark evaluates model adaptability under limited supervision by training on K-shot 
+samples per class and testing on full test sets. To evaluate domain generalization, Ima-
+geNet serves as the source domain, with testing conducted on four distribution-shifted 
+--- hit ---
+KDA-Tuning 377
+Datasets and Benchmarks. We comprehensively evaluate KDA-Tuning across two 
+critical benchmarks: few-shot learning and domain generalization. For few-shot learn-
+ing, we follow standard protocols, conducting [1, 2, 4, 8, 16]-shot experiments on 11 
+diverse downstream datasets, including ImageNet, StanfordCars, Caltech101, UCF101, 
+Flowers102, Food101, DTD, EuroSA T, FGVCAircraft, OxfordPets, and SUN397. This 
+benchmark evaluates model adaptability under limited supervision by training on K-shot 
+samples per class and testing on full test sets. To evaluate domain generalization, Ima-
+geNet serves as the source domain, with testing conducted on four distribution-shifted 
+datasets: ImageNet-V2, -S, -A, and -R. This benchmark examines the model’s resilience 
+--- hit ---
+Datasets and Benchmarks. We comprehensively evaluate KDA-Tuning across two 
+critical benchmarks: few-shot learning and domain generalization. For few-shot learn-
+ing, we follow standard protocols, conducting [1, 2, 4, 8, 16]-shot experiments on 11 
+diverse downstream datasets, including ImageNet, StanfordCars, Caltech101, UCF101, 
+Flowers102, Food101, DTD, EuroSA T, FGVCAircraft, OxfordPets, and SUN397. This 
+benchmark evaluates model adaptability under limited supervision by training on K-shot 
+samples per class and testing on full test sets. To evaluate domain generalization, Ima-
+geNet serves as the source domain, with testing conducted on four distribution-shifted 
+datasets: ImageNet-V2, -S, -A, and -R. This benchmark examines the model’s resilience 
+to domain changes while ensuring category-level semantic alignment. 
+--- hit ---
+critical benchmarks: few-shot learning and domain generalization. For few-shot learn-
+ing, we follow standard protocols, conducting [1, 2, 4, 8, 16]-shot experiments on 11 
+diverse downstream datasets, including ImageNet, StanfordCars, Caltech101, UCF101, 
+Flowers102, Food101, DTD, EuroSA T, FGVCAircraft, OxfordPets, and SUN397. This 
+benchmark evaluates model adaptability under limited supervision by training on K-shot 
+samples per class and testing on full test sets. To evaluate domain generalization, Ima-
+geNet serves as the source domain, with testing conducted on four distribution-shifted 
+datasets: ImageNet-V2, -S, -A, and -R. This benchmark examines the model’s resilience 
+to domain changes while ensuring category-level semantic alignment. 
+Comparison Methods. We compare our KDA-Tuning with several state-of-the-art 
+--- hit ---
+ing, we follow standard protocols, conducting [1, 2, 4, 8, 16]-shot experiments on 11 
+diverse downstream datasets, including ImageNet, StanfordCars, Caltech101, UCF101, 
+Flowers102, Food101, DTD, EuroSA T, FGVCAircraft, OxfordPets, and SUN397. This 
+benchmark evaluates model adaptability under limited supervision by training on K-shot 
+samples per class and testing on full test sets. To evaluate domain generalization, Ima-
+geNet serves as the source domain, with testing conducted on four distribution-shifted 
+datasets: ImageNet-V2, -S, -A, and -R. This benchmark examines the model’s resilience 
+to domain changes while ensuring category-level semantic alignment. 
+Comparison Methods. We compare our KDA-Tuning with several state-of-the-art 
+(SOTA) methods, including Zero-shot CLIP [ 1], CoOp [ 5], CLIP-Adapter [ 11], DAPT 
+
+--- PAGE 9 TARGETED ---
+4.2 Comparison with SOTA Methods 
+Few-Shot Learning. As shown in Fig. 3, KDA-Tuning achieves superior few-shot per-
+formance across 11 datasets under [1, 2, 4, 8, 16]-shot settings, reaching SOTA average 
+accuracy of [70.36%, 74.43%, 77.39%, 80.67%, 82.91%]. Take representative settings 
+with very few samples (1-shot), moderate samples (4-shot), and relatively more sam-
+ples (16-shot) as examples, KDA-Tuning surpasses existing methods consistently. These 
+results highlight KDA-Tuning’s balanced optimization of task-speciﬁc adaptation and 
+generalization preservation, validating its design effectiveness. 
+Domain Generalization. We conduct 16-shot KDA-Tuning on ImageNet and evaluate 
+the model on 4 sub-datasets. As summarized in Table 1, while KDA-Tuning marginally 
+--- hit ---
+with very few samples (1-shot), moderate samples (4-shot), and relatively more sam-
+ples (16-shot) as examples, KDA-Tuning surpasses existing methods consistently. These 
+results highlight KDA-Tuning’s balanced optimization of task-speciﬁc adaptation and 
+generalization preservation, validating its design effectiveness. 
+Domain Generalization. We conduct 16-shot KDA-Tuning on ImageNet and evaluate 
+the model on 4 sub-datasets. As summarized in Table 1, while KDA-Tuning marginally 
+underperforms state-of-the-art methods Maple and TCP on ImageNet-A (−0.26%) and 
+ImageNet-R (−0.12%), it achieves the highest average accuracy across the benchmark. 
+These results validate that our dual-branch knowledge decoupling design effectively 
+enhances vision-language models’ generalization capabilities, particularly in balancing 
+--- hit ---
+results highlight KDA-Tuning’s balanced optimization of task-speciﬁc adaptation and 
+generalization preservation, validating its design effectiveness. 
+Domain Generalization. We conduct 16-shot KDA-Tuning on ImageNet and evaluate 
+the model on 4 sub-datasets. As summarized in Table 1, while KDA-Tuning marginally 
+underperforms state-of-the-art methods Maple and TCP on ImageNet-A (−0.26%) and 
+ImageNet-R (−0.12%), it achieves the highest average accuracy across the benchmark. 
+These results validate that our dual-branch knowledge decoupling design effectively 
+enhances vision-language models’ generalization capabilities, particularly in balancing 
+task-speciﬁc adaptation with cross-domain robustness. 
+Table 2. Comparison of training efﬁciency and computational cost. 
+--- hit ---
+generalization preservation, validating its design effectiveness. 
+Domain Generalization. We conduct 16-shot KDA-Tuning on ImageNet and evaluate 
+the model on 4 sub-datasets. As summarized in Table 1, while KDA-Tuning marginally 
+underperforms state-of-the-art methods Maple and TCP on ImageNet-A (−0.26%) and 
+ImageNet-R (−0.12%), it achieves the highest average accuracy across the benchmark. 
+These results validate that our dual-branch knowledge decoupling design effectively 
+enhances vision-language models’ generalization capabilities, particularly in balancing 
+task-speciﬁc adaptation with cross-domain robustness. 
+Table 2. Comparison of training efﬁciency and computational cost. 
+Method Epoch GFLOPS Param Accuracy 
+--- hit ---
+Domain Generalization. We conduct 16-shot KDA-Tuning on ImageNet and evaluate 
+the model on 4 sub-datasets. As summarized in Table 1, while KDA-Tuning marginally 
+underperforms state-of-the-art methods Maple and TCP on ImageNet-A (−0.26%) and 
+ImageNet-R (−0.12%), it achieves the highest average accuracy across the benchmark. 
+These results validate that our dual-branch knowledge decoupling design effectively 
+enhances vision-language models’ generalization capabilities, particularly in balancing 
+task-speciﬁc adaptation with cross-domain robustness. 
+Table 2. Comparison of training efﬁciency and computational cost. 
+Method Epoch GFLOPS Param Accuracy 
+CoOp 200 10.41 0.01M 71.93 
+
+--- PAGE 10 FULL/EDGE ---
+KDA-Tuning 379
+4.3 Ablation Studies 
+Various Adapter Variants. We evaluate three variants of adapters: visual-only, text-
+only, and joint implementation. For fair comparison, single-branch variants adjust the 
+LGK and LSK : (i) replacing the dual-branch probability distillation in LGK with feature 
+distillation from frozen backbones, and (ii) applying LSK constraints only to their respec-
+tive modalities. Experiments (Fig. 4) reveal that both visual-only and text-only adapters 
+signiﬁcantly outperform zero-shot CLIP , with visual adaptation showing greater efﬁ-
+cacy. Notably, combining both adapters achieves optimal performance, demonstrating 
+that joint multimodal feature alignment yields complementary beneﬁts. 
+Fig. 4. Impact of various adapter variants. 
+Table 4. Effectiveness of LGK and LSK 
+Method LGK LSK 1-shot 4-shot 16-shot 
+Baseline × × 65.64 69.80 72.07 
+Loss √ × 67.35 (+1.71) 70.73 (+0.93) 72.45 (+0.38)
+√ √ 68.18 (+2.54) 71.36 (+1.56) 72.92 (+0.85) 
+Effectiveness of Shared Projection Layer . We evaluate the shared projection layer 
+under [1, 4, 16]-shot settings on ImageNet. As shown in Table 3, introducing the shared 
+layer consistently improves performance across all settings, with 0.93% (1-shot), 0.67% 
+(4-shot), and 0.52% (16-shot) accuracy gains. These results highlight critical insights: 
+cross-modal interaction is particularly vital in low-data regimes. 
+Visualization Analysis. We conduct visualization with Grad-CAM. Results (Fig. 5) 
+reveal distinct attention patterns: the task-speciﬁc branch focuses on ﬁne-grained dis-
+criminative details (e.g., the car’s faces and rear, the cake’s strawberry) but is susceptible 
+to background noise, while the general knowledge branch prioritizes holistic foreground 
+objects (e.g., vehicle backbone, food center) and overlooks subtle features. Through 
+dynamic fusion, the ﬁnal prediction synthesizes strengths from both branches. 
+Effectiveness of LGK and LSK . We evaluate the contributions of LGK and LSK under 
+[1, 4, 16]-shot settings (Table 4). Adding LGK alone improves accuracy by +1.71% (1-
+shot),+0.93% (4-shot), and+0.38% (16-shot) over the baseline. Jointly optimizing LGK
+
+--- PAGE 11 FULL/EDGE ---
+380 Z. Zhou et al.
+Fig. 5. Grad-CAM results of KDA-Tuning 
+and LSK further enhances performance, achieving +2.54% (1-shot), +1.56% (4-shot), 
+and +0.85% (16-shot) improvements, which underscores the complementary nature of 
+hierarchical knowledge constraints:LGK stabilizes optimization by anchoring pretrained 
+know-ledge, while LSK reﬁnes task-discriminative features. 
+Fig. 6. Hyperparameter α, β1,a n d β2 sensitivity analysis. 
+Hyperparameter Sensitivity Analysis. We investigate the impact of hyperparameters 
+α, β1, and β2 (deﬁned in Eq. 10 and Eq. 15) on performance under the 16-shot setting 
+on ImageNet (Fig. 6). Lower α degrade performance, indicating insufﬁcient retention of 
+general knowledge for robust generalization. Optimal β1 ranges are narrower and more 
+sensitive than those of β2. This aligns with CLIP’s inherent properties: text embed-
+dings require minimal downstream adjustment, whereas visual representations demand 
+stronger adaptation due to domain shifts in downstream tasks.
+
+--- PAGE 12 FULL/EDGE ---
+KDA-Tuning 381
+5 Conclusion 
+In this paper, we propose KDA-Tuning, a novel tuning framework that enhances VLMs 
+adaptation by explicitly decoupling general and task-speciﬁc knowledge via dual-branch 
+adapters. By dynamically fusing decoupled representations and enforcing specialized 
+supervision, KDA-Tuning avoids conﬂicts between the optimization, enabling models 
+to retain generalizability while adapting to task-speciﬁc data distributions. Extensive 
+experiments validate the effectiveness of KDA-Tuning in transferring VLMs. 
+References 
+1. Radford, A., Kim, J.W., et al.: Learning transferable visual models from natural language 
+supervision. 
+In: International Conference on Machine Learning, PMLR, pp. 8748–8763 
+(2021) 
+2. Jia, C., Y ang, Y ., et al.: Scaling up visual and vision-language representation learning with 
+noisy 
+text supervision. In: International Conference on Machine Learning, PMLR, pp. 4904– 
+4916 (2021) 
+3. Li, Y ., Fan, H., et al.: Scaling language-image pre-training via masking. In: Proceedings of 
+the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 23390–23400 
+(2023) 
+4. Y uan, L., Chen, D., et al.: Florence: a new foundation model for computer vision. arXiv 
+preprint arXiv:2111.11432. Accessed 1 Apr 2025 
+5. Zhou, K., Y ang, J., et al.: Learning to prompt for vision-language models. Int. J. Comput. 
+Vi
+sion 130(9), 2337–2348 (2022) 
+6. Zhou, K., Y ang, J., et al.: Conditional prompt learning for vision-language models. In: 
+Proceedings 
+of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, 
+pp. 16816–16825 (2022) 
+7. Khattak, M.U., Rasheed, H., et al.: MaPLe: multi-modal prompt learning. In: Proceedings of 
+the 
+IEEE/CVF Conference on Computer Vision and Pattern Recognition, pp. 19113–19122 
+(2023) 
+8. Jia, M., Tang, L., et al.: Visual prompt tuning. In: European Conference on Computer Vision 
+(ECCV), 
+pp. 709–727. Springer Nature, Switzerland (2022) 
+9. Cho, E., Kim, J., et al.: Distribution-aware prompt tuning for vision-language models. In: 
+Proceedings 
+of the IEEE/CVF International Conference on Computer Vision, pp. 22004– 
+22013 (2023) 
+10. Y ao, H., Zhang, R., Xu, C.: TCP: textual-based class-aware prompt tuning for visual-language 
+model. 
+In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern 
+Recognition, pp. 23438–23448 (2024) 
+11. Gao, P ., Geng, S., et al.: CLIP-adapter: better vision-language models with feature adapters. 
+Int. 
+J. Comput. Vision 132(2), 581–595 (2024) 
+12. Zhang, R., Fang, R., et al.: Tip-adapter: training-free CLIP-adapter for better vision-language 
+modeling 
+(2025). arXiv preprint arXiv:2111.03930. Accessed 1 Apr 2025 
+13. V aswani, A., Shazeer, N., et al.: Attention is all you need. In: Advances in Neural Information 
+Processing 
+Systems, vol. 30 (2017) 
+14. Dosovitskiy, A., Beyer, L., Kolesnikov, A., et al.: An image is worth 16x16 words: transformers 
+for 
+image recognition at scale. arXiv preprint arXiv:2010.11929 (2020)

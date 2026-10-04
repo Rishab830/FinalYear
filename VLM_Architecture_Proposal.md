@@ -8,47 +8,51 @@ This proposal keeps the VLM modular so Kaggle experiments can swap backbones, fu
 
 ```mermaid
 flowchart LR
-    I[Image Input] --> IP[Image Preprocessing<br/>resize, normalize, augment]
-    T[Text Input] --> TP[Text Preprocessing<br/>tokenize, prompt template]
+    subgraph OUTER[" "]
+        direction LR
 
-    IP --> VE{Vision Encoder}
-    VE --> VE1[CNN]
-    VE --> VE2[ViT]
-    VE --> VE3[Swin Transformer]
-    VE --> VE4[Hybrid CNN + Transformer]
+        D["<b>Dataset</b><br/><br/>- WildFireVQA JSON annotations<br/>- FLAME-3 RGB images<br/>- FLAME-3 thermal JPG/TIFF<br/>- Question-answer pairs"]
 
-    TP --> TE{Text Encoder}
-    TE --> TE1[LSTM]
-    TE --> TE2[Transformer Encoder]
-    TE --> TE3[Small LLM / Decoder LM]
+        P["<b>Data Preprocessing</b><br/><br/>- Path resolution<br/>- RGB/thermal pairing<br/>- Temperature summary extraction<br/>- Train/validation split<br/>- Image augmentation"]
 
-    VE1 --> VP[Vision Projection / Adapter]
-    VE2 --> VP
-    VE3 --> VP
-    VE4 --> VP
+        subgraph M["<b>Custom Generative VLM Framework</b>"]
+            direction TB
+            M1["RGB Vision Encoder<br/>(CLIP / ViT / Swin)"]
+            M2["Thermal Vision Encoder<br/>(shared or separate weights)"]
+            M3["Visual Projection<br/>(linear / MLP / adapter)"]
+            M4["Question Encoder<br/>(T5 / small LLM embeddings)"]
+            M5["RGB-Thermal Fusion<br/>(concat / cross-attention / Q-Former)"]
+            M6["Text Decoder<br/>(generates free-form answer)"]
+        end
 
-    TE1 --> TPJ[Text Projection / Adapter]
-    TE2 --> TPJ
-    TE3 --> TPJ
+        E["<b>Evaluation and Comparative Analysis</b><br/><br/>BLEU / ROUGE-L<br/>Exact Match<br/>Semantic Similarity<br/>Category-wise Scores<br/>Ablation Comparison"]
 
-    VP --> F{Cross-Modal Fusion}
-    TPJ --> F
+        B["<b>Take Final Best Model</b>"]
 
-    F --> F1[Embedding Concatenation]
-    F --> F2[Cross-Attention]
-    F --> F3[Q-Former / Query Tokens]
-    F --> F4[Mixture of Experts]
+        N["<b>New Wildfire Samples</b><br/><br/>Collect / mount additional<br/>RGB-thermal UAV fire images"]
 
-    F1 --> MM[Multimodal Representation]
-    F2 --> MM
-    F3 --> MM
-    F4 --> MM
+        R["<b>Proposed Work Output</b><br/><br/>- Data preprocessing pipeline<br/>- RGB-thermal generative VLM<br/>- Layer permutation experiments<br/>- Evaluation and comparison<br/>- Final Kaggle-ready model"]
 
-    MM --> H{Task Head}
-    H --> R[Retrieval / Similarity Head]
-    H --> C[Captioning Decoder]
-    H --> VQA[VQA / Instruction Head]
-    H --> CLS[Classification Head]
+        D --> P --> M --> E --> B --> N
+        N --> R
+        N -.future data.-> P
+        E -.best config.-> R
+
+        style OUTER fill:#ffffff,stroke:#75a3ff,stroke-width:3px
+        style D fill:#92d050,stroke:#4f6570,stroke-width:2px,color:#000
+        style N fill:#92d050,stroke:#4f6570,stroke-width:2px,color:#000
+        style P fill:#13aadd,stroke:#4f6570,stroke-width:2px,color:#000
+        style M fill:#aaa7dc,stroke:#4f6570,stroke-width:2px,color:#000
+        style M1 fill:#bde5e8,stroke:#4f6570,stroke-width:1px,color:#000
+        style M2 fill:#bde5e8,stroke:#4f6570,stroke-width:1px,color:#000
+        style M3 fill:#bde5e8,stroke:#4f6570,stroke-width:1px,color:#000
+        style M4 fill:#bde5e8,stroke:#4f6570,stroke-width:1px,color:#000
+        style M5 fill:#bde5e8,stroke:#4f6570,stroke-width:1px,color:#000
+        style M6 fill:#bde5e8,stroke:#4f6570,stroke-width:1px,color:#000
+        style E fill:#eef3df,stroke:#4f6570,stroke-width:2px,color:#000
+        style B fill:#338a9b,stroke:#4f6570,stroke-width:2px,color:#000
+        style R fill:#338a9b,stroke:#4f6570,stroke-width:2px,color:#000
+    end
 ```
 
 ## Training Flow

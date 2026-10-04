@@ -8,34 +8,62 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 | # | Paper | Main Use For Proposed Work |
 |---|---|---|
-| 1 | Comprehensive VLM survey | Overall research map: PEFT, prompts, datasets, benchmarks, deployment gaps |
-| 2 | CLIP-AST | Adaptive layer/parameter selection instead of manually choosing tuning locations |
-| 3 | Contrastive alignment | Use contrastive loss with next-token prediction during alignment |
-| 4 | KDA-Tuning | Preserve general knowledge while learning task-specific adapters |
-| 5 | Molmo and PixMo | Open-data VLM recipe and importance of high-quality non-distilled data |
-| 6 | PEFT post-transformer survey | Compare LoRA, QLoRA, DoRA, adapters, prompts under resource limits |
-| 7 | SynthVLM | Synthetic image-caption data generation and data selection |
-| 8 | Remote sensing VLM survey | Domain-specific VLM gaps: multimodal RS data, explainability, continual learning |
-| 9 | VisionCore | Spatial reasoning with coordinate-aware LoRA tuning |
-| 10 | VL-PET | Granularity-controlled PET modules and layer placement experiments |
+| 1 | WildFireVQA | Target dataset and benchmark for RGB-thermal wildfire VQA |
+| 2 | UAV Swarms and VLM Forest Fire System | System architecture for VLM-assisted wildfire detection and response |
+| 3 | CLIP-AST | Adaptive layer/parameter selection instead of manually choosing tuning locations |
+| 4 | Contrastive alignment | Use contrastive loss with next-token prediction during alignment |
+| 5 | KDA-Tuning | Preserve general knowledge while learning task-specific adapters |
+| 6 | Molmo and PixMo | Open-data VLM recipe and importance of high-quality non-distilled data |
+| 7 | PEFT post-transformer survey | Compare LoRA, QLoRA, DoRA, adapters, prompts under resource limits |
+| 8 | SynthVLM | Synthetic image-caption data generation and data selection |
+| 9 | Remote sensing VLM survey | Domain-specific VLM gaps: multimodal RS data, explainability, continual learning |
+| 10 | VisionCore | Spatial reasoning with coordinate-aware LoRA tuning |
+| 11 | VL-PET | Granularity-controlled PET modules and layer placement experiments |
 
 ---
 
-## 1. Comprehensive VLM Survey
+## 1. WildFireVQA
 
-**Authors:** Sufyan Danish, Abolghasem Sadeghi-Niaraki, Samee Ullah Khan, L. Minh Dang, Lilia Tightiz, Hyeonjoon Moon
+**Authors:** Mobin Habibpour, Niloufar Alipour Talemi, John Spodnik, Camren J. Khoury, Fatemeh Afghah
 
-**Full title with year:** *A comprehensive survey of Vision-Language Models: Pretrained models, fine-tuning, prompt engineering, adapters, and benchmark datasets* (2026)
+**Full title with year:** *WildFireVQA: A Large-Scale Radiometric Thermal VQA Benchmark for Aerial Wildfire Monitoring* (2026)
 
-**Datasets used / reviewed:** This is a survey, so it does not introduce one experimental dataset. It reviews major VLM datasets and benchmarks including MS COCO, VQAv2, GQA, CLEVR, Open Images, ADE20K, Cityscapes, Flickr30k, COCO Captions, Conceptual Captions, SBU Captions, Flickr30k Entities, RS5M, and medical VLM datasets such as VQA-Med, MIMIC-NLE, SLAKE, GEMeX, MS-CXR, 3D-RAD, MEDVQA-GI, PMC-OA, and BIOMEDICA.
+**Datasets used:** The paper introduces WildFireVQA, built on the FLAME-3 UAV wildfire dataset. It uses paired RGB imagery, color-mapped thermal visualizations, and radiometric thermal TIFFs from Sycan Marsh, Willamette, and Shoetank prescribed burns. The benchmark contains 6,097 RGB-thermal samples, 34 questions per sample, and 207,298 multiple-choice questions. Evaluation uses representative MLLMs including Qwen3-VL-8B, LLaVA-v1.6-Mistral-7B, InternVL2-8B, and MiniCPM-V2 under RGB, thermal, and retrieval-augmented settings.
 
-**Inference from the paper:** The paper shows that modern VLM progress is not only about larger models. Practical performance depends on a combination of pretrained architectures, prompt engineering, adapter-based tuning, dataset quality, benchmark choice, and deployment constraints. The most relevant point for our work is that PEFT methods such as LoRA, BitFit, adapters, and prompt tuning can preserve most of the performance of full fine-tuning while greatly reducing trainable parameters and compute cost.
+**Inference from the paper:**
 
-**Open problem for proposed work:** Build a modular VLM experimentation framework that jointly evaluates architecture choices, PEFT choices, and dataset choices under fixed compute limits. Important gaps to address are benchmark inconsistency, weak generalization to low-resource/domain-specific settings, limited interpretability, dataset bias, and efficient deployment.
+- Wildfire VQA needs domain-specific evaluation.
+- RGB alone is strongest for current MLLMs.
+- Thermal metadata helps stronger models.
+- Radiometric TIFFs enable temperature-grounded labels.
+- Label quality needs deterministic checks and manual review.
+
+**Open problem for proposed work:** Build a generative RGB-thermal VLM for WildFireVQA that produces free-form answers instead of scoring candidate options. Important gaps are stronger RGB-thermal fusion, better use of radiometric temperature summaries, generalization across burn sites, and evaluation with text-generation metrics such as BLEU, ROUGE-L, exact match, and semantic similarity.
 
 ---
 
-## 2. Adaptive Parameter Selection for Tuning VLMs
+## 2. A Smart System for Early Detection and Prevention of Forest Fire Using UAV Swarms and VLM
+
+**Authors:** Sarah Basahel, Adnan Ahmed Abi Sen, Nour Mahmoud Bahbouh, Omar Tayan, Adel Ben Mnaouer, Mohammad Yamin
+
+**Full title with year:** *A Smart System for Early Detection and Prevention of Forest Fire Using UAV Swarms and VLM* (2026)
+
+**Datasets used:** The paper does not introduce a new dataset. For preliminary image-analysis testing, it uses `Fire-Detection-Image-Dataset-master`, which includes real fire scenes and visually confusing non-fire scenes such as sunsets or red skies. The proposed operational system assumes UAV-mounted RGB cameras, thermal cameras, and sensors such as smoke, CO2, and temperature sensors, but the full UAV swarm system is not evaluated on a deployed dataset.
+
+**Inference from the paper:**
+
+- UAV swarms can improve forest coverage.
+- Spiral coverage supports systematic monitoring.
+- Fog nodes reduce response latency.
+- VLMs detect smoke, flames, and thermal anomalies.
+- Response drones can act before fire spreads.
+- The evaluation is still preliminary.
+
+**Open problem for proposed work:** Convert this conceptual UAV-VLM framework into a measurable VQA or detection pipeline. Important gaps are full-system simulation, real UAV deployment, latency measurement, false-alarm control, RGB-thermal fusion, and evaluation on wildfire-specific datasets such as WildFireVQA instead of only binary fire/non-fire images.
+
+---
+
+## 3. Adaptive Parameter Selection for Tuning VLMs
 
 **Authors:** Yi Zhang, Yi-Xuan Deng, Meng-Hao Guo, Shi-Min Hu
 
@@ -43,13 +71,19 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used:** Caltech101, DTD, EuroSAT, FGVC Aircraft, Flowers102, Food101, ImageNet, OxfordPets, StanfordCars, SUN397, UCF101, ImageNet-Sketch, and ImageNetV2.
 
-**Inference from the paper:** The paper proposes CLIP-AST, which automatically selects important CLIP parameters for fine-tuning using AdamW second-moment gradient statistics. Instead of adding prompts or adapters at manually chosen locations, it first estimates parameter importance and then fine-tunes the top selected sub-layers. This improves few-shot, base-to-novel, and out-of-distribution performance without adding inference-time parameters.
+**Inference from the paper:**
+
+- CLIP-AST selects tunable CLIP parameters automatically.
+- It uses AdamW second-moment gradient statistics.
+- It fine-tunes only the most important sub-layers.
+- It improves few-shot, novel-class, and OOD accuracy.
+- It adds no inference-time parameters.
 
 **Open problem for proposed work:** Our VLM pipeline should not only compare fixed LoRA/adapters at predefined layers. We should add an adaptive layer-selection experiment where the model identifies which vision, projection, fusion, or language layers need tuning for each dataset. A gap remains in extending CLIP-AST-style selection beyond CLIP classification to generative VLMs, VQA, captioning, and domain-specific data.
 
 ---
 
-## 3. Contrastive Alignment for VLMs
+## 4. Contrastive Alignment for VLMs
 
 **Authors:** Kenan E. Ak, Jay Mohta, Dimitris Dimitriadis, Saurav Manchanda, Yan Xu, Mingwei Shen
 
@@ -57,13 +91,19 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used:** Stage 1 uses 558K image-text pairs from LAION, Conceptual Captions, and SBU. Stage 2 uses LLaVA-style instruction tuning data including COCO, GQA, OCR-VQA, Text-VQA, and Visual Genome. Evaluation uses MMBench, MMBench-CN, MME, Seed-Bench, MM-VET, and MMMU.
 
-**Inference from the paper:** The paper identifies a weakness in next-token-prediction-only alignment: image and text embeddings can remain poorly aligned even after pretraining. Adding contrastive loss alongside next-token prediction improves multimodal performance by about 2 percent without extra training data or major extra compute. The paper also shows that projection layers, vision encoder strength, and LLM choice affect alignment quality.
+**Inference from the paper:**
+
+- Next-token loss alone can leave weak image-text alignment.
+- Contrastive loss improves alignment and benchmark performance.
+- The gain is about 2 percent in their experiments.
+- Projection design strongly affects results.
+- Vision encoder and LLM choice also matter.
 
 **Open problem for proposed work:** Our baseline should include an explicit ablation between next-token-only alignment and joint contrastive plus next-token alignment. We should also test whether this benefit remains under small Kaggle-scale datasets and with lightweight projection layers.
 
 ---
 
-## 4. KDA-Tuning
+## 5. KDA-Tuning
 
 **Authors:** Zhengdong Zhou, Chenhao Ding, Qilong Xue
 
@@ -71,13 +111,19 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used:** Few-shot experiments use ImageNet, StanfordCars, Caltech101, UCF101, Flowers102, Food101, DTD, EuroSAT, FGVCAircraft, OxfordPets, and SUN397. Domain generalization uses ImageNet as source and ImageNet-V2, ImageNet-Sketch, ImageNet-A, and ImageNet-R as shifted target datasets.
 
-**Inference from the paper:** KDA-Tuning addresses overfitting in adapter tuning by separating general knowledge and task-specific knowledge into two adapter branches. The general branch is supervised to preserve frozen CLIP behavior, while the task branch improves task-specific visual-text alignment. Dynamic fusion combines the branches. The result is better few-shot performance and stronger domain generalization than several prompt/adaptation baselines.
+**Inference from the paper:**
+
+- KDA-Tuning separates general and task-specific knowledge.
+- One branch preserves frozen CLIP behavior.
+- The other branch learns task-specific alignment.
+- Dynamic fusion combines both branches.
+- It improves few-shot and domain generalization results.
 
 **Open problem for proposed work:** For our VLM, adapters should not be treated as one generic module. We can test dual-branch adapters that separately preserve base-model knowledge and learn domain-specific task features. The open gap is whether this idea transfers from CLIP-style classification to VQA/captioning and to multimodal fusion layers.
 
 ---
 
-## 5. Molmo and PixMo
+## 6. Molmo and PixMo
 
 **Authors:** Matt Deitke, Christopher Clark, Sangho Lee, Rohun Tripathi, Yue Yang, Jae Sung Park, Mohammadreza Salehi, Niklas Muennighoff, Kyle Lo, Luca Soldaini, Jiasen Lu, Taira Anderson, Erin Bransom, Kiana Ehsani, Huong Ngo, YenSung Chen, Ajay Patel, Mark Yatskar, Chris Callison-Burch, Andrew Head, Rose Hendrix, Favyen Bastani, Eli VanderBilt, Nathan Lambert, Yvonne Chou, Arnavi Chheda, Jenna Sparks, Sam Skjonsberg, Michael Schmitz, Aaron Sarnat, Byron Bischoff, Pete Walsh, Chris Newell, Piper Wolters, Tanmay Gupta, Kuo-Hao Zeng, Jon Borchardt, Dirk Groeneveld, Crystal Nam, Sophie Lebrecht, Caitlin Wittlif, Carissa Schoenick, Oscar Michel, Ranjay Krishna, Luca Weihs, Noah A. Smith, Hannaneh Hajishirzi, Ross Girshick, Ali Farhadi, Aniruddha Kembhavi
 
@@ -85,13 +131,19 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used:** The paper introduces PixMo, including PixMo-Cap, PixMo-AskModelAnything, PixMo-Points, PixMo-CapQA, PixMo-Docs, PixMo-Clocks, and PixMo-Count. It also uses open-source training/evaluation datasets such as VQA v2.0, TextVQA, OK-VQA, ChartQA, DocVQA, InfographicVQA, AI2D, A-OKVQA, AndroidControl, ScienceQA, TabMWP, ST-VQA, TallyQA, DVQA, FigureQA, PlotQA, RealWorldQA, MMMU, MathVista, CountBenchQA, and PixMo-Count.
 
-**Inference from the paper:** Molmo shows that strong open VLMs can be built without distilling proprietary VLM outputs if the dataset is carefully designed. Its key contribution is not just model scale, but high-quality data collection: dense spoken captions, free-form Q&A, pointing supervision, and targeted synthetic data. The architecture itself is relatively standard: vision encoder, connector, tokenizer, and decoder-only LLM.
+**Inference from the paper:**
+
+- Strong open VLMs do not require proprietary distillation.
+- Data quality is the main contribution.
+- Useful supervision includes captions, Q&A, and points.
+- Targeted synthetic data also helps.
+- The architecture is fairly standard.
 
 **Open problem for proposed work:** Our proposed VLM should treat data quality and supervision type as experimental variables, not just model layers. A useful direction is to add pointing/grounding or coordinate supervision to improve spatial answers. A remaining open problem is how to reproduce Molmo-like data quality at small scale on Kaggle without expensive annotation.
 
 ---
 
-## 6. PEFT Post-Transformer Survey
+## 7. PEFT Post-Transformer Survey
 
 **Authors:** Patalee Narasinghe, B.H. Sudantha
 
@@ -99,13 +151,19 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used / benchmarked:** This is a survey/analysis paper. It discusses benchmark results on ImageNet, VQAv2, GQA, VisWiz, ScienceQA, TextVQA, POPE, and MMBench, and references domain datasets such as PubMed Central biomedical image-text data through BiomedCLIP and remote-sensing data through RemoteCLIP.
 
-**Inference from the paper:** PEFT is essential for VLMs because full fine-tuning is expensive, storage-heavy, and vulnerable to catastrophic forgetting. The paper groups PEFT into input-level prompting, feature-level adapters, and weight-level reparameterization such as LoRA, QLoRA, DoRA, PiSSA, and LoftQ. Different methods have different trade-offs: adapters may add latency, LoRA can be merged for inference, QLoRA reduces memory, and DoRA/PiSSA improve LoRA stability and convergence.
+**Inference from the paper:**
+
+- Full fine-tuning is costly and storage-heavy.
+- It can also cause catastrophic forgetting.
+- PEFT includes prompts, adapters, and reparameterization.
+- Key methods include LoRA, QLoRA, DoRA, PiSSA, and LoftQ.
+- Each method trades off memory, latency, and stability.
 
 **Open problem for proposed work:** The proposed work should compare PEFT methods using the same validation split, memory budget, trainable parameter count, and inference latency. A strong open problem is choosing PEFT dynamically based on the target task: retrieval, VQA, captioning, domain adaptation, or edge deployment.
 
 ---
 
-## 7. SynthVLM
+## 8. SynthVLM
 
 **Authors:** Zheng Liu, Hao Liang, Bozhou Li, Wentao Xiong, Chong Chen, Conghui He, Wentao Zhang, Bin Cui
 
@@ -113,13 +171,19 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used:** The paper introduces SynthVLM-100K, generated from a 1M-caption pool. Caption sources include LAION, Conceptual Captions, SBU, COCO, and BLIP2-DataComp-style captions. It compares against COCO-Caption, BLIP-LCS, ShareGPT4V, ShareGPT4V-PT, and LLaVA-558K. SFT uses LLaVA-665K. Evaluation includes ScienceQA, image-based ScienceQA, MMVet, VizWiz, VQAv2, GQA, MMBench, MME, POPE, and MMLU.
 
-**Inference from the paper:** The paper argues that low-quality web images and weak image-text alignment are major bottlenecks. SynthVLM reverses the usual image-to-caption pipeline by filtering high-quality captions, generating images using diffusion models, and then selecting aligned image-caption pairs using CLIPScore and SSIM. With only 100K synthetic pairs, the resulting models outperform LLaVA baselines trained with much more pretraining data.
+**Inference from the paper:**
+
+- Poor web data limits VLM training.
+- Weak image-text alignment is a major bottleneck.
+- SynthVLM filters captions before generating images.
+- It uses CLIPScore and SSIM for pair selection.
+- 100K synthetic pairs outperform larger LLaVA pretraining sets.
 
 **Open problem for proposed work:** Our Kaggle experiments should include a data-quality axis: raw data, filtered data, synthetic data, and filtered synthetic data. The open problem is how to verify that synthetic image-caption pairs improve real-world generalization rather than only improving benchmark alignment.
 
 ---
 
-## 8. Remote Sensing VLM Survey
+## 9. Remote Sensing VLM Survey
 
 **Authors:** Xingxing Weng, Chao Pang, Gui-Song Xia
 
@@ -127,13 +191,19 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used / reviewed:** This is a remote-sensing VLM survey. It reviews pretraining, instruction-following, and benchmark datasets including UCM-captions, Sydney-captions, RSICD, RS5M, GeoRSCLIP-related datasets, RemoteCLIP-related datasets, DIOR, DOTA, FAIR1M, LEVIR, NWPU-RESISC45, RSVQA-LR, RSVQA-HR, RSVG, DIOR-RSVG, RSITMD, NWPU-Captions, LHRS-Align, LHRS-Bench, VRSBench, GEOBench-VLM, and other optical, SAR, IR, detection, captioning, VQA, grounding, and generation datasets.
 
-**Inference from the paper:** Remote sensing VLMs need more than generic natural-image VLM design. They must handle sensor variation, geographic distribution shifts, scale changes, domain-specific semantics, and specialized tasks such as classification, captioning, VQA, retrieval, grounding, text-conditioned generation, change detection, and urban prediction. The survey emphasizes the pretraining-then-fine-tuning paradigm and divides RS VLMs into contrastive, instruction-based, and generation-based methods.
+**Inference from the paper:**
+
+- Remote sensing needs domain-specific VLM design.
+- Models must handle sensor and geography shifts.
+- Scale variation is a core challenge.
+- Tasks include VQA, captioning, retrieval, and grounding.
+- RS VLMs are contrastive, instruction-based, or generative.
 
 **Open problem for proposed work:** If our proposed work includes a remote-sensing or domain-specific track, it should test domain adaptation explicitly. Key gaps are alignment across optical/SAR/IR/geospatial/vector/social data, vague natural-language task requirements, expert explanations for reliability, continual adaptation without forgetting, richer multimodal datasets, and harder application-specific benchmarks.
 
 ---
 
-## 9. VisionCore
+## 10. VisionCore
 
 **Authors:** Ufuk Ozkul, Levent Karacan, Cemil Zalluhoglu
 
@@ -141,13 +211,20 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used:** GQA is the main dataset, using scene descriptions, bounding boxes, coordinates, and directional relationships. The paper evaluates on GQA test-dev and VQAv2 validation. It also experiments with HaloQuest for hallucination/non-existing-object questions.
 
-**Inference from the paper:** VisionCore shows that small VLMs can improve spatial reasoning through coordinate-aware instruction tuning and LoRA. It uses DeepSeek-VL 1.3B, freezes the base model, and trains only about 15M LoRA parameters. GQA scene descriptions inject explicit spatial priors such as object coordinates and left/right/above/below relations. The method reaches 60.3% on GQA, approaching larger models while using fewer parameters.
+**Inference from the paper:**
+
+- Small VLMs can improve spatial reasoning.
+- Coordinate-aware instruction tuning helps.
+- VisionCore freezes DeepSeek-VL 1.3B.
+- It trains only about 15M LoRA parameters.
+- GQA scene metadata adds spatial priors.
+- It reaches 60.3% on GQA.
 
 **Open problem for proposed work:** Add spatial metadata as an optional training feature and test whether coordinate-aware prompts improve VQA/captioning. The main gap is robustness: VisionCore overfits to a single conversation format, so proposed work should use multi-style prompt augmentation and adaptive fine-tuning across prompt formats.
 
 ---
 
-## 10. VL-PET
+## 11. VL-PET
 
 **Authors:** Zi-Yuan Hu, Yanyang Li, Michael R. Lyu, Liwei Wang
 
@@ -155,21 +232,29 @@ This document summarizes each PDF with the fields needed for the proposed work: 
 
 **Datasets used:** Image-text tasks use VQAv2, GQA, NLVR2, and MSCOCO. Video-text tasks use TVQA, How2QA, TVC, and YC2C from the VALUE benchmark.
 
-**Inference from the paper:** VL-PET shows that PET modules need careful control and placement. Excessive modular modifications can harm performance, and encoder-decoder VLMs have different needs: encoders need stronger visual-language alignment and modeling, while decoders should preserve text generation ability. The proposed granularity-controlled mechanism creates variants with different parameter-efficiency/performance trade-offs and shows strong results on image-text and video-text tasks.
+**Inference from the paper:**
+
+- PET placement strongly affects performance.
+- Too many module changes can hurt.
+- Encoders need stronger visual-language alignment.
+- Decoders must preserve generation ability.
+- Granularity control balances efficiency and accuracy.
 
 **Open problem for proposed work:** This paper directly supports our layer-permutation plan. We should test where PEFT modules are inserted: vision encoder, text encoder, projection layer, fusion layer, decoder cross-attention, and task head. The open problem is to design a search strategy that finds the best PET placement automatically under Kaggle compute limits.
 
 ---
 
-## Consolidated Open Problems for Proposed Work
+## Consolidated Research Gap for Proposed Work
 
-1. **Adaptive tuning location:** Automatically choose which layers/modules to tune instead of fixing LoRA or adapters manually.
-2. **Joint alignment objective:** Compare next-token-only training with contrastive plus next-token training.
-3. **Knowledge retention:** Prevent PEFT from overfitting to small task data by preserving base-model general knowledge.
-4. **Data quality:** Include dataset filtering, synthetic data, and alignment scoring as first-class experiment variables.
-5. **Spatial reasoning:** Add coordinate, bounding-box, or pointing supervision for tasks requiring object relationships.
-6. **Domain adaptation:** Test whether the architecture survives domain shifts such as remote sensing, medical, or other specialized Kaggle datasets.
-7. **Prompt robustness:** Train and evaluate using multiple prompt styles to avoid overfitting to one instruction template.
-8. **Compute-aware search:** Track trainable parameters, GPU memory, epoch time, and inference latency for every architecture/PEFT variant.
-9. **Benchmark reliability:** Use fixed validation splits and consistent metrics so layer permutations are comparable.
-10. **Explainability:** Add interpretable outputs such as evidence regions, pointing tokens, or structured rationales where possible.
+Existing wildfire VLM work is still limited in three ways: most systems focus on fire detection or multiple-choice scoring, thermal evidence is not deeply fused with RGB reasoning, and few methods test lightweight generative VLMs under realistic Kaggle-scale compute limits. The proposed work should fill this gap by building a custom RGB-thermal VLM that generates answers for WildFireVQA and evaluates them with text-generation metrics.
+
+1. **Free-form VQA generation:** Current WildFireVQA baselines score options; our model should generate answers directly.
+2. **RGB-thermal fusion:** Existing models use RGB better than thermal; stronger fusion is needed.
+3. **Radiometric reasoning:** Thermal summaries and TIFF-derived statistics should guide answer generation.
+4. **Wildfire-specific adaptation:** Generic VLMs need tuning for smoke, hotspots, burn regions, and UAV flight context.
+5. **Layer permutation search:** Vision, projection, fusion, and decoder layers should be compared systematically.
+6. **Parameter-efficient tuning:** LoRA, adapters, and selective tuning should be tested under the same split.
+7. **Generative evaluation:** BLEU, ROUGE-L, exact match, and semantic similarity should replace option accuracy.
+8. **Cross-site generalization:** The model should be tested across Sycan, Willamette, and Shoetank-style shifts.
+9. **Data availability handling:** The pipeline must resolve separate WildFireVQA annotations and FLAME-3 images.
+10. **Operational reliability:** False alarms, weak thermal interpretation, and missing visual evidence remain open issues.

@@ -1,0 +1,287 @@
+FILE: WildFireVQA A Large-Scale Radiometric Thermal VQA Benchmark for Aerial.txt
+
+
+--- FULL PAPER EXTRACT ---
+
+TITLE: WildFireVQA: A Large-Scale Radiometric Thermal VQA Benchmark for Aerial Wildfire Monitoring
+
+AUTHORS: Niloufar Alipour Talemi, Mobin Habibpour, John Spodnik, Camren J. Khoury, Fatemeh Afghah
+AFFILIATION: Clemson University
+CONTACT: {mhabibp, nalipou, jspodni, camrenk, fafghah}@clemson.edu
+ARXIV: 2604.20190v1 [cs.CV] 22 Apr 2026
+
+=== ABSTRACT ===
+
+Wildfire monitoring requires timely, actionable situational awareness from airborne platforms, yet existing aerial visual question answering (VQA) benchmarks do not evaluate wildfire-specific multimodal reasoning grounded in thermal measurements. We introduce WildFireVQA, a large-scale VQA benchmark for aerial wildfire monitoring that integrates RGB imagery with radiometric thermal data. WildFireVQA contains 6,097 RGB-thermal samples, where each sample includes an RGB image, a color-mapped thermal visualization, and a radiometric thermal TIFF, and is paired with 34 questions, yielding a total of 207,298 multiple-choice questions spanning presence and detection, classification, distribution and segmentation, localization and direction, cross-modal reasoning, and flight planning for operational wildfire intelligence. To improve annotation reliability, we combine multimodal large language model (MLLM)-based answer generation with sensor-driven deterministic labeling, manual verification, and intra-frame and inter-frame consistency checks. We further establish a comprehensive evaluation protocol for representative MLLMs under RGB, Thermal, and retrieval-augmented settings using radiometric thermal statistics. Experiments show that across task categories, RGB remains the strongest modality for current models, while retrieved thermal context yields gains for stronger MLLMs, highlighting both the value of temperature-grounded reasoning and the limitations of existing MLLMs in safety-critical wildfire scenarios. The dataset and benchmark code are open-source at https://github.com/mobiiin/WildFire_VQA.
+
+=== 1. INTRODUCTION ===
+
+Wildfires are fast-evolving natural disasters that can cause widespread damage to lives, critical infrastructure, and local economies. Effective response depends on timely, actionable situational awareness, where visual understanding from airborne platforms plays a central role. Unmanned aerial vehicles (UAVs) can capture rich observations from active fire scenes, but converting them into reliable decisions remains challenging at scale.
+
+Recent wildfire-response systems increasingly combine multimodal sensing, simulation, and interactive analytics to support tactical decision making, as in digital-twin frameworks such as FIRETWIN. Vision language models offer a promising direction by combining visual perception with natural language understanding. Among multimodal tasks, visual question answering (VQA) is especially demanding because it requires scene-level comprehension and fine-grained reasoning conditioned on the question.
+
+Aerial VQA is also relatively new, and although recent benchmarks target environmental monitoring, there is still no dataset designed specifically for wildfire monitoring. This gap makes it difficult to measure how well multimodal large language models (MLLMs) handle wildfire-specific reasoning beyond basic fire presence detection. The need is further highlighted by recent efforts on wildfire-aware vision-language reasoning in physics-grounded digital twins for autonomous UAV fire tracking, such as FIREVLM.
+
+To address this need, we introduce WildFireVQA, a large-scale VQA benchmark for UAV-based wildfire monitoring that integrates RGB imagery with radiometric thermal data. Unlike benchmarks that rely only on visual appearance, WildFireVQA supports temperature-grounded reasoning by providing radiometric thermal TIFFs with per-pixel temperature values in addition to color-mapped thermal visualizations aligned with RGB frames.
+
+The benchmark contains 6,097 RGB-thermal samples, with 34 questions per sample, resulting in 207,298 multiple-choice questions spanning detection, classification, segmentation-related queries, localization, cross-modal reasoning, and flight planning.
+
+ANNOTATION RELIABILITY:
+Constructing a reliable benchmark for a safety-critical domain requires careful label validation. WildFireVQA pairs automated answer proposals with manual review and correction, and further enforces consistency through inter-image and intra-image checks. For inter-image verification, we leverage ORB feature matching to identify overlapping frames and require that answers to identical questions remain consistent across matched views. For intra-image verification, we ensure that answers across different questions for the same frame do not contradict each other.
+
+EVALUATION PROTOCOL:
+Alongside the dataset, we provide an evaluation protocol for representative MLLMs under multiple inference settings. Our main-paper experiments focus on zero-shot evaluation across input modalities and retrieval augmentation settings; additional in-context learning analyses are provided in the supplementary material. These experiments establish baselines, highlight failure modes, and show how modality choice and retrieved thermal context affect model behavior in a high-stakes environment.
+
+MAIN CONTRIBUTIONS:
+• We propose WildFireVQA, a large-scale VQA benchmark built on paired RGB imagery and radiometric thermal measurements, enabling temperature-grounded question answering for wildfire monitoring.
+• We design 34 per-frame questions tailored to wildfire monitoring in binary and multiple-choice formats, with carefully curated distractors, and improve annotation reliability through manual verification and inter-frame and intra-frame consistency checks.
+• We provide a comprehensive evaluation protocol and baselines for representative MLLMs across inference settings, analyzing the effects of modality inputs and in-context learning to reveal strengths and failure modes in safety-critical wildfire scenarios.
+
+=== 2. RELATED WORK ===
+
+2.1. REMOTE SENSING VQA BENCHMARKS
+
+Remote sensing VQA enables natural-language querying of overhead imagery beyond fixed label sets. Early benchmarks such as RSVQA introduced large-scale image-question-answer triplets generated automatically from geospatial sources, while later datasets such as RSIVQA and HRVQA emphasized finer spatial reasoning and higher-resolution aerial imagery. More recent efforts, including VQA-TextRS, RSVLM-QA, and VRSBench, further broaden question diversity and annotation richness for evaluating modern vision-language models.
+
+Several remote sensing VQA benchmarks are also motivated by monitoring needs, especially disaster response: FloodNet provides UAV imagery collected after Hurricane Harvey for post-flood scene understanding and damage assessment, while RescueNet-VQA targets UAV-based post-disaster damage assessment through structured question answering.
+
+Despite this progress, existing remote sensing VQA benchmarks largely focus on generic land-cover or post-disaster assessment, remain predominantly RGB-centric, and, to our knowledge, do not offer a dedicated benchmark for wildfire monitoring that explicitly evaluates thermal reasoning, observability under smoke, and UAV decision-relevant interpretation. FLAME 3 advances wildfire datasets by providing paired RGB and radiometric thermal UAV imagery with per-pixel temperature estimates, but it is not formulated as a VQA benchmark. These gaps motivate WildFireVQA, a wildfire-specific multimodal VQA benchmark for systematically evaluating fire-monitoring capabilities in FLAME 3 imagery.
+
+2.2. WILDFIRE MONITORING BENCHMARKS
+
+Public wildfire monitoring datasets span multiple sensing platforms and annotation granularities, reflecting needs from early warning to tactical decision support. For aerial platforms, early benchmarks focused on recognizing fire and smoke cues in cluttered scenes with rapid viewpoint changes, occlusions, and strong illumination variations.
+
+The FLAME dataset provides UAV imagery collected during prescribed burns and supports both fire classification and segmentation, including large-scale frame-level Fire/Non-Fire labels and pixel-wise fire masks for fine-grained delineation of flame regions in aerial views. FLAME 2 broadened this setting by releasing paired RGB and thermal UAV imagery at scale and benchmarking learning strategies that exploit multi-spectral inputs for wildfire detection and monitoring beyond purely RGB-based perception.
+
+Beyond the FLAME 1 and 2 series, more recent aerial datasets diversify scene conditions, label types, and mission objectives. UAV image collections have also been introduced for detection and segmentation under varying lighting conditions and with richer class definitions beyond binary fire versus non-fire, enabling more realistic evaluation of false positives in visually similar backgrounds.
+
+WITUAS targets long-wave infrared detection of crew and vehicle assets in prescribed fire environments and highlights failure modes where thermal fire signatures can induce false positives, motivating fire-aware training data for operational safety monitoring. Video-focused resources such as the Boreal Forest Fire dataset further broaden coverage for smoke detection and segmentation by providing annotated UAV images and videos collected at multiple prescribed burning events.
+
+FLAME 3 ADVANCES:
+FLAME 3 further advances aerial wildfire datasets by introducing synchronized RGB imagery and radiometric thermal data with per-pixel temperature estimates stored in thermal TIFFs, along with thermal visualizations for human inspection. The dataset spans multiple prescribed fire events across diverse fuel and environment types and additionally includes nadir thermal plot recordings for characterizing spatiotemporal fire dynamics. Its radiometric temperature values enable temperature-driven screening and labeling workflows, for example using conservative thresholds to separate clear No-Fire imagery from active-fire imagery before expert review. Compared with prior palette-based thermal datasets, FLAME 3 preserves quantitative thermal information, enabling temperature-aware supervision, more objective validation of fire intensity and hotspots, and learning tasks that require true thermal reasoning rather than color-mapped proxies.
+
+=== 3. THE WILDFIREVOQA BENCHMARK ===
+
+3.1. IMAGE COLLECTION
+
+WildFireVQA is built on FLAME 3 dataset, which provides synchronized aerial visible spectrum (RGB) imagery and radiometric thermal imagery collected by UAVs at rural prescribed burns. A key advantage of FLAME 3 is that it provides radiometric thermal TIFFs that support per-pixel temperature values, rather than only palette-based thermal visualizations, which enables stronger validation for thermal-driven queries, since hazardous hotspots can remain detectable in temperature even when flames are visually weak or partially obscured, for example when dense smoke masks visible combustion while the TIFF still indicates concentrated regions exceeding high temperature thresholds.
+
+To support both human readability and algorithmic use, radiometric thermal measurements are stored as single-band thermal TIFF rasters, and a corresponding thermal JPEG is produced by mapping temperature values through a color map. In WildFireVQA, we use paired RGB and IR imagery from three prescribed burns: Sycan Marsh, Willamette, and Shoetank. For each frame, we provide three aligned modalities: an RGB image, a color-mapped thermal visualization, and a radiometric thermal TIFF that enables temperature-grounded queries. These pixel-wise temperature measurements provide a stronger basis for validating fire-related queries, because radiometric thermal data can reveal elevated heat signatures from smoldering fuel or obscured hotspots even when visible flames are not clearly discernible in RGB imagery.
+
+3.2. QUESTION GENERATION
+
+We design the WildFireVQA question set to benchmark UAV-based wildfire understanding with both binary and multiple-choice items, each paired with carefully constructed distractor options. To reduce positional and language-model biases, we randomly permute answer choices per question instance. We adopt the multiple-choice format following recent MLLM evaluation practice, which reports that constrained outputs offer a more standardized and reliable benchmarking protocol than unconstrained free-form generation.
+
+OPERATIONAL REQUIREMENTS:
+Assessing MLLMs as assistants for operational wildfire intelligence requires capabilities beyond detecting fire presence. In practice, analysts must identify fire and smoke cues, interpret fire behavior and fuels, localize hazards, estimate affected regions, and reason about flight safety under limited observability. To capture these requirements, we generate an initial pool of candidate questions by prompting multiple MLLMs with representative bimodal samples from FLAME 3, comprising RGB imagery and color-mapped thermal images.
+
+Using targeted prompt engineering, we elicit questions that prioritize actionable, scene-grounded wildfire interpretation, resulting in approximately 50 candidates. We then perform iterative manual curation across diverse samples from all three burns. We remove questions that are unanswerable, unsupported by the imagery, or of limited operational value. For retained items, we refine answer choices to keep distractors informative and non-trivial while avoiding subjective or ambiguous options. We further add expert-designed questions to fill gaps identified during curation.
+
+This process yields a final set of 6 binary and 28 multiple-choice questions organized into six task categories aligned with wildfire response needs. These categories capture the main forms of reasoning required for operational wildfire intelligence.
+
+QUESTION CATEGORIES:
+
+1. PRESENCE AND DETECTION: Determines whether salient wildfire cues and operationally relevant scene elements are present, including fire and smoke indicators, thermal activity, nearby structures, fuel breaks, standing dead trees, isolated heat sources, and emergency vehicles.
+
+2. CLASSIFICATION: Categorizes scene attributes relevant to fire behavior interpretation and suppression planning, including dominant fire behavior (active/smoldering/extinguished), vegetation type, moisture level, canopy density, ground fuel type, and fire area accessibility.
+
+3. DISTRIBUTION AND SEGMENTATION: Assesses spatial patterns and coverage of fire activity, fuels, and obscuration, including hotspot distribution (scattered/concentrated/linear), fuel bed continuity, intensity consistency, percentage of affected vegetation, vegetation coverage, smoke obstruction levels, and temperature threshold exceedance (200°C and 400°C).
+
+4. LOCALIZATION AND DIRECTION: Identifies spatial locations of key scene elements within the image frame, including most intense hotspot position, densest vegetation location, smoke plume origin, and man-made structure location.
+
+5. CROSS-MODAL REASONING: Evaluates joint reasoning over RGB and thermal signals, including cases where one modality reveals information missing in the other, handling occlusion, limited observability, and temperature-informed interpretation of fire activity and heat-bearing fuels. Questions cover canopy obstruction of fire base, primary observability limitations, smoke obstruction, and hotspot temperature.
+
+6. FLIGHT PLANNING: Captures UAV operational reasoning, including camera viewing angle (nadir/oblique), estimated flight altitude category, safety risk level near flames or smoke, and scene features that pose risks to safe UAV movement.
+
+3.3. ANSWER GENERATION
+
+For dataset-wide annotation, we use Gemini 2.5 Pro to answer all questions for every multimodal sample. Each annotation prompt contains the RGB image, the aligned color-mapped thermal visualization, and a retrieved radiometric temperature summary computed from the paired thermal TIFF. This summary includes the minimum, maximum, and standard deviation of pixel temperatures, together with the percentage of pixels exceeding 200°C and 400°C. The prompt then presents the question and its candidate answers and instructs the model to select the correct option. By combining visual evidence with compact radiometric statistics, this annotation pipeline preserves physically grounded thermal context while maintaining a standardized multiple-choice labeling protocol.
+
+ANNOTATION CATEGORIES:
+After comprehensive investigation of the MLLM-generated labels, we group questions into three categories based on the supervision required for accurate and reliable annotation:
+
+(i) Questions that remain challenging for current MLLMs but can be answered deterministically from metadata using dedicated mathematical formulations or machine learning pipelines (e.g., consistency of hotspot intensity, estimated flight altitude category), which also serve as a useful axis for future evaluation in wildfire monitoring.
+
+(ii) Questions that are difficult for MLLMs and cannot be inferred from the available metadata via deterministic rules or standard learning methods (e.g., percentage of vegetation affected by fire, moisture level of vegetation), for which we employ additional manual effort and expert verification to audit the labels.
+
+(iii) Questions that the MLLM answers correctly in nearly all cases when supported by our prompt design and the paired thermal modality (e.g., dominant fire behavior, smoke visible).
+
+3.4. SENSOR-DRIVEN AND DETERMINISTIC LABELING
+
+UAV HEIGHT ESTIMATION:
+To answer the UAV height above ground level (AGL) question, we use a deterministic sensor-derived pipeline rather than visual estimation. For each RGB frame, GPS latitude, longitude, and altitude are extracted from EXIF metadata, where altitude h is reported relative to the WGS84 ellipsoid. We convert ellipsoidal altitude to orthometric height H by subtracting the geoid undulation N from the EGM96 model. The orthometric ground elevation H_ground at the same location is obtained from Shuttle Radar Topography Mission (SRTM) data. We then compute AGL as the difference between the UAV orthometric altitude and the local ground elevation.
+
+THERMAL HOTSPOT DEFINITION AND DETECTION:
+We detect active wildfire regions from radiometric thermal imagery using a physically grounded, deterministic, altitude-aware formulation that operates directly on per-pixel temperature measurements, avoiding reliance on qualitative visual cues or language-model interpretation. For each frame, we use radiometric thermal TIFF data in which every pixel encodes an absolute temperature (in degrees Celsius). Let T(x,y) denote the temperature at pixel location (x,y), enabling thresholding in temperature space without dependence on color palettes or relative intensity normalization.
+
+A pixel is classified as thermally active if its temperature exceeds a fixed physical threshold:
+H(x,y) = 1 if T(x,y) ≥ 200°C, 0 otherwise
+
+The 200°C threshold effectively captures actively burning regions such as flame fronts, torching vegetation, and crown fire activity while suppressing warm background terrain and non-fire heat sources. We then aggregate thermally active pixels into candidate hotspots via 8-connected component analysis. Each connected component C_i corresponds to a contiguous thermally active region consisting of N_i pixels.
+
+To ensure robustness across varying UAV altitudes, we convert pixel counts to ground-projected physical dimensions using the UAV above-ground altitude H and the thermal camera field of view. With a field-of-view based approximation, the ground sampling distance is:
+GSD = (2H × tan(θ/2)) / W
+
+where θ is the thermal lens diagonal field of view (61° for the DJI M30T) and W is the thermal image width in pixels. The physical ground area of a candidate hotspot is computed as:
+A_i = N_i × GSD²
+
+We summarize its spatial extent by the equivalent circular ground-projected radius r_i = √(A_i/π). A connected component C_i is considered a valid thermal hotspot if:
+r_i ≥ r_min and N_i ≥ N_min
+
+where r_min = 0.75m and N_min = 5 pixels, enforcing a small minimum pixel count in practice to suppress isolated sensor artifacts and numerical noise.
+
+DETECTION OF ISOLATED HEAT SOURCES:
+Building on the hotspot definition, we analyze the spatial organization of valid thermal hotspots to identify isolated heat sources away from the main fire perimeter. For each frame, we extract hotspot instances with centroid c_i = (x_i, y_i) in pixel coordinates and physical area A_i. We cluster hotspots via single-linkage using centroid distances in meters:
+d_ij = √((x_i - x_j)² × GSD² + (y_i - y_j)² × GSD²)
+
+where GSD is the altitude-dependent ground sampling distance (m/pixel). Two hotspots are merged if d_ij ≤ d_merge, with d_merge = 10m, yielding clusters {K_k}. We define the main fire cluster as the cluster with the largest total ground-projected area. A non-main cluster K_k is treated as an isolated heat source when the minimum centroid distance between any hotspot in K_k and any hotspot in the main cluster M is at least 30m.
+
+SPATIAL DISTRIBUTION OF ACTIVE HOTSPOTS:
+Given the set of thermal hotspot instances extracted, the goal is to characterize the within-frame spatial organization of active burning in a physically grounded, altitude-aware manner. Let {C_i} denote the detected hotspots, where each hotspot C_i is associated with a ground-projected centroid P_i ∈ R² (in meters) and physical area A_i, computed using the GSD. If no valid hotspots are detected (N=0), the spatial distribution is labeled as "No active hotspots".
+
+To identify elongated fire structures (e.g., firelines), centroid collinearity is assessed via principal component analysis (PCA) on {P_i}. Let λ₁ ≥ λ₂ be the eigenvalues of the covariance matrix of the centroid coordinates. Then, a linearity score is defined as L = λ₁/(λ₁ + λ₂). For N≥3, the distribution is classified as "Linear" if L≥τ_lin and the maximum pairwise centroid distance exceeds a minimum extent threshold d_lin. For the special case N=2, the distribution is labeled as "Linear" if the inter-hotspot distance exceeds d_lin. In all experiments, τ_lin = 0.90 and d_lin = 20m.
+
+For configurations that do not satisfy the linearity criteria, compactness is determined by comparing the spatial extent of hotspots to the equivalent radius of their combined physical area. Let D_max denote the maximum pairwise distance between hotspot centroids. The combined hotspot area and its equivalent radius are defined as:
+A_tot = Σ A_i, r_eq = √(A_tot/π)
+
+The distribution is classified as "Concentrated" if D_max ≤ α × r_eq, and as "Scattered" otherwise, with α = 4.0 used throughout.
+
+HOTSPOT INTENSITY CONSISTENCY:
+Given thermal hotspots extracted, hotspot intensity consistency assesses whether hotspots in a scene exhibit comparable thermal intensity or contain clearly distinct intensity levels. For each hotspot C_i, a representative intensity is defined as:
+I_i = max_(x,y)∈C_i T(x,y)
+
+where T(x,y) is the temperature (in °C) at pixel (x,y). Using the maximum temperature provides a physically meaningful indicator of local fire intensity while remaining invariant to hotspot size. For a scene with N valid hotspots, intensity variation is measured using a robust coefficient of variation based on the median absolute deviation (MAD). Let {I_i} denote hotspot intensities, with median Ĩ = median({I_i}) and MAD = median({|I_i - Ĩ|}). The robust coefficient of variation is defined as:
+rCV = (1.4826 × MAD) / max(Ĩ, ε)
+
+where ε is a small constant for numerical stability. The hotspot intensity consistency label is assigned as "No active hotspots" if N=0, "Similar intensity" if N≥1 and (rCV ≤ τ_sim or ΔI ≤ ΔT_sim), "Clearly different" otherwise, where ΔI = max_i I_i - min_i I_i, τ_sim = 0.10, and ΔT_sim = 20°C.
+
+Beyond hotspot-level comparisons, scene-level extreme-temperature coverage is computed from the radiometric thermal TIFF as the fraction of pixels exceeding fixed thresholds. Let N_pix denote the total number of pixels. The percentage of the scene above a threshold τ is computed as:
+p_τ = 100 × (1/N_pix) × Σ I[T(x,y) ≥ τ]
+
+where I[·] is the indicator function. WildFireVQA includes two coverage queries: one reports p_400 binned into {None, <2%, 2-4%, 4-6%, >6%}, and the other reports p_200 binned into {None, <5%, 5-10%, 10-15%, >15%}.
+
+LOCATION OF THE MOST INTENSE HOTSPOT:
+Using the radiometric thermal map T(x,y) (in °C), we define active hotspot pixels as those satisfying T(x,y) ≥ 200°C. If no such pixels exist, the answer is "No hotspots". Otherwise, we identify the hottest hotspot location as the argmax pixel (x*, y*) = argmax_x,y T(x,y) restricted to the hotspot mask. We then assign the location category by partitioning the image into five regions: "Center" corresponds to the middle third of the frame in both axes, while the remaining area is split by image midlines into the four quadrants (Top-left, Top-right, Bottom-left, Bottom-right).
+
+EMERGENCY VEHICLE COUNTING:
+To obtain reliable ground-truth counts for emergency vehicles (a task where MLLMs can hallucinate or miscount), we use an open-vocabulary object detector instead of language-only inference. Specifically, we apply YOLO-World, a real-time open-vocabulary detector that supports text-prompted category definitions. Given the RGB frame, we query the detector with prompts related to emergency response vehicles (e.g., fire truck, ambulance, police car, emergency vehicle). We aggregate all detections above a confidence threshold and apply class-agnostic non-maximum suppression to merge overlapping boxes across prompts, producing the final count.
+
+3.5. CONSISTENCY VERIFICATION AND QUALITY CONTROL
+
+After dataset-wide labeling and manual inspection of all annotations, two additional quality-control procedures are applied as a final consistency audit to identify and correct any remaining inconsistencies.
+
+INTRA-FRAME CROSS-QUESTION CONSISTENCY CONSTRAINTS:
+We apply cross-question logic constraints within each frame to detect contradictions among semantically related questions. For example, if the scene is labeled as "No fire", then hotspot, flame, and fire-base visibility questions should not indicate active burning. Similarly, if "No smoke" is selected for smoke presence, the estimated smoke coverage should be "No smoke". If "No active hotspots" is predicted, then the hotspot location question must also return "No hotspots", and hotspot intensity consistency must return "No active hotspots". Likewise, if no man-made structures are detected, the structure localization question should be "No structures visible". Together, these rule-based consistency checks, deterministic approaches and manual verification reduce label noise while preserving scalable dataset-wide annotation.
+
+INTER-FRAME VISUAL SIMILARITY CONSISTENCY VIA ORB MATCHING:
+We perform an inter-frame, similarity-driven consistency audit to detect label conflicts among visually near-duplicate frames. Since WildFireVQA contains multiple burns, and each burn is organized into Fire and No-Fire subsets, we treat each subset as a label-consistent seed pool. For every query frame, we extract ORB keypoints and binary descriptors and match them using a brute-force Hamming-distance matcher. Candidate correspondences are first filtered using Lowe's ratio test (ratio=0.8) and then geometrically verified by estimating a homography with RANSAC (reprojection threshold=20.0). A pair of frames is considered a near-duplicate if at least 15 geometrically consistent inlier matches are obtained. ORB is configured to detect up to 8000 features per image to improve robustness under viewpoint variations. This retrieval-based audit complements intra-frame logic by ensuring spatiotemporal stability across the dataset.
+
+=== 4. EXPERIMENTS AND ANALYSIS ===
+
+4.1. EXPERIMENTAL SETUP
+
+We evaluate four representative MLLMs to establish baselines for WildFireVQA: LLaVA-v1.6-Mistral-7B, Qwen3-VL-8B-Instruct, InternVL2-8B, MiniCPM-V2. Because the questions contain different numbers of answer choices, task difficulty varies across categories. We also report the distribution of answer choices and the corresponding random-guess accuracy, computed under uniform selection.
+
+Random accuracy by category:
+- Presence & Detection (8 questions, 2.38 avg choices): 44.79%
+- Classification (6 questions, 3.83 avg choices): 26.39%
+- Distribution & Segmentation (8 questions, 4.25 avg choices): 24.58%
+- Localization & Direction (4 questions, 6.50 avg choices): 15.48%
+- Cross-Modal Reasoning (4 questions, 4.75 avg choices): 21.67%
+- Flight Planning (4 questions, 3.50 avg choices): 31.25%
+- Overall (34 questions, 3.97 avg choices): 29.03%
+
+All models are evaluated in a zero-shot setting to assess out-of-the-box generalization on wildfire-specific multimodal reasoning, and performance is measured using accuracy. To systematically evaluate MLLM reasoning on WildFireVQA, we conduct controlled experiments that isolate the effects of input modality and retrieval augmentation. Retrieval-augmented generation (RAG) appends retrieved radiometric thermal statistics as auxiliary context. This setup distinguishes gains due to visual evidence alone from gains driven by explicit temperature cues in the paired radiometric thermal TIFF, and reveals how models use RGB, thermal structure, and retrieved statistics.
+
+4.2. EXPERIMENT RESULTS
+
+OVERALL PERFORMANCE:
+Qwen3-VL-8B achieves the strongest overall performance among all evaluated models, with its best result obtained by RGB with retrieved radiometric thermal statistics at 54.76% overall accuracy. RGB remains the stronger modality for this model, but gains under both RGB and Thermal indicate that Qwen3-VL can use the retrieved thermal summary as a complementary cue.
+
+LLaVA-v1.6-7B performs best with RGB without retrieved radiometric thermal statistics, reaching 52.68%, suggesting that it relies most effectively on RGB cues alone. Thermal input remains weaker overall for LLaVA, although it becomes more competitive when augmented with retrieved thermal statistics, indicating that RAG helps selectively when the added thermal information is closely aligned with the reasoning required by the question.
+
+InternVL2-8B also shows a generally positive response to retrieval augmentation, with its best performance achieved by RGB with retrieved radiometric thermal statistics at 47.66%. Although RGB remains its stronger modality, the substantial improvement in the Thermal setting suggests that InternVL2 can use the thermal summary as a complementary signal, with gains concentrated in categories more naturally grounded in thermal evidence.
+
+MiniCPM-V2 achieves its best result with RGB without retrieved radiometric thermal statistics at 49.51%, confirming that RGB is its strongest input modality. Unlike Qwen3-VL and InternVL2, however, MiniCPM-V2 does not benefit from retrieval augmentation, as performance decreases in both RGB and Thermal settings. This suggests that the limitation lies less in the retrieved information itself and more in the model's weaker ability to combine visual content, question context, answer choices, and structured numeric thermal metadata within a single prompt.
+
+DETAILED RESULTS BY CATEGORY:
+
+Model: Qwen3-VL-8B-Instruct
+- RGB No-RAG: Overall 53.28%, Cls 45.38%, CMR 57.45%, D&S 41.28%, FP 51.70%, L&D 40.35%, P&D 76.39%
+- RGB Yes-RAG: Overall 54.76%, Cls 47.67%, CMR 65.77%, D&S 47.20%, FP 51.07%, L&D 43.47%, P&D 69.64%
+- Thermal No-RAG: Overall 33.00%, Cls 31.17%, CMR 28.54%, D&S 27.07%, FP 22.23%, L&D 23.40%, P&D 52.70%
+- Thermal Yes-RAG: Overall 38.08%, Cls 30.71%, CMR 49.75%, D&S 39.17%, FP 29.55%, L&D 16.97%, P&D 51.49%
+
+Model: LLaVA-v1.6-Mistral-7B
+- RGB No-RAG: Overall 52.68%, Cls 49.56%, CMR 38.75%, D&S 48.78%, FP 19.64%, L&D 61.50%, P&D 78.01%
+- RGB Yes-RAG: Overall 51.88%, Cls 48.55%, CMR 61.60%, D&S 38.78%, FP 22.68%, L&D 55.26%, P&D 75.51%
+- Thermal No-RAG: Overall 38.74%, Cls 31.88%, CMR 31.26%, D&S 20.50%, FP 16.06%, L&D 51.99%, P&D 70.56%
+- Thermal Yes-RAG: Overall 41.23%, Cls 42.93%, CMR 28.16%, D&S 29.98%, FP 21.85%, L&D 46.60%, P&D 64.75%
+
+Model: InternVL2-8B
+- RGB No-RAG: Overall 45.79%, Cls 43.57%, CMR 31.23%, D&S 42.36%, FP 24.27%, L&D 38.08%, P&D 72.79%
+- RGB Yes-RAG: Overall 47.66%, Cls 46.40%, CMR 30.80%, D&S 47.78%, FP 24.56%, L&D 45.60%, P&D 69.47%
+- Thermal No-RAG: Overall 34.21%, Cls 33.89%, CMR 11.87%, D&S 27.71%, FP 23.34%, L&D 38.63%, P&D 55.34%
+- Thermal Yes-RAG: Overall 39.21%, Cls 34.92%, CMR 23.78%, D&S 40.84%, FP 23.84%, L&D 38.38%, P&D 56.60%
+
+Model: MiniCPM-V2
+- RGB No-RAG: Overall 49.51%, Cls 47.26%, CMR 50.41%, D&S 40.31%, FP 17.63%, L&D 59.77%, P&D 70.73%
+- RGB Yes-RAG: Overall 45.72%, Cls 46.70%, CMR 36.01%, D&S 34.79%, FP 21.60%, L&D 48.05%, P&D 71.65%
+- Thermal No-RAG: Overall 36.10%, Cls 31.65%, CMR 37.33%, D&S 28.04%, FP 17.12%, L&D 33.34%, P&D 57.76%
+- Thermal Yes-RAG: Overall 34.86%, Cls 34.75%, CMR 30.45%, D&S 22.32%, FP 21.43%, L&D 34.11%, P&D 56.77%
+
+RAG EFFECTIVENESS BY MODEL:
+The effect of RAG varies significantly by model:
+- Qwen3-VL RGB Gain: +1.48%, Thermal Gain: +5.08%
+- LLaVA-v1.6 RGB Gain: -0.80%, Thermal Gain: +2.49%
+- InternVL2 RGB Gain: +1.87%, Thermal Gain: +5.00%
+- MiniCPM-V2 RGB Gain: -3.79%, Thermal Gain: -1.24%
+
+Qwen3-VL-8B and InternVL2-8B benefit consistently from RAG, especially in the Thermal setting, indicating effective use of structured thermal evidence. The gains are most apparent for questions directly grounded in temperature cues, while less thermal-dependent categories show smaller improvements or slight declines. LLaVA-v1.6-7B shows selective benefit, with negative RGB gain but positive Thermal gain. MiniCPM-V2 shows performance degradation in both settings, indicating difficulty integrating multiple information sources.
+
+FINE-GRAINED TEMPERATURE-RELATED ANALYSIS:
+For Qwen3-VL under RGB setting, we partition questions into temperature-related (PD1, CL1, CMR4, DS3, DS7, DS8) and remaining questions:
+- Temperature-related without RAG: 61.54% (22,513/36,582 correct)
+- Temperature-related with RAG: 71.61% (26,197/36,582 correct), Gain: +10.07%
+- Remaining questions without RAG: 51.51% (87,944/170,716 correct)
+- Remaining questions with RAG: 51.15% (87,328/170,716 correct), Gain: -0.36%
+
+This demonstrates that RAG benefits are highly concentrated on temperature-related questions. Per-question analysis for temperature-related questions:
+- CL1 (dominant fire behavior): No-RAG 48.93%, RAG 67.69%, Gain +18.76%
+- CMR4 (hottest part temperature): No-RAG 58.88%, RAG 88.60%, Gain +29.72%
+
+COMPARISON ACROSS MODELS:
+RGB-based settings perform best across all models. Ranking: Qwen3-VL-8B (54.76%) > LLaVA-v1.6-7B (52.68%) > MiniCPM-V2 (49.51%) > InternVL2-8B (47.66%). Retrieval augmentation helps Qwen3-VL-8B and InternVL2-8B more consistently, helps LLaVA-v1.6-7B selectively, and degrades MiniCPM-V2, indicating that effective use of retrieved thermal context remains model-dependent.
+
+KEY INSIGHTS:
+1. RGB remains the strongest modality overall for current MLLMs
+2. Retrieved thermal context benefits stronger models (Qwen3-VL, InternVL2) but not weaker ones
+3. RAG gains are concentrated on questions directly grounded in temperature cues
+4. Substantial gap between best performance (54.76%) and random accuracy (29.03%) indicates task difficulty
+5. Large performance gap between RGB and Thermal modalities reveals limitations in current thermal understanding
+6. Model-dependent RAG effectiveness suggests varying capabilities in multimodal integration
+
+=== 5. CONCLUSION ===
+
+WildFireVQA provides a large-scale radiometric thermal VQA benchmark for UAV-based wildfire monitoring. By combining RGB imagery, color-mapped thermal visualizations, radiometric thermal TIFFs, deterministic sensor-driven labeling, and consistency verification, it enables physically grounded evaluation of wildfire intelligence.
+
+Our baselines show that RGB remains the strongest modality overall, while retrieved thermal context benefits stronger MLLMs, highlighting both the value of temperature-grounded reasoning and the limitations of current models in wildfire scenarios. A limitation of the current evaluation protocol is that radiometric thermal statistics are provided explicitly as text under RAG, rather than requiring models to infer them directly from thermal inputs. This design isolates whether current MLLMs can benefit from physically grounded temperature cues once made explicit, while leaving direct end-to-end thermal inference for future work.
+
+ACKNOWLEDGMENT:
+This work was supported in part by NASA award 80NSSC23K1393 and NSF grants CNS-2232048 and CNS-2204445.
+
+=== DATASET AVAILABILITY ===
+Dataset and benchmark code: https://github.com/mobiiin/WildFire_VQA
+
+=== KEY TAKEAWAYS ===
+
+1. First wildfire-specific VQA benchmark with radiometric thermal data
+2. 207,298 questions across 6,097 samples covering operational wildfire intelligence
+3. Multi-tier annotation combining MLLMs, sensor-driven deterministic methods, and manual verification
+4. Comprehensive consistency verification (intra-frame logic + inter-frame ORB matching)
+5. RGB >> Thermal for all current models
+6. RAG helps stronger models (Qwen3-VL, InternVL2) but hurts weaker ones (MiniCPM-V2)
+7. Temperature-related questions show largest RAG gains (+10-30% for specific questions)
+8. Substantial headroom for improvement (best 54.76% vs random 29.03%)
+9. Reveals critical limitations in thermal understanding and cross-modal reasoning
+10. Enables future research in safety-critical vision-language applications

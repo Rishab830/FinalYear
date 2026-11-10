@@ -1,0 +1,298 @@
+FILE: A_Smart_System_for_Early_Detection_and_Prevention_of_Forest_Fire_Using_UAV_Swarms_and_VLM.txt
+
+
+--- FULL PAPER EXTRACT ---
+
+TITLE: A Smart System for Early Detection and Prevention of Forest Fire using UAV Swarms and VLM
+
+AUTHORS AND AFFILIATIONS:
+- Sarah Basahel: Department of Management Information Systems, King Abdulaziz University, Jeddah, Saudi Arabia (sbbasahel@kau.edu.sa)
+- Adnan Ahmed Abi Sen: Dr. Hussein El-Sayyed Research and Innovation Center, Deanship of Scientific Research and Graduate Studies, University of Prince Mugrin, Al-Madinah, Saudi Arabia (a.ahmed@upm.edu.sa)
+- Nour Mahmoud Bahbouh: Department of Information and Communication Sciences, Granada University, Granada, Spain (nourmahmoud@correo.ugr.es)
+- Omar Tayan: Dr. Hussein El-Sayyed Research and Innovation Center, University of Prince Mugrin (o.tayan@upm.edu.sa)
+- Adel Ben Mnaouer: Dr. Hussein El-Sayyed Research and Innovation Center, University of Prince Mugrin (a.mnaouer@upm.edu.sa)
+- Mohammad Yamin: Faculty of Economics and Administration, King Abdulaziz University, Jeddah, Saudi Arabia (mohammad.yamin@anu.edu.au)
+
+PUBLICATION: Proceedings of 2025 12th International Conference on Computing for Sustainable Global Development (INDIACom), 2025, pp. 1-7
+
+=== ABSTRACT ===
+
+The need for sustainability is on the rise as forests are critical to ecosystem stabilization, biodiversity, and climate change protection. Forest fires are a threat to these ecosystems, particularly in hot climate areas. Traditional monitoring tools, such as Internet of Things (IoT) systems, are expensive and hard to implement in nature-dependent landscapes or in remote areas. In this paper, we introduce a smart and scalable system for early detection and prevention of forest fires with a swarm of UAVs, based on a spiral coverage algorithm to monitor large forest areas and adapt to environmental conditions such as high temperatures. Vision-Language Models (VLMs) are used to analyze images and detect the early signs of fire (e.g., smoke, flames, or abnormal thermal changes). If any of them is detected, an alarm is triggered, and a preventive action is taken with UAVs equipped with fire-extinguishing agents to stop the spread of the fire. This approach is cost-effective and flexible, leading to improved early warning and forest conservation.
+
+KEYWORDS: Smart Monitoring, Drone, Sustainability, AI, Urban Green Spaces, Fog Computing
+
+=== I. INTRODUCTION ===
+
+Sustainability is a fundamental part of global environmental and developmental planning, research, and policymaking, and it is increasingly emphasized in our global efforts to protect our natural resources and reduce the impact of climate change on the human environment. Nations are working to integrate sustainability in areas like smart transport, health care, and natural resources.
+
+Natural ecosystems like forests are at the heart of sustainability because they are crucial to maintain ecological balance and biodiversity and to sustain life on Earth. Forests are carbon sinks and contribute to oxygen production and climate control, as well as food, timber, and medicinal crops, while sustaining biodiversity. However, forests are also in a state of crisis worldwide (forest fires are among the most serious, life-threatening, and rapidly spreading environmental disasters).
+
+The intensity and frequency of these fires increased significantly in recent years because of climate change, rising temperatures, long droughts, and the difficulty of early identification of ignition zones. Some of these fires have destroyed vast areas of forest in many countries worldwide, such as Australia, the United States, and parts of the Middle East, causing both environmental and economic destruction, biodiversity loss, and damage to ecosystems.
+
+LIMITATIONS OF CURRENT SYSTEMS:
+Today, forest fire monitoring systems are largely based on satellite images, ground-based surveillance systems, IoT, and manual observation by forest rangers and human patrols. They are used in many aspects to control forest fires and are useful; however, there are some difficulties in using them:
+- Time taken to detect fires
+- High cost of installation and maintenance of sensors in large areas
+- Difficulty of implementation in dense or remote areas
+- Many are not suitable to respond to crises in real emergencies in a timely manner
+
+UAVs AS SOLUTION:
+In this regard, UAVs have emerged as a promising solution in environmental monitoring because of their strong mobility, rugged terrain coverage, and their ability to cover extensive areas efficiently. A swarm of UAVs can provide better and continuous coverage than a single drone. Moreover, AI has advanced the capabilities of these aerial vehicles to analyze the data in real time.
+
+VISION-LANGUAGE MODELS:
+Vision-language models (VLMs) are one of the most advanced technologies capable of understanding and analyzing visual scenes. These architectures are pre-trained on massive datasets and are very useful to detect early indicators of fires, such as smoke, flames, or any other abnormal changes in the forest. The combination of VLMs and UAVs can enable smart, adaptive, and effective monitoring with fast response for any case.
+
+SAUDI ARABIA CONTEXT:
+Saudi Arabia considers environmental sustainability and saving natural resources to be the main goals of development to create a sustainable life and the well-being of its citizens. There are many national initiatives in this context, and one of the most important initiatives is the Saudi Green, which targets reducing carbon, increasing dependence on clean energy, and increasing the vegetation ratio in different areas. Another initiative is planting billions of trees and rehabilitating degraded land to face desertification, support biodiversity, and enhance air quality. Moreover, Saudi Arabia depends on developing advanced methodologies to save and secure forests and vegetation from environmental threats like fires or floods, by adopting modern technologies and finding early monitoring and response models.
+
+Although the important efforts of Saudi initiatives and contributions reflect a high recognition of the importance of forests and vegetation, which is not only for environmental resources, but also for long-term sustainability, there is still a need for more smart solutions and modern technologies, such as UAVs, Digital Twin, AI, etc. These technologies are required to support any environmental conservation process and to keep the green agenda going.
+
+PROPOSED APPROACH:
+In this research, we propose a new approach to early detection and prevention of forest fires using a swarm of UAVs based on a spiral coverage algorithm, which ensures continuous and regular monitoring of forested areas. The system can also adjust to the environment by increasing the frequency of monitoring when temperatures are high. Also, VLMs are used to analyze the images and detect early fire indicators, and quickly apply preventive measures with drones equipped with fire-extinguishing materials to prevent fire propagation.
+
+This approach aims to combat the drawbacks of current systems and provide a flexible, scalable, and cost-effective solution that combines drone swarm smart with AI technology for forest preservation and a sustainable environment in the long run.
+
+MAIN CONTRIBUTIONS:
+1. Propose a smart framework for the early detection of forest fires using a swarm of UAVs.
+2. Develop a Spiral Coverage algorithm to ensure the efficient monitoring of vast forested areas.
+3. Adopt VLMs for fast image analysis tasks to detect any early fire indicators.
+4. Propose a response mechanism via drones to proactively deploy fire-extinguishing materials to control and limit fire spread.
+5. Boost the concept and culture of environmental sustainability of ecosystems.
+
+=== II. RELATED WORK ===
+
+In recent years, there has been growing interest in developing smart solutions for early detection and mitigation of forest fires, given climate change and increasing temperatures. These solutions differ from the ground-based and satellite monitoring systems that have been used for years to the more recent systems using AI and UAVs.
+
+A. IoT-BASED FIRE DETECTION SYSTEMS
+
+Many studies have made use of Internet of Things (IoT) networks to monitor forests for temperature, humidity, and smoke levels. This data is sent to the central data analysis center for examination to see if there are abnormal variations that indicate the beginning of a fire. While they work in some situations, these systems have a number of challenges, such as:
+- High installation and maintenance costs
+- Extensive infrastructure requirements
+- Low coverage in dense natural forests or remote areas
+- Prone to failures or lost connection in harsh environments
+
+B. SATELLITE-BASED MONITORING
+
+Satellite-based monitoring is one of the primary tools for monitoring large-scale forest fires and provides periodic images of vast landmasses. These systems have helped to improve post-ignition fire tracking. However, they have:
+- Limited image resolution
+- Time-dependent updates
+- Failure to detect fires in early stages, especially in regions of heavy cloud cover or dense vegetation
+
+C. UAV-BASED FOREST MONITORING
+
+With advancements in UAV technologies, many studies have been conducted on their applications in environmental monitoring and the detection of fire. UAVs are very portable and can travel across difficult terrain, and they can retain high-resolution images in real time. Some work has been done on drone-based monitoring of a specific area. Some have been done on UAV swarms to enhance coverage and monitoring efficiency. Despite these advances:
+- Most solutions are based on monitoring and not in conjunction with any preventive effort
+- Do not provide proper coverage strategies
+- Lack smart coverage strategies that guarantee continuous and systematic surveillance of target areas
+
+D. ARTIFICIAL INTELLIGENCE AND IMAGE ANALYSIS FOR FIRE DETECTION
+
+The field of fire detection has received much help with the use of AI technologies using both images and video analysis. Deep learning models have been applied to detect smoke and flames in aerial images or videos to improve detection accuracy and reduce response times. Vision-language models (VLMs) have recently been introduced and provide deeper, more accessible visual and linguistic understanding of complex scenes, thanks to pre-trained models. However:
+- These studies are largely analytical
+- They do not incorporate these models to build complete operational systems that depend on continuous tracking and quick decision-making
+
+E. RESEARCH GAP
+
+While there has been huge progress in IoT, satellite monitoring, UAVs, and AI image analysis, integrated systems still have a serious gap to fill, including:
+- Continuous and effective coverage of vast forested areas
+- Real-time smart analysis using sophisticated models like VLMs
+- A fast preventive response mechanism to stop fire spreading
+- Cost-effective, scalable solutions that can be applied in natural environments
+
+In this paper, we address this issue by introducing an integrated platform that is based on a UAV swarm, smart coverage algorithm, deep visual analysis, and an early preventive response mechanism.
+
+=== III. METHODOLOGY ===
+
+We propose to develop a multi-layered framework for early detection and prevention of forest fires from UAVs, Fog Computing, Cloud Computing, and a smart application layer. This framework would enable monitoring, rapid analysis, and preventive response in the large-scale natural environment.
+
+The proposed system consists of four main layers:
+
+A. SENSING LAYER
+
+This layer is the field interface of the system and relies on a swarm of UAVs equipped with:
+- Mobile sensors (smoke, CO2, and temperature sensors)
+- High-resolution cameras (RGB and thermal cameras)
+
+These UAVs continuously observe the environment, including aerial images, temperatures, and smoke or abnormal changes in vegetation cover.
+
+ADVANTAGES:
+- Very flexible layer - UAVs can be deployed in large areas and hard to reach
+- Dynamically change coverage density with environmental conditions (e.g., high temperatures or higher fire risk)
+- Swarm nature provides balanced coverage and minimizes time between monitoring
+
+B. FOG LAYER
+
+The fog computing layer is a key component of the solution and is based on a UAV ground station that serves as a Fog node. This layer provides data processing close to the data source, minimizing latency and enabling decisions in real time.
+
+IMPORTANCE OF FOG NODES:
+- Reduce time required to send data to the cloud
+- Allow real-time analysis of images and data
+- Provide quick response to emergency situations
+- Low energy and bandwidth consumption
+
+FUNCTIONALITY:
+This layer is based on the use of Application Programming Interfaces (APIs) and VLMs to analyze images captured by the UAVs and enhanced sensor readings, thus detecting early signs of fire such as smoke, flames, or abnormal environmental events. The fog nodes handle the swarm management by scheduling the UAVs for each of the coverage areas, the flight paths, and avoiding overlap in the coverage areas and redundant UAVs.
+
+SPIRAL COVERAGE ALGORITHM:
+The proposed algorithm is based on spiral coverage to ensure comprehensive and systematic monitoring of forested areas. The area is organized into center points. Each UAV starts from the center point and then moves along a spiral path to gradually cover the entire area from the inside out.
+
+OPERATIONAL MECHANISM:
+1. Defining the center of the monitoring area for each UAV
+2. The UAV is moving in a circular path with a small initial radius and gradually expands after each rotation
+3. The spiral moves on until the entire zone is covered
+4. The UAV moves to a new area, or the cycle can be restarted after recharging
+5. Each time a new UAV is launched, make sure coverage is complete and continuous with a UAV swarm
+
+ALGORITHM ADVANTAGES:
+- Filling the gaps in coverage
+- Assessing the same areas regularly
+- Increasing energy efficiency
+- Eliminating interference between UAVs
+
+SPIRAL COVERAGE ALGORITHM PSEUDOCODE:
+Input: a, b, θ_max, Δθ
+// where a is the initial radius, and b is the rate of expansion,
+// r is the new radius, while θ represents the angle of rotation
+// about the center of the observation area.
+
+Output: Sequence of UAV positions (x, y)
+
+1: Initialize θ = 0
+2: while θ ≤ θ_max do
+3:   r = a + bθ
+4:   x = r cos(θ)
+5:   y = r sin(θ)
+6:   Move UAV to position (x, y)
+7:   Capture image/data at current position
+8:   θ = θ + Δθ
+9: end while
+
+ADAPTIVE FEATURES:
+Further, the proposed framework adapts to the environment to reduce costs and improve efficiency by setting the coverage speed of the UAV and the number of active UAVs according to the temperature, wind speed, and the risk level in the region.
+
+C. CLOUD LAYER
+
+It is the main storage layer of data and has high computation power for analysis and processing. All the drones' data that are collected and received from fog nodes will be saved permanently here.
+
+CAPABILITIES:
+The cloud layer enables the platform to create and build real historical databases, which will be utilized for:
+- Training the ML models with continuous tuning (Model Tuning) of the VLMs
+- Study of fire patterns and behavior
+- Making the system accurate and adaptive over time by tuning and adapting to different environmental conditions
+
+D. APPLICATION LAYER
+
+It is the end-user interface of the proposed framework. It provides many services to various parties, such as:
+- Forest protection governmental agencies
+- Drone operating companies
+- First aid or emergency teams
+
+CROWDSOURCING INTEGRATION:
+It also enables users and volunteers to share with the crowdsourcing services, and allows them to report potential fires to the system via the smart mobile application. This data is integrated with other IoT and drone data for boosting detection accuracy and rapid response.
+
+SYSTEM INTEGRATION:
+In summary, the proposed framework combines:
+- Smart field monitoring using UAVs
+- Real-time analysis of the sensor using fog computing
+- Long-term storage and learning in the cloud
+- Application services
+
+This integration allows for the development of an effective and scalable system for early detection and control of forest fires and environmental sustainability at the same time, and thus a sustainable system.
+
+=== IV. RESULTS AND DISCUSSION ===
+
+At this stage, we were working on a framework and testing its utility and not doing a full system simulation. The aim of this work is to provide a detailed picture of the proposed system in terms of architecture, algorithms, and mechanisms, and a preliminary assessment of one of its key components: image analysis using AI technologies.
+
+VLM-BASED IMAGE ANALYSIS:
+The UAVs capture aerial images and analyze them using AI models, which are able to understand the data through semantic scene understanding instead of just seeing the visual patterns. Danger indicators are identified, including:
+- Light smoke emerging from the sky and not visible to the naked eye
+- Discoloration of the vegetation
+- Abnormal thermal hotspots
+- The initial formation of small flames
+- The presence of fire in the area of a fire
+
+This allows early detection of the incident before the full ignition process has started. Once a hazard is detected, the location is identified, and a fast-response UAV is sent to spray fire-retardant foam over the hotspot to prevent the spread of the fire.
+
+EXPERIMENTAL VALIDATION:
+We have performed a first experiment using an API for an advanced Vision-Language Model based on ChatGPT architecture (GPT-5.3) to analyze aerial images and find fire indicators. We tested the model on a specialized dataset, Fire-Detection-Image-Dataset-master.
+
+DATASET DESCRIPTION:
+This dataset contains a variety of images, including:
+- Actual fire scenes
+- Misleading images that show either colors or patterns that look like fire, such as sunsets or red twilight skies
+
+RESULTS:
+The model is able to describe the data with high accuracy and achieved:
+- Fire detection accuracy of over 99% in binary classification (presence or absence of fire)
+- Successfully distinguished between real fires versus natural scenes that might cause visual confusion (sunset imagery or red skies)
+- Demonstrated the power of the Vision-Language Model in this context
+
+REMAINING CHALLENGES:
+However, like any other work and any use of modern technologies, there are still challenges that need to be solved in the future. The most important challenges are:
+- Security concerns
+- Privacy protection
+- Interoperability issues
+- Scheduling and auto-selecting algorithms still have their scope for researchers, especially with the adoption and integration of fog computing with cloud
+
+BROADER APPLICATIONS:
+In addition, our methodology can be used in different applications like:
+- Monitoring crowds
+- Disaster cases management
+
+=== V. CONCLUSION ===
+
+We have proposed a novel framework combining UAV swarms and AI technologies to track forest fires ultra-early with a spiral coverage algorithm to ensure systematic and effective monitoring. Vision-language models (VLMs) were employed to analyze aerial imagery and detect early signs of fire, and hence to make early detection possible to control fire spreading at early stages.
+
+The framework shifts the reactive models to proactive ones, where it uses prediction and early intervention. This proactive approach can protect the forest from fires and ensure more sustainability.
+
+FUTURE WORK:
+In future work, we propose to:
+1. Add an additional layer (semantic analysis layer) based on LLM-Assisted processing. This layer will enable the framework to filter based on a semantic classification to improve accuracy and reduce false alerts.
+2. Apply a proof-of-concept (PoC) for testing in a real-world environment to evaluate the system.
+3. Develop a smartphone application that enables volunteers to report suspicious cases with auto-classifying reports.
+4. Present all reports and actions in an interactive dashboard for decision makers in real-time to assist decision-making efficiently.
+
+=== VI. KEY REFERENCES (SELECTED) ===
+
+The paper cites 52 references covering:
+- Forest fire monitoring and detection systems
+- UAV-based environmental monitoring
+- Vision-language models and multimodal AI
+- IoT and fog computing architectures
+- Security, privacy, and interoperability in distributed systems
+- Disaster management and crowd monitoring applications
+- Sustainability and climate change mitigation
+
+Notable related work includes:
+- FLAME dataset series for wildfire detection
+- Remote sensing VQA benchmarks
+- UAV swarm coordination algorithms
+- Vision-language model architectures
+- Fog computing frameworks for IoT applications
+
+=== SYSTEM SUMMARY ===
+
+CORE INNOVATION:
+Integration of UAV swarm technology, spiral coverage algorithm, fog computing, VLM-based semantic analysis, and proactive fire-suppression capability into a unified framework for forest fire prevention.
+
+KEY DIFFERENTIATORS:
+1. Proactive prevention (not just detection and response)
+2. Semantic understanding via VLMs (not just pattern matching)
+3. Systematic coverage ensuring no gaps
+4. Multi-layer architecture balancing real-time and long-term needs
+5. Adaptive resource allocation based on environmental risk
+6. Cost-effective alternative to extensive IoT infrastructure
+
+VALIDATION STATUS:
+- Framework architecture designed and documented
+- VLM component validated with >99% accuracy on fire detection
+- Spiral coverage algorithm theoretically developed
+- Full system integration and real-world deployment pending
+
+IMPACT POTENTIAL:
+- Significant cost reduction compared to IoT sensor networks
+- Applicability to remote and infrastructure-limited regions
+- Scalable to various forest sizes and risk levels
+- Contribution to global sustainability and climate goals
+- Paradigm shift from reactive to proactive fire management
+- Template for similar applications in disaster management and environmental monitoring

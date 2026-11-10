@@ -1,0 +1,113 @@
+FILE: WildFireVQA A Large-Scale Radiometric Thermal VQA Benchmark for Aerial.txt
+
+
+--- PAPER BRIEF ---
+
+TITLE: WildFireVQA: A Large-Scale Radiometric Thermal VQA Benchmark for Aerial Wildfire Monitoring
+
+AUTHORS: Niloufar Alipour Talemi, Mobin Habibpour, John Spodnik, Camren J. Khoury, Fatemeh Afghah
+INSTITUTION: Clemson University
+PUBLICATION: arXiv:2604.20190v1 [cs.CV] 22 Apr 2026
+
+MAIN CONTRIBUTION:
+Introduces WildFireVQA, a large-scale visual question answering (VQA) benchmark specifically designed for aerial wildfire monitoring that integrates RGB imagery with radiometric thermal data. The benchmark contains 6,097 RGB-thermal samples with 34 questions each, yielding 207,298 multiple-choice questions spanning wildfire-specific reasoning tasks.
+
+KEY INNOVATIONS:
+1. First wildfire-specific VQA benchmark integrating radiometric thermal data with RGB imagery
+2. Provides radiometric thermal TIFFs with per-pixel temperature values (not just color-mapped visualizations)
+3. Comprehensive question taxonomy covering 6 task categories: presence/detection, classification, distribution/segmentation, localization/direction, cross-modal reasoning, and flight planning
+4. Sensor-driven deterministic labeling approach combining MLLM-based annotation with physical temperature thresholds
+5. Multi-level consistency verification: intra-frame cross-question logic checks and inter-frame ORB-based visual similarity matching
+
+DATASET DETAILS:
+- 6,097 RGB-thermal sample pairs from FLAME 3 dataset
+- Three prescribed burns: Sycan Marsh, Willamette, and Shoetank
+- Three aligned modalities per sample: RGB image, color-mapped thermal visualization, radiometric thermal TIFF
+- 34 questions per frame (6 binary, 28 multiple-choice)
+- Total: 207,298 question-answer pairs
+- Supports temperature-grounded reasoning with per-pixel temperature measurements
+
+QUESTION CATEGORIES:
+1. Presence and Detection (8 questions): Fire/smoke/flame presence, structures, fuel breaks, isolated heat sources, emergency vehicle counting
+2. Classification (6 questions): Fire behavior, vegetation type, moisture level, forest canopy density, fuel type, accessibility
+3. Distribution and Segmentation (8 questions): Hotspot spatial distribution, fuel continuity, intensity consistency, vegetation coverage, smoke obstruction, temperature thresholds
+4. Localization and Direction (4 questions): Hotspot location, vegetation density location, smoke plume origin, structure location
+5. Cross-Modal Reasoning (4 questions): Canopy obstruction, observability limitations, smoke obstruction, hotspot temperature
+6. Flight Planning (4 questions): Camera viewing angle, flight altitude, safety risk assessment, UAV movement obstacles
+
+ANNOTATION METHODOLOGY:
+- Primary annotation using Gemini 2.5 Pro with RGB, thermal visualization, and radiometric statistics (min, max, std, % above 200°C and 400°C)
+- Three-tier approach: (i) deterministic sensor-driven labeling for physically grounded questions, (ii) manual verification for complex questions, (iii) MLLM annotation for visually straightforward questions
+- Sensor-driven methods: UAV altitude estimation using GPS+SRTM, thermal hotspot detection (200°C threshold with altitude-aware size filtering), spatial distribution via PCA-based linearity analysis, intensity consistency using robust coefficient of variation
+
+CONSISTENCY VERIFICATION:
+- Intra-frame: Cross-question logic constraints (e.g., "no fire" implies no hotspots, flames, or fire-base visibility)
+- Inter-frame: ORB feature matching with homography-based geometric verification to detect near-duplicate frames and enforce label consistency
+
+EVALUATION PROTOCOL:
+- Models tested: LLaVA-v1.6-Mistral-7B, Qwen3-VL-8B-Instruct, InternVL2-8B, MiniCPM-V2
+- Three input settings: RGB-only, Thermal-only, with/without retrieval-augmented generation (RAG)
+- RAG provides compact radiometric summary: min/max/std temperature, % pixels above 200°C and 400°C
+- Zero-shot evaluation to assess out-of-the-box generalization
+
+KEY FINDINGS:
+1. RGB remains strongest modality across all models (54.76% best accuracy - Qwen3-VL)
+2. Retrieved thermal context helps stronger MLLMs (Qwen3-VL, InternVL2) but not weaker ones (MiniCPM-V2)
+3. RAG gains concentrated on temperature-related questions: +10.07% for Qwen3-VL on temp-related subset vs. -0.36% on remaining questions
+4. Specific gains: CMR4 (hottest part temperature) +29.72%, CL1 (fire behavior) +18.76%
+5. Models ranked: Qwen3-VL-8B (54.76%) > LLaVA-v1.6-7B (52.68%) > MiniCPM-V2 (49.51%) > InternVL2-8B (47.66%)
+6. Large performance gap vs. random accuracy (29.03%), indicating task difficulty
+
+TECHNICAL DETAILS:
+- Hotspot detection: 200°C threshold, 8-connected components, altitude-aware ground sampling distance (GSD) for physical area calculation
+- Minimum hotspot size: 0.75m radius, 5 pixels
+- Spatial distribution criteria: Linear (PCA eigenvalue ratio ≥0.90, max distance >20m), Concentrated (max pairwise distance ≤4×equivalent radius), otherwise Scattered
+- Intensity consistency: robust coefficient of variation using MAD, threshold 0.10 or absolute difference ≤20°C
+- Emergency vehicle counting: YOLO-World open-vocabulary detector with class-agnostic NMS
+
+COMPARISON TO EXISTING BENCHMARKS:
+- Remote sensing VQA: RSVQA, RSIVQA, HRVQA, VQA-TextRS focus on generic land-cover or RGB-only
+- Disaster response VQA: FloodNet (post-flood), RescueNet-VQA (post-disaster) - not wildfire-specific or thermal-grounded
+- Wildfire datasets: FLAME 1 (fire classification), FLAME 2 (multi-spectral), FLAME 3 (radiometric thermal) - not formulated as VQA
+- WildFireVQA uniquely combines wildfire domain, VQA task structure, and radiometric thermal reasoning
+
+LIMITATIONS:
+- Current evaluation provides radiometric statistics as explicit text (RAG) rather than requiring models to infer from thermal inputs directly
+- Limited to prescribed burns from three locations - generalization to other fire types and geographies needs validation
+- Questions designed for UAV-based monitoring - may not fully cover ground-based or satellite perspectives
+
+APPLICATIONS:
+- UAV-based wildfire situational awareness and tactical decision support
+- Training and benchmarking vision-language models for safety-critical fire scenarios
+- Development of interactive wildfire response systems and digital twins (e.g., FIRETWIN, FIREVLM)
+- Operational intelligence for fire behavior assessment, hotspot localization, and flight planning
+
+IMPACT:
+- Fills critical gap in wildfire-specific multimodal reasoning benchmarks
+- Enables temperature-grounded evaluation beyond visual appearance
+- Establishes baseline performance and failure modes for current MLLMs
+- Provides open-source dataset and evaluation code for community use
+
+DATASET AVAILABILITY:
+Open-source at https://github.com/mobiiin/WildFire_VQA
+
+FUTURE DIRECTIONS:
+- End-to-end thermal inference without explicit radiometric text summaries
+- Expansion to additional fire types, locations, and environmental conditions
+- Integration with physics-grounded fire propagation models
+- Multi-turn conversational evaluation for interactive decision support
+- Temporal reasoning across video sequences for fire progression tracking
+
+SIGNIFICANCE FOR VLM RESEARCH:
+- Demonstrates value and limitations of temperature-grounded reasoning in current MLLMs
+- Shows modality-dependent performance gaps (RGB >> Thermal for current models)
+- Reveals model-dependent RAG effectiveness (stronger models benefit, weaker degrade)
+- Highlights need for improved thermal understanding and cross-modal integration
+- Provides safety-critical domain for evaluating real-world MLLM deployment readiness
+
+RELATION TO BROADER WILDFIRE MONITORING:
+- Complements sensor networks (IoT), satellite monitoring, and ground surveillance
+- Addresses limitations: real-time response, temperature grounding, fine-grained spatial reasoning
+- Supports autonomous UAV navigation and decision-making in fire scenarios
+- Enables natural language interfaces for wildfire intelligence systems
+- Bridges perception, reasoning, and operational decision-making for emergency response

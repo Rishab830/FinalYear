@@ -1,0 +1,979 @@
+% =====================================================================
+%  PROJECT REPORT - FireVLM (Dept. of CSE, Amrita School of Computing, Bengaluru)
+%  Compile with XeLaTeX, twice. Keep "amrita_logo.png" in the same folder.
+%  Anything in RED in square brackets is still a placeholder (\todo{...}).
+%  All numbers below come from the Kaggle notebook outputs / repo digest.
+% =====================================================================
+\documentclass[12pt]{report}
+
+\usepackage[letterpaper,
+            top=1.38in, bottom=1.18in, left=1.58in, right=1.18in,
+            headsep=0.38in, footskip=0.5in]{geometry}
+\usepackage{fontspec}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{%
+  \IfFontExistsTF{TeX Gyre Termes}{\setmainfont{TeX Gyre Termes}}{%
+    \setmainfont{Liberation Serif}}}
+\IfFontExistsTF{Calibri}{\newfontfamily\hffont{Calibri}}{%
+  \IfFontExistsTF{Carlito}{\newfontfamily\hffont{Carlito}}{%
+    \newfontfamily\hffont{Liberation Sans}}}
+
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{enumitem}
+\usepackage{array}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepackage[labelsep=colon]{caption}
+\usepackage[numbers,square,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{wordred}{HTML}{FF0000}
+\newcommand{\red}[1]{\textcolor{wordred}{#1}}
+\newcommand{\todo}[1]{\textcolor{wordred}{[#1]}}
+
+\setlength{\headheight}{14pt}
+\emergencystretch=1em
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% ---------------- Details --------------------------------------------
+\newcommand{\projecttitle}{FireVLM: Parameter-Efficient Fine-Tuning of a Vision-Language Model for Wildfire Visual Question Answering}
+\newcommand{\monthyear}{December 2026}
+\newcommand{\guidename}{Dr. Rimjhim Padam Singh, Assistant Professor (Sl.Gd.), Department of Computer Science Engineering}
+
+% ---------------- Headers and footers --------------------------------
+\newif\ifinmain
+\fancypagestyle{front}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \fancyfoot[C]{\thepage}}
+\fancypagestyle{main}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \fancyhead[L]{\hffont\small\leftmark}
+  \fancyhead[R]{\hffont\small\monthyear}
+  \fancyfoot[L]{\hffont\small\vspace*{\baselineskip}Dept. of CSE, ASC, Bengaluru}
+  \fancyfoot[R]{\hffont\small Page | \thepage\vspace*{\baselineskip}}}
+% chapter-opening pages use "plain": same as "main" in the body, page number only in the front matter
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \fancyhead[L]{\ifinmain\hffont\small\leftmark\fi}
+  \fancyhead[R]{\ifinmain\hffont\small\monthyear\fi}
+  \fancyfoot[C]{\ifinmain\else\thepage\fi}
+  \fancyfoot[L]{\ifinmain\hffont\small\vspace*{\baselineskip}Dept. of CSE, ASC, Bengaluru\fi}
+  \fancyfoot[R]{\ifinmain\hffont\small Page | \thepage\vspace*{\baselineskip}\fi}}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{}
+
+\makeatletter
+\renewcommand{\chapter}{\global\@topnum\z@\@afterindentfalse
+  \secdef\@chapter\@schapter}
+\makeatother
+
+\titleformat{\chapter}[display]
+  {\normalfont\fontsize{14}{17}\bfseries\centering}
+  {CHAPTER - \thechapter}{6pt}{\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{18pt}
+\titleformat{\section}{\normalfont\fontsize{12}{14}\bfseries}{\thesection}{0.6em}{}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+\titleformat{\subsection}{\normalfont\fontsize{12}{14}\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+
+\contentsmargin{0.5in}
+\newcommand{\tocdots}{\titlerule*[0.6pc]{.}}
+\titlecontents{chapter}[0pt]{\addvspace{3pt}}
+  {CHAPTER \thecontentslabel\ -- \MakeUppercase}
+  {\hspace*{0.25in}\MakeUppercase}
+  {\tocdots\contentspage}
+\titlecontents{section}[0.95in]{}
+  {\contentslabel{0.45in}\MakeUppercase}{\MakeUppercase}
+  {\tocdots\contentspage}
+\titlecontents{subsection}[1.55in]{}
+  {\contentslabel{0.6in}\MakeUppercase}{\MakeUppercase}
+  {\tocdots\contentspage}
+\titlecontents{figure}[0.55in]{\addvspace{2pt}}
+  {\contentslabel{0.55in}}{}{\tocdots\contentspage}
+\titlecontents{table}[0.55in]{\addvspace{2pt}}
+  {\contentslabel{0.55in}}{}{\tocdots\contentspage}
+
+\renewcommand{\contentsname}{TABLE OF CONTENTS}
+\renewcommand{\listfigurename}{List Of Figures}
+\renewcommand{\listtablename}{List Of Tables}
+\renewcommand{\bibname}{REFERENCES}
+
+\captionsetup[figure]{name=Fig., font=bf, labelfont=bf, skip=6pt}
+\captionsetup[table]{name=Table, font=bf, labelfont=bf, position=top, skip=6pt}
+
+\renewcommand{\bibnumfmt}[1]{[#1].}
+\setlength{\bibsep}{2pt}
+
+\newcommand{\frontchapter}[1]{%
+  \clearpage\phantomsection
+  \addcontentsline{toc}{chapter}{#1}%
+  \chapter*{#1}}
+
+% TikZ styles for diagrams
+\tikzset{
+  blk/.style={draw, rounded corners=2pt, align=center, minimum height=13mm,
+              text width=25mm, font=\footnotesize, fill=gray!8},
+  arr/.style={-{Stealth[length=2.2mm]}, thick}
+}
+
+\begin{document}
+\addtocontents{toc}{\protect\hfill\textbf{Page No.}\protect\par}
+
+% =====================================================================
+%  TITLE PAGE
+% =====================================================================
+\begin{titlepage}
+\centering
+\vspace*{0.4in}
+{\fontsize{14}{17}\selectfont\bfseries \projecttitle\par}
+\vspace{10pt}
+A PROJECT REPORT\par
+\vspace{10pt}
+{\fontsize{14}{17}\selectfont\bfseries\itshape Submitted by\par}
+\vspace{14pt}
+\begin{tabular}{@{}l@{\hspace{0.45in}}l@{}}
+BL.EN.U4AIE23123 & Praanesh Balakrishnan Nair\\[16pt]
+BL.EN.U4AIE23126 & Rishab Ramesh Nair\\[16pt]
+BL.EN.U4AIE23130 & Sanjushree Rajan\\[16pt]
+BL.EN.U4AIE23135 & Varun Adhitya G B\\[16pt]
+\end{tabular}\par
+\vspace{18pt}
+{\fontsize{14}{17}\selectfont\bfseries\itshape in partial fulfillment for the award of the degree of\par}
+\vspace{18pt}
+{\fontsize{14}{17}\selectfont\bfseries BACHELOR OF TECHNOLOGY\par}
+\vspace{16pt}
+{\small IN\par}
+\vspace{16pt}
+COMPUTER SCIENCE AND ENGINEERING\par
+(Artificial Intelligence) \\
+\vspace{12pt}
+\IfFileExists{amrita_logo.png}{\includegraphics[width=1.75in]{amrita_logo.png}}{\todo{amrita\_logo.png not found}}\par
+\vspace{12pt}
+AMRITA SCHOOL OF COMPUTING, BENGALURU\par
+\vspace{12pt}
+{\fontsize{14}{17}\selectfont AMRITA VISHWA VIDYAPEETHAM\par}
+\vspace{12pt}
+BENGALURU 560 035\par
+\vspace{12pt}
+\MakeUppercase{\monthyear}\par
+\end{titlepage}
+
+% =====================================================================
+%  FRONT MATTER
+% =====================================================================
+\pagestyle{front}
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+\frontchapter{ACKNOWLEDGEMENTS}
+\begin{spacing}{1.5}
+\setlength{\parindent}{0.5in}
+\indent The satisfaction that accompanies successful completion of any task would
+be incomplete without mention of people who made it possible, and whose
+constant encouragement and guidance have been source of inspiration
+throughout the course of this project work.
+
+We offer our sincere pranams at the lotus feet of \textbf{``AMMA'',
+MATA AMRITANANDAMAYI DEVI} who showered her blessing upon us throughout the
+course of this project work.
+
+We owe our gratitude to \textbf{Prof. Manoj P.}, Director, Amrita Vishwa Vidyapeetham Bengaluru Campus. We would like to place our heartfelt gratitude to \textbf{Dr. Gopalakrishnan E.A.,} Principal, Amrita School of Computing and Amrita School of Artificial Intelligence, Bengaluru for his
+valuable support and inspiration.
+
+It is a great pleasure to express our gratitude and indebtedness to our
+project guide \textbf{\guidename}, Amrita School of Computing, Bengaluru for
+her valuable guidance, encouragement, moral support, and affection
+throughout the project work.
+
+We would like to express our gratitude to project panel members for
+their suggestions, encouragement, and moral support during the process of
+project work and all faculty members for their academic support. Finally,
+we are forever grateful to our parents, who have loved, supported and
+encouraged us in all our endeavors.
+\end{spacing}
+
+\frontchapter{ABSTRACT}
+\begin{spacing}{1.5}
+Early and accurate situational awareness is critical in wildfire
+response, yet interpreting aerial imagery of an active fire still
+depends on trained analysts. This project presents \textbf{FireVLM}, a
+vision-language model that answers natural-language questions about
+paired RGB and thermal wildfire imagery. We use the WildFireVQA
+question--answer set built on the FLAME~3 Sycan Marsh imagery (738 image
+pairs, 34 questions each, 25,092 question--answer pairs) and compare two
+ways of adapting a language model to this task. The first is a frozen
+Qwen2.5-VL-3B-Instruct model prompted with zero to ten solved examples.
+The second is a compact vision-language model that combines a frozen
+CLIP ViT-B/32 encoder, trainable RGB and thermal projectors, and a
+4-bit quantised 1.5B-parameter Qwen2 language model fine-tuned with
+QLoRA in several adapter configurations (query/value; query/key/value/output;
+all linear layers; ranks 4 to 16). All runs use free Kaggle T4 GPUs. On the
+held-out test split the frozen few-shot baseline reaches 15.0\% exact match
+with no examples and 28.0\% with ten examples (200 test queries), whereas
+the QLoRA models reach 84.1--86.6\% exact match on 2,482 test queries while
+training only 5.8--14.0 million parameters. The best Qwen2 configuration
+(query/key/value/output adapters, rank 4) reaches 86.62\% exact match, and
+larger adapters did not help: rank 16 and all-linear adapters scored lower. A
+Llama-3.2-1B backbone trained with the same pipeline reached up to 88.48\%.
+The results show that a small adapter budget is sufficient for fire-scene
+question answering and give a practical recipe for low-resource adaptation of
+vision-language models to disaster imagery.
+\end{spacing}
+
+\clearpage
+{\linespread{0.95}\selectfont\tableofcontents}
+
+\clearpage\phantomsection
+\addcontentsline{toc}{chapter}{LIST OF FIGURES}
+\listoffigures
+
+\clearpage\phantomsection
+\addcontentsline{toc}{chapter}{LIST OF TABLES}
+\listoftables
+
+% =====================================================================
+%  MAIN CHAPTERS
+% =====================================================================
+\clearpage
+\pagestyle{main}
+\inmaintrue
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\onehalfspacing
+
+% ---------------- CHAPTER 1 ------------------------------------------
+\chapter{Introduction}
+
+\section{Introduction to Wildfire Visual Question Answering}
+Wildfires cause large losses of life, property and ecosystems, and their
+frequency and intensity are increasing. Aerial platforms such as drones
+now capture large volumes of visible and thermal imagery of fires, but
+turning that imagery into decisions (Is there active flame? Where is the
+smoke heading? Which area is burned?) is still largely manual.
+Visual Question Answering (VQA) lets an operator ask such questions in
+plain language and receive an answer grounded in the image
+\cite{antol2015}. Recent vision-language models (VLMs) such as
+Qwen-VL \cite{bai2023} are strong general-purpose VQA systems, but they
+are not trained on fire scenes and are too large to fully fine-tune on
+modest hardware.
+
+This project, \textbf{FireVLM}, studies how to adapt a language model to
+wildfire VQA cheaply. We use the WildFireVQA question--answer set built
+over the FLAME~3 Sycan Marsh imagery \cite{wildfirevqa,flame3} and compare a frozen
+few-shot baseline (Qwen2.5-VL-3B-Instruct \cite{bai2025}) with QLoRA
+\cite{dettmers2023} fine-tuned models that combine a frozen CLIP vision
+encoder \cite{radford2021}, trainable projectors and a 4-bit Qwen2 language
+model \cite{yang2024}. The task takes a paired RGB and thermal image and a
+question as input and produces a short textual answer.
+
+\section{Motivation}
+Emergency agencies need quick, consistent reading of fire imagery, and
+a model that can answer free-form questions is more flexible than a
+fixed classifier. Fully fine-tuning a multi-billion-parameter VLM needs
+more GPU memory than a student project or a small agency can afford.
+Parameter-efficient fine-tuning with low-rank adapters and 4-bit
+quantisation reduces this cost sharply, but it is unclear how much
+adapter capacity a fire-scene task actually needs. This project answers
+that with a controlled comparison of adapter placement and rank.
+
+\section{Problem Statement}
+Given a paired aerial RGB and thermal wildfire image and a natural-language question,
+produce the correct short answer, while keeping the number of trainable
+parameters and GPU memory low enough to run on free-tier Kaggle T4 GPUs.
+
+\section{Objectives}
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item Establish a frozen pretrained VLM with 0--10-shot prompting as a baseline on WildFireVQA.
+  \item Fine-tune a compact CLIP + projector + 4-bit language-model VLM with QLoRA in several adapter configurations (query/value, query/key/value/output, all linear layers).
+  \item Compare accuracy against trainable-parameter count and training cost.
+  \item Identify the smallest adapter configuration that gives most of the gain.
+\end{itemize}
+
+\section{Organisation of the Report}
+Chapter~2 surveys related work. Chapter~3 lists requirements, Chapter~4
+gives the design and Chapter~5 the implementation. Chapters~6 and~7 cover
+testing and results, and Chapter~8 concludes with future scope.
+
+% ---------------- CHAPTER 2 ------------------------------------------
+\clearpage
+\chapter{Literature Survey}
+
+\section{Visual Question Answering}
+VQA was introduced as a task where a system answers free-form questions
+about an image \cite{antol2015}. Modern systems connect a vision encoder
+to a large language model so that image features are consumed as tokens
+by the language model.
+
+\section{Qwen and Llama Language Models}
+The Qwen-VL family couples a vision encoder with the Qwen language model
+and is trained on large image--text corpora \cite{bai2023}. Its
+successors improve dynamic-resolution image handling \cite{wang2024,bai2025}.
+Two Qwen checkpoints are used in this project. The frozen few-shot baseline uses
+\texttt{Qwen/Qwen2.5-VL-3B-Instruct}, a native vision-language model. The fine-tuned models use
+\texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct}~\cite{mithan}. According to its model card and
+configuration, this repository contains only the extracted Qwen2 language
+component (\texttt{Qwen2ForCausalLM}) without a vision tower, so we pair
+it with our own CLIP encoder and projectors instead of loading it as a native
+Qwen2-VL model. For a backbone comparison we also use
+\texttt{meta-llama/Llama-3.2-1B-Instruct}~\cite{llama32} with the same pipeline.
+
+\section{Vision Encoder and Multimodal Projection}
+CLIP \cite{radford2021} provides image features aligned with text. We use the
+frozen ViT-B/32 variant, which turns a $224\times224$ image into
+$7\times7=49$ patch tokens of dimension 768. Small multilayer-perceptron
+projectors map these tokens into the embedding space of the language model, a
+common design in visual instruction-tuning systems.
+
+\section{Few-Shot In-Context Learning}
+Large models can adapt to a new task from a handful of examples placed
+in the prompt, without weight updates \cite{brown2020}. This is the
+setting of our frozen baseline notebook, where $k\in\{0,\dots,10\}$ solved
+examples precede the test question.
+
+\section{LoRA and QLoRA Fine-Tuning}
+LoRA freezes the pretrained weights and learns a low-rank update
+$\Delta W = BA$ for selected weight matrices \cite{hu2022}. For a layer
+$W \in \mathbb{R}^{d\times k}$ the adapter adds $r(d+k)$ trainable
+parameters instead of $dk$, where $r$ is the rank. QLoRA stores the
+frozen base model in 4-bit precision and back-propagates through it into
+the adapters, which makes fine-tuning large models possible on a single
+modest GPU \cite{dettmers2023}.
+
+\section{Wildfire Imagery Datasets}
+The FLAME family provides aerial imagery of prescribed burns captured
+with visible and thermal cameras. FLAME~3 adds radiometric thermal TIFF
+files with per-pixel temperatures \cite{flame3}. WildFireVQA is built on FLAME~3
+and contains 6,097 RGB--thermal samples from three prescribed burns (Sycan Marsh,
+Willamette and Shoetank), each paired with 34 questions, for 207,298 questions
+in total \cite{wildfirevqa}. The questions (6 binary and 28 multiple-choice) fall into six
+categories: presence and detection, classification, distribution and
+segmentation, localization and direction, cross-modal reasoning, and flight
+planning. Answers were generated with Gemini~2.5~Pro from the RGB image, the
+colour-mapped thermal image and a radiometric temperature summary, and were then
+corrected using deterministic sensor-based rules, manual verification and
+intra-frame and inter-frame consistency checks \cite{wildfirevqa}. The WildFireVQA
+paper evaluates frozen multimodal models zero-shot in a multiple-choice format;
+the best result is 54.76\% accuracy (Qwen3-VL-8B with RGB input and retrieved
+thermal statistics) \cite{wildfirevqa}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Summary of related approaches and the gap addressed}
+  \label{tab:related}
+  \begin{tabular}{P{1.3in}P{1.7in}P{1.8in}}
+    \toprule
+    \textbf{Approach} & \textbf{Strength} & \textbf{Gap for wildfire VQA} \\
+    \midrule
+    Few-shot prompting \cite{brown2020} & No training needed & Limited domain adaptation \\
+    LoRA \cite{hu2022} & Few trainable parameters & Adapter placement not studied on fire scenes \\
+    QLoRA \cite{dettmers2023} & Fits on small GPUs & Capacity versus accuracy unclear for this domain \\
+    Zero-shot MLLMs on WildFireVQA \cite{wildfirevqa} & Strong general baselines & No fine-tuned, low-cost models reported \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ---------------- CHAPTER 3 ------------------------------------------
+\clearpage
+\chapter{System Requirements and Analysis}
+
+\section{Software Requirements}
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item Kaggle Notebooks (Python 3.13) as the execution environment, with PyTorch 2.11.0 (CUDA 12.8)
+  \item Hugging Face \texttt{transformers} 4.57.1, \texttt{accelerate} 1.10.1, \texttt{peft} 0.17.1 and \texttt{bitsandbytes} 0.48.1 (versions pinned in the Qwen2 fine-tuning notebooks)
+  \item \texttt{qwen-vl-utils} for the Qwen2.5-VL few-shot notebook (installed together with \texttt{transformers} 4.49 or newer; exact versions not pinned)
+  \item \texttt{kagglehub} to download the WildFireVQA and FLAME~3 datasets, plus pandas, matplotlib, Pillow and tqdm
+\end{itemize}
+
+\section{Hardware Requirements}
+Training and evaluation were run on Kaggle notebooks with two NVIDIA Tesla T4
+GPUs (14.6\,GiB each) and \todo{system RAM}. The fine-tuning notebooks place the model
+on a single GPU (cuda:0); the second GPU is intentionally left unused. The
+few-shot notebook also runs on one GPU. No local hardware beyond a web browser is needed.
+
+\section{Functional and Non-Functional Requirements}
+The system must accept a paired RGB and thermal image and a question and return a textual
+answer, and must report accuracy on a held-out split. It should fit within
+the memory of a 14.6\,GiB T4 GPU and finish within the session limits of the
+platform; the fine-tuning notebooks therefore cache CLIP features once, use
+FP16 and 4-bit weights, and keep the effective batch size at 16 through
+gradient accumulation.
+
+% ---------------- CHAPTER 4 ------------------------------------------
+\clearpage
+\chapter{System Design}
+
+\section{High Level Design}
+Figure~\ref{fig:pipeline} shows the fine-tuned architecture. WildFireVQA
+samples are paired with their FLAME~3 RGB and thermal images, and both images are resized to
+$224\times224$. A frozen CLIP ViT-B/32 encoder converts each image into 49 patch
+tokens (98 visual tokens per sample). Two separate projectors, one for RGB
+and one for thermal, map the tokens to the language-model width, and learned
+modality (type) embeddings are added. The visual tokens are inserted into a chat-formatted
+prompt together with the question, and the 4-bit language model with LoRA adapters
+generates the answer, which is compared with the reference. The frozen few-shot baseline instead
+feeds the RGB and thermal images of each demonstration and of the query
+directly to Qwen2.5-VL-3B-Instruct as a multi-turn chat, with no training.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=6mm and 8mm]
+    \node[blk] (rgb) {RGB image\\$224\times224$};
+    \node[blk, below=of rgb] (th) {Thermal image\\$224\times224$};
+    \node[blk, right=of rgb] (c1) {CLIP ViT-B/32\\(frozen)};
+    \node[blk, right=of th] (c2) {CLIP ViT-B/32\\(frozen)};
+    \node[blk, right=of c1] (p1) {RGB projector\\(MLP, trained)};
+    \node[blk, right=of c2] (p2) {Thermal projector\\(MLP, trained)};
+    \node[blk, text width=28mm, fill=orange!15] (llm) at ($(p1)!0.5!(p2)+(38mm,0)$) {4-bit language model\\+ LoRA adapters};
+    \node[blk, above=of llm] (q) {Question\\(chat prompt)};
+    \node[blk, right=of llm] (ans) {Answer text\\(max.\ 32 tokens)};
+    \draw[arr] (rgb) -- (c1);
+    \draw[arr] (th) -- (c2);
+    \draw[arr] (c1) -- (p1);
+    \draw[arr] (c2) -- (p2);
+    \draw[arr] (p1) -- (llm);
+    \draw[arr] (p2) -- (llm);
+    \draw[arr] (q) -- (llm);
+    \draw[arr] (llm) -- (ans);
+  \end{tikzpicture}}
+  \caption{Architecture of the fine-tuned FireVLM models ($d$ = hidden width of the language model: 1536 for Qwen2-1.5B, 2048 for Llama-3.2-1B).}
+  \label{fig:pipeline}
+\end{figure}
+
+\section{Low Level Design}
+\subsection{Dataset and Data Splits}
+The Kaggle release of WildFireVQA contains 207,306 annotation rows over
+three burns. We keep the Sycan Marsh rows (25,092) and match every row to the
+FLAME~3 Sycan Marsh Kaggle subset, which contains 738 RGB--thermal pairs (622 fire and 116
+no-fire). A strict pairing audit checks that each question is attached to the right image
+pair (RGB and thermal files differ, one pair per source image, 34 questions
+per image). The pairs are then split by image with seed 42 into train, validation and
+test sets (Table~\ref{tab:split}), so no image appears in two splits. The prompt contains only the
+question; the answer options are not given to the model, so answers are
+generated as free-form short text and scored by string match.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Image-grouped split used by the fine-tuning notebooks}
+  \label{tab:split}
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Split} & \textbf{Image pairs} & \textbf{QA rows} & \textbf{Share} \\
+    \midrule
+    Train & 592 & 20,128 & 80\% \\
+    Validation & 73 & 2,482 & 10\% \\
+    Test & 73 & 2,482 & 10\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Experiment Configurations}
+Table~\ref{tab:variants} lists the configurations. Adapters are
+attached to the attention projections (query $q$, key $k$, value $v$,
+output $o$) or to all linear layers of the language model (attention plus the MLP projections
+gate, up and down). Additional ranks were run to study capacity
+(Chapter~7). Every fine-tuned run also trains the two projectors and the modality embeddings.
+
+\begin{table}[htbp]
+  \centering
+  \caption{The experimental configurations (notebook names are listed in Chapter~5)}
+  \label{tab:variants}
+  \begin{tabular}{P{1.7in}P{1.5in}cc}
+    \toprule
+    \textbf{Variant} & \textbf{Adapted modules} & \textbf{Rank $r$} & \textbf{$\alpha$} \\
+    \midrule
+    Few-shot, frozen Qwen2.5-VL-3B & none & --- & --- \\
+    LoRA efficient & $q,v$ & 8 (also 16) & $2r$ \\
+    LoRA balanced & $q,k,v,o$ & 16 (also 4, 8) & $2r$ \\
+    LoRA high capacity & all linear & 16 (also 8) & $2r$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Hyperparameters}
+\begin{table}[htbp]
+  \centering
+  \caption{Training hyperparameters of the Qwen2-1.5B fine-tuning runs}
+  \label{tab:hparams}
+  \small
+  \begin{tabular}{P{2.3in}P{2.5in}}
+    \toprule
+    \textbf{Parameter} & \textbf{Value} \\
+    \midrule
+    LoRA alpha / dropout & $2r$ / 0.05 \\
+    Optimiser / learning rate & AdamW / $2\times10^{-4}$, weight decay 0.01 \\
+    Scheduler & Cosine with 5\% warm-up, gradient clipping 1.0 \\
+    Batch size / grad.\ accumulation & 4 / 4 (effective batch 16) \\
+    Epochs & Up to 100, early stopping on validation loss (patience 3) \\
+    Quantisation & 4-bit NF4, double quantisation, FP16 compute \\
+    Visual input & CLIP ViT-B/32, $224\times224$, 98 visual tokens per sample \\
+    Projector & $768\to1024\to d$ with GELU, FP32 \\
+    Max.\ answer length & 32 tokens (training target and generation) \\
+    Decoding & Greedy (no sampling, one beam) \\
+    Train / validation / test split & 20,128 / 2,482 / 2,482 rows (Table~\ref{tab:split}) \\
+    Random seed & 42 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The Llama-3.2-1B runs use the same pipeline but not identical settings: for example, the
+$q,k,v,o$ rank-16 run used a learning rate of $1.5\times10^{-4}$, at most 8 epochs and early-stopping
+patience 2 (tolerance $10^{-3}$), whereas the $q,v$ rank-8 run used $2\times10^{-4}$ and patience 3 as in
+Table~\ref{tab:hparams}. The few-shot baseline uses the same
+4-bit NF4 loading (double quantisation, FP16), images of $224\times224$ pixels, greedy decoding
+and at most 32 new tokens.
+
+\subsection{Trainable Parameter Count}
+For one adapted matrix of size $d\times k$ and rank $r$, the number of
+trainable parameters is $r(d+k)$. For Qwen2-1.5B (28 layers, hidden width 1536, 2 key/value
+heads of size 128, MLP width 8960) this gives, per layer, $r(3072)$ for $q$, $r(1792)$ for each
+of $k$ and $v$, $r(3072)$ for $o$ and $r(10496)$ for each of the gate, up and down
+projections. The two projectors and the two modality embeddings add 4,726,784 trainable parameters
+in every fine-tuned run. Table~\ref{tab:params} lists the totals; the values for the runs
+that were executed match the counts printed by the notebooks.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Trainable parameters of the Qwen2-1.5B variants}
+  \label{tab:params}
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Variant} & \textbf{LoRA} & \textbf{Projectors + type emb.} & \textbf{Total trainable} \\
+    \midrule
+    $q,v$, $r{=}8$ & 1,089,536 & 4,726,784 & 5,816,320 \\
+    $q,k,v,o$, $r{=}16$ & 4,358,144 & 4,726,784 & 9,084,928 \\
+    all-linear, $r{=}16$ & 18,464,768 & 4,726,784 & 23,191,552$^{*}$ \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize $^{*}$Computed from the formula above; this notebook has no saved output, so the value was not printed by a run.}
+\end{table}
+
+% ---------------- CHAPTER 5 ------------------------------------------
+\clearpage
+\chapter{System Implementation}
+
+\section{Modules Used with Description}
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item \textbf{Data module}: downloads WildFireVQA and FLAME~3 Sycan Marsh with \texttt{kagglehub}, runs the pairing audit and builds the image-grouped splits.
+  \item \textbf{Vision module}: encodes every unique image once with the frozen CLIP ViT-B/32 and caches the 49 patch features, so CLIP is not run during training.
+  \item \textbf{Prompt module}: converts each sample into the chat template of the language model, with the RGB and thermal visual tokens placed before the question; for the baseline it builds multi-turn chats with $k$ solved demonstrations.
+  \item \textbf{Model module}: loads the language model in 4-bit NF4 precision, attaches LoRA adapters with \texttt{peft}, and adds the RGB and thermal projectors and modality embeddings.
+  \item \textbf{Training module}: supervised fine-tuning with a causal language-modelling loss on the answer tokens only; the best checkpoint is chosen by validation loss.
+  \item \textbf{Evaluation module}: generates answers greedily and computes the metrics below.
+\end{itemize}
+
+\section{Implementation Details}
+Each configuration is implemented as a separate Kaggle notebook so that
+runs are independent and reproducible. The main four notebooks are:
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item \texttt{firevlm-few-shot-qwen-pre-trained}
+  \item \texttt{firevlm-qwen2-vl-1.5b-lora-efficient-qv-r8}
+  \item \texttt{firevlm-qwen2-vl-1.5b-lora-balanced-qkvo-r16}
+  \item \texttt{firevlm-qwen2-vl-1.5b-lora-high-capacity-all-linear-r16}
+\end{itemize}
+Further notebooks with the same names but ranks 4, 8 and 16 (and the \texttt{firevlm-lora-*}
+notebooks for the Llama-3.2-1B backbone) supply the capacity ablation in Chapter~7.
+
+\subsection{Few-Shot Baseline}
+The base model, Qwen2.5-VL-3B-Instruct, is loaded in 4-bit and kept frozen
+(the notebook asserts that the number of trainable parameters is zero). The
+test queries are 200 rows sampled with seed 42 from the images held out as the test set
+(10\% of the images); examples are drawn from the remaining images. For each query a
+deterministic ordered pool of 10 solved examples (from the same question category where
+possible) is built, and the $k$-shot run uses the first $k$ of them, so $k$ is the
+only factor that changes: $k=0,1,\dots,10$. Each example contributes its RGB
+and thermal images, the question and the reference answer. Confidence intervals
+use 1,000 bootstrap resamples.
+
+\subsection{QLoRA Variants}
+The base weights are quantised to 4 bits and frozen. Only the adapter
+matrices, the two projectors and the modality embeddings are trained. The variants differ in the
+modules that receive adapters and in rank, as in Table~\ref{tab:variants}.
+Validation loss is computed each epoch; the best projectors and adapters are saved,
+and the saved best checkpoint is used for the final test generation.
+
+\subsection{Answer Generation and Scoring}
+Answers are generated greedily (one beam, no sampling, at most 32 new tokens);
+only the first line of the output is kept. A prediction counts as an exact match (EM) when it
+equals the reference after lower-casing and trimming white space. The notebooks also report
+a smoothed sentence BLEU-4 and ROUGE-L (F-measure of the longest common subsequence).
+The few-shot notebook additionally reports a normalised EM (lower-casing, removing articles
+and punctuation), which was identical to EM in every run. Because most answers are one or two
+words, BLEU-4 is very small and is not used for comparison; EM and ROUGE-L are the main metrics.
+
+% ---------------- CHAPTER 6 ------------------------------------------
+\clearpage
+\chapter{System Testing}
+Testing consisted of (i) a strict pairing audit of the data, which passed with 738 image
+pairs and exactly 34 questions per image, and a check that RGB and thermal paths never
+coincide; (ii) checking that only the intended weights have gradients enabled (the few-shot notebook
+asserts zero trainable parameters, and the fine-tuning notebooks print and verify the adapter and projector counts);
+(iii) asserting that train, validation and test image sets are disjoint (and that few-shot
+demonstration images are disjoint from test images); and (iv) a memory check, in that every
+configuration listed in Chapter~7 completed on a 14.6\,GiB T4 GPU. Each reported result comes from a single run per
+configuration with seed 42; no repeated runs with other seeds were made.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Test cases}
+  \label{tab:tests}
+  \begin{tabular}{P{1.5in}P{2.2in}c}
+    \toprule
+    \textbf{Test} & \textbf{Expected behaviour} & \textbf{Status} \\
+    \midrule
+    Data loading and pairing & 738 pairs, 34 questions per image, RGB $\neq$ thermal & Pass \\
+    Trainable parameters & Only adapters, projectors and type embeddings require gradients; zero for few-shot & Pass \\
+    Split leakage & No overlap between train, validation and test images & Pass \\
+    Memory & Run completes within GPU memory & Pass \\
+    Repeatability & Results stable over several seeds & Not tested \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ---------------- CHAPTER 7 ------------------------------------------
+\clearpage
+\chapter{Results and Analysis}
+
+\section{Evaluation Setup}
+The fine-tuned models are evaluated on the 2,482 test rows (73 held-out image pairs). The
+few-shot baseline is evaluated on 200 queries sampled from its own held-out images,
+because every query is run 11 times with up to 22 images in the prompt. The two test sets
+are therefore not identical, and the few-shot notebook resolves image paths with a simpler
+mapping that yields 480 distinct RGB files instead of the 738 pairs of the audited pipeline.
+The few-shot numbers are therefore a reference point and not a strictly paired comparison.
+Within the fine-tuned runs the test set, metric and decoding are identical, so differences reflect the adaptation
+method (and, for the two backbones, the language model).
+
+\section{Quantitative Results}
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of the four configurations (exact match on the respective test sets)}
+  \label{tab:results}
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{P{1.65in}ccccc}
+    \toprule
+    \textbf{Configuration} & \textbf{Trainable params} & \textbf{EM (\%)} & \textbf{ROUGE-L} & \textbf{Train time} \\
+    \midrule
+    Few-shot, frozen, $k{=}10$ (Qwen2.5-VL-3B; 200 queries) & 0 & 28.00 & 0.376 & --- \\
+    LoRA $q,v$, $r{=}8$ (Qwen2-1.5B) & 5,816,320 & 86.14 & 0.8932 & 7 h 58 min \\
+    LoRA $q,k,v,o$, $r{=}16$ (Qwen2-1.5B) & 9,084,928 & 84.13 & 0.8773 & 6 h 42 min \\
+    LoRA all-linear, $r{=}16$ (Qwen2-1.5B) & 23,191,552$^{*}$ & \todo{not run} & \todo{not run} & \todo{not run} \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize Train time is the sum of all epochs, including the three epochs after the best checkpoint. $^{*}$Computed, see Table~\ref{tab:params}.}
+\end{table}
+
+\subsection{Few-Shot Baseline}
+\begin{table}[htbp]
+  \centering
+  \caption{Frozen Qwen2.5-VL-3B-Instruct versus number of demonstrations $k$ (200 test queries)}
+  \label{tab:shots}
+  \small
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{cccccc}
+    \toprule
+    \textbf{$k$} & \textbf{EM (\%)} & \textbf{ROUGE-L} & \textbf{Words / answer} & \textbf{Latency (s)} & \textbf{Input tokens} \\
+    \midrule
+    0 & 15.00 & 0.2438 & 2.51 & 0.40 & 211 \\
+    1 & 20.00 & 0.3113 & 1.73 & 0.51 & 381 \\
+    2 & 23.50 & 0.3280 & 1.54 & 0.65 & 552 \\
+    3 & 23.50 & 0.3290 & 1.54 & 0.80 & 723 \\
+    4 & 24.50 & 0.3362 & 1.60 & 0.98 & 893 \\
+    5 & 25.50 & 0.3421 & 1.66 & 1.14 & 1,064 \\
+    6 & 26.00 & 0.3474 & 1.67 & 1.33 & 1,235 \\
+    7 & 27.00 & 0.3585 & 1.66 & 1.54 & 1,405 \\
+    8 & 26.00 & 0.3468 & 1.66 & 1.76 & 1,576 \\
+    9 & 27.50 & 0.3668 & 1.64 & 1.99 & 1,747 \\
+    10 & 28.00 & 0.3760 & 1.61 & 2.23 & 1,919 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[width=0.85\textwidth, height=6.2cm, xlabel={Number of demonstrations $k$},
+      ylabel={Score (\%)}, xmin=0, xmax=10, ymin=10, ymax=42, xtick={0,1,...,10},
+      legend pos=south east, grid=major, grid style={gray!25}, every axis plot/.append style={thick}]
+      \addplot[mark=*, color=blue!70!black] coordinates {(0,15)(1,20)(2,23.5)(3,23.5)(4,24.5)(5,25.5)(6,26)(7,27)(8,26)(9,27.5)(10,28)};
+      \addlegendentry{Exact match}
+      \addplot[mark=square*, color=red!70!black] coordinates {(0,24.38)(1,31.13)(2,32.80)(3,32.90)(4,33.62)(5,34.21)(6,34.74)(7,35.85)(8,34.68)(9,36.68)(10,37.60)};
+      \addlegendentry{ROUGE-L $\times$ 100}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Few-shot accuracy of the frozen baseline against the number of demonstrations.}
+  \label{fig:shots}
+\end{figure}
+
+Exact match rises from 15.0\% with no examples to 28.0\% with ten, and ROUGE-L from 0.244 to
+0.376. Paired against the zero-shot answers on the same queries, ten demonstrations give
+a gain of 13.0 points of EM (95\% bootstrap interval 8.0 to 18.5 points), with 29 queries
+improved and 3 made worse. Most of the gain comes from the first two demonstrations:
+they teach the output format, and the average answer length falls from 2.5 to about 1.5 words
+(zero-shot answers are often full sentences). The cost grows linearly, since latency rises from 0.40\,s
+to 2.23\,s and the prompt from 211 to 1,919 tokens. Table~\ref{tab:fsexamples} shows
+that individual answers are unstable: for the hottest-temperature question the model
+answered 400, 200, 300, 400, 100 and then 100 as $k$ increased, while the reference is
+$>$500. Few-shot prompting therefore mostly fixes the answer format and does not
+add reliable fire-specific perception.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Examples of frozen few-shot predictions for ten test queries (exact match marked $\checkmark$)}
+  \label{tab:fsexamples}
+  \small
+  \begin{tabular}{P{2.0in}P{0.95in}P{1.0in}P{1.0in}}
+    \toprule
+    \textbf{Question (abridged)} & \textbf{Reference} & \textbf{$k{=}0$} & \textbf{$k{=}10$} \\
+    \midrule
+    Most intense hotspot location & Center & Upper right & Bottom-right \\
+    Region of largest smoke plume & Center & Top-left & Left \\
+    Fuel-bed continuity & Continuous & (full sentence) & Continuous $\checkmark$ \\
+    Hottest temperature (\textdegree C) & $>$500 & 400 & 100 \\
+    Safety risk of UAV position & Medium risk & High & High \\
+    Scene share above 200\textdegree C & $<$5\% & 50\% & 0\% \\
+    Region of largest smoke plume & Bottom-left & Top-left & Top-left \\
+    Number of emergency vehicles & 0 & 0 $\checkmark$ & 0 $\checkmark$ \\
+    Primary ground fuel type & Grass & Vegetation & Grass $\checkmark$ \\
+    Buildings visible & Yes & No & No \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{QLoRA Fine-Tuning and Adapter Capacity}
+Table~\ref{tab:ablation} lists every Qwen2-1.5B run that finished, including the extra ranks.
+Fine-tuning lifts exact match from at most 28\% to between 84\% and 87\%.
+
+\begin{table}[htbp]
+  \centering
+  \caption{All completed Qwen2-1.5B fine-tuning runs (2,482 test rows; best checkpoint by validation loss)}
+  \label{tab:ablation}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lrccccc}
+    \toprule
+    \textbf{Adapters, rank} & \textbf{Trainable params} & \textbf{EM (\%)} & \textbf{ROUGE-L} & \textbf{Best val.\ loss} & \textbf{Epochs (best)} & \textbf{Time (min)} \\
+    \midrule
+    $q,k,v,o$, $r{=}4$ & 5,816,320 & \textbf{86.62} & 0.8979 & 0.1236 & 14 (11) & 568 \\
+    $q,k,v,o$, $r{=}8$ & 6,905,856 & 86.30 & 0.8928 & 0.1159 & 13 (10) & 512 \\
+    $q,v$, $r{=}8$ & 5,816,320 & 86.14 & 0.8932 & 0.1209 & 12 (9) & 478 \\
+    $q,v$, $r{=}16$ & 6,905,856 & 86.06 & 0.8937 & 0.1177 & 12 (9) & 456 \\
+    all-linear, $r{=}8$ & 13,959,168 & 84.85 & 0.8858 & 0.1263 & 6 (3) & 283 \\
+    $q,k,v,o$, $r{=}16$ & 9,084,928 & 84.13 & 0.8773 & 0.1270 & 10 (7) & 402 \\
+    all-linear, $r{=}16$ & 23,191,552$^{*}$ & \todo{not run} & \todo{not run} & \todo{not run} & \todo{not run} & \todo{not run} \\
+    \bottomrule
+  \end{tabular}}\\[2pt]
+  {\footnotesize Time is the total over all epochs on one T4 GPU. $^{*}$Computed, not executed. A rank-32 run ($q,k,v,o$) has no saved results.}
+\end{table}
+
+The four attention-only runs with ranks up to 16 on $q,v$ and ranks 4--8 on $q,k,v,o$ lie within 0.6
+points of one another (86.06 to 86.62\%). With 2,482 test rows from only 73 images and one seed, differences
+of this size are within sampling noise, so they should not be ranked. The two
+configurations with the most adapter parameters, $q,k,v,o$ at $r{=}16$ and all-linear at $r{=}8$, are 1.3 to 2.5
+points lower, and they also stopped earlier (best epoch 7 and 3). The smallest configuration
+with near-best accuracy is therefore $q,v$ or $q,k,v,o$ at a low rank, which trains 5.8 million
+parameters of which 4.7 million are the projectors. Adapter capacity beyond this did not help:
+extra adapter parameters add training cost and, in these runs, lower accuracy, which is consistent with
+over-fitting of the 592 training images. The result for all-linear at $r{=}16$ is not available.
+
+\subsection{Llama-3.2-1B Backbone}
+The same pipeline was run with \texttt{meta-llama/Llama-3.2-1B-Instruct} as the language model
+(Table~\ref{tab:llama}). All of these runs score higher than the matching Qwen2 runs, from
+0.2 points higher for $q,v$ at $r{=}8$ to 4.0 points higher for $q,k,v,o$ at $r{=}16$,
+and the best result is 88.48\% EM for $q,k,v,o$ at $r{=}8$. The training settings differ between the Llama runs and from the Qwen2 runs
+(e.g.\ learning rate $1.5\times10^{-4}$ versus $2\times10^{-4}$), so the backbone comparison is not
+fully controlled. The ordering of the adapter variants is similar: the all-linear adapters did not beat
+the attention-only ones, and rank 16 did not beat rank 8.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Completed Llama-3.2-1B runs (same data, split and metric)}
+  \label{tab:llama}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lrccccc}
+    \toprule
+    \textbf{Adapters, rank} & \textbf{Trainable params} & \textbf{EM (\%)} & \textbf{ROUGE-L} & \textbf{Best val.\ loss} & \textbf{Epochs} & \textbf{Time (min)} \\
+    \midrule
+    $q,k,v,o$, $r{=}8$ & 7,481,344 & \textbf{88.48} & 0.9121 & 0.1057 & 9 & 268 \\
+    $q,k,v,o$, $r{=}16$ & 9,185,280 & 88.15 & 0.9073 & 0.1017 & 8 & 247 \\
+    $q,v$, $r{=}16$ & 7,481,344 & 87.63 & 0.9043 & 0.1099 & 7 & 202 \\
+    all-linear, $r{=}8$ & 11,413,504 & 87.63 & 0.9062 & 0.1096 & 9 & 310 \\
+    $q,v$, $r{=}8$ & 6,629,376 & 86.38 & 0.8911 & 0.1233 & 10 & 302 \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[width=0.85\textwidth, height=6.4cm, xlabel={Trainable parameters (millions)},
+      ylabel={Exact match (\%)}, xmin=5, xmax=15, ymin=83, ymax=89.5, grid=major,
+      grid style={gray!25}, legend pos=north east, legend cell align=left]
+      \addplot[only marks, mark=*, mark size=2.6pt, color=blue!70!black]
+        coordinates {(5.82,86.14)(5.82,86.62)(6.91,86.06)(6.91,86.30)(9.08,84.13)(13.96,84.85)};
+      \addlegendentry{Qwen2-1.5B}
+      \addplot[only marks, mark=square*, mark size=2.6pt, color=red!70!black]
+        coordinates {(6.63,86.38)(7.48,87.63)(7.48,88.48)(9.19,88.15)(11.41,87.63)};
+      \addlegendentry{Llama-3.2-1B}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Exact match against trainable parameters (adapters, projectors and modality embeddings) for all completed fine-tuning runs.}
+  \label{fig:pareto}
+\end{figure}
+
+\subsection{Per-Category Results}
+Table~\ref{tab:category} gives exact match by question category for the two runs whose notebooks
+contain this breakdown. Presence and detection (mostly yes/no questions) is easiest and localization and direction
+is hardest in both runs, which agrees with the larger number of answer choices
+for the localization questions (about 6.5 on average, against about 2.4 for presence questions
+\cite{wildfirevqa}).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Exact match (\%) by question category}
+  \label{tab:category}
+  \small
+  \begin{tabular}{P{2.2in}cc}
+    \toprule
+    \textbf{Category} & \textbf{Qwen2, $q,k,v,o$ $r{=}16$} & \textbf{Llama, $q,v$ $r{=}8$} \\
+    \midrule
+    Presence and detection & 90.75 & 94.35 \\
+    Distribution and segmentation & 85.96 & 90.41 \\
+    Classification & 85.84 & 81.96 \\
+    Flight planning & 85.27 & 85.27 \\
+    Cross-modal reasoning & 76.37 & 81.85 \\
+    Localization and direction & 71.23 & 74.66 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Analysis}
+Table~\ref{tab:results} shows the effect of fine-tuning and of adapter capacity. Four points stand out.
+First, task-specific training matters far more than prompting: the best frozen few-shot result is 28\%,
+while every fine-tuned model scores above 84\%. This gap should be read with the caveats of Section~7.1
+(different model size, test set and input handling), but it is large enough to be
+meaningful. Second, a small adapter budget is enough. The best Qwen2 run uses $q,k,v,o$ at rank 4, and
+the all-linear and rank-16 attention adapters, which add 3 to 8 million trainable parameters over the smallest
+runs, do not improve accuracy. Third, the choice of language backbone matters at least as much as the
+adapter configuration in these experiments: Llama-3.2-1B gave 0.2 to 4.0 points more than Qwen2-1.5B for matching
+adapters. Fourth, the hard categories are those with many answer options, such as localization and
+direction and cross-modal reasoning, where one error type is confusing neighbouring image regions or
+temperature bins.
+
+\section{Limitations}
+(i) Each configuration was trained once with a single seed, and the test set contains only 73 image pairs,
+so differences of about one point are not reliable. (ii) The data come from one burn site (Sycan Marsh); generalisation to other
+sites was not tested. (iii) The few-shot baseline and the fine-tuned models use different language models, test
+sets and image-path handling. (iv) Answers are scored by exact string match without the answer options
+in the prompt, so a correct answer worded differently counts as wrong. (v) The all-linear $r{=}16$ and
+$q,k,v,o$ $r{=}32$ Qwen2 notebooks have no saved results. (vi) The Qwen2 language component is paired with a CLIP
+encoder and randomly initialised projectors rather than its own vision tower, so the model is not a native Qwen2-VL.
+
+% ---------------- CHAPTER 8 ------------------------------------------
+\clearpage
+\chapter{Conclusion and Future Scope}
+
+\section{Conclusion}
+FireVLM shows that a compact vision-language model, built from a frozen CLIP encoder, trainable projectors and a
+4-bit Qwen2-1.5B language model with QLoRA adapters, can answer wildfire questions about paired RGB and thermal
+imagery on free-tier T4 GPUs. It reaches 84.1--86.6\% exact match on 2,482 held-out WildFireVQA questions
+while training 5.8--14.0 million parameters, compared with 28\% for a frozen Qwen2.5-VL-3B model given ten
+examples. Comparing adapter placement and rank shows that low-rank attention adapters give most of the gain:
+the best Qwen2 configuration ($q,k,v,o$, rank 4) scores 86.62\%, and larger adapters did not improve it. With a
+Llama-3.2-1B backbone the same pipeline reached 88.48\% ($q,k,v,o$, rank 8).
+
+\section{Future Scope}
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item Run the missing all-linear $r{=}16$ and $q,k,v,o$ $r{=}32$ configurations, repeat runs over several seeds, and evaluate the frozen baseline on the same 2,482-row test split.
+  \item Evaluate on other fire sites (Willamette and Shoetank) and use the radiometric thermal TIFF data to test generalisation.
+  \item Explore other adapter methods, larger CLIP-style or native Qwen2-VL vision towers, and fine-tuning the vision encoder.
+  \item Score answers with the multiple-choice protocol of WildFireVQA so results can be compared with published baselines.
+  \item Add temporal reasoning over video sequences of a fire.
+  \item Deploy on an edge device for on-board drone inference.
+\end{itemize}
+
+% =====================================================================
+%  REFERENCES
+% =====================================================================
+\clearpage\phantomsection
+\addcontentsline{toc}{chapter}{REFERENCES}
+\markboth{References}{}
+\begin{singlespace}
+\begin{thebibliography}{99}
+
+\bibitem{antol2015}
+S. Antol \textit{et al.}, ``VQA: Visual Question Answering'', Proceedings of the
+IEEE International Conference on Computer Vision (ICCV), pp. 2425-2433, 2015.
+
+\bibitem{bai2023}
+J. Bai \textit{et al.}, ``Qwen-VL: A Versatile Vision-Language Model for
+Understanding, Localization, Text Reading, and Beyond'', arXiv:2308.12966, 2023.
+
+\bibitem{wang2024}
+P. Wang \textit{et al.}, ``Qwen2-VL: Enhancing Vision-Language Model's Perception
+of the World at Any Resolution'', arXiv:2409.12191, 2024.
+
+\bibitem{bai2025}
+S. Bai \textit{et al.}, ``Qwen2.5-VL Technical Report'', arXiv:2502.13923, 2025.
+
+\bibitem{yang2024}
+A. Yang \textit{et al.}, ``Qwen2 Technical Report'', arXiv:2407.10671, 2024.
+
+\bibitem{mithan}
+MIT HAN Lab, ``Qwen2-VL-1.5B-Instruct'', Hugging Face model repository, \url{https://huggingface.co/mit-han-lab/Qwen2-VL-1.5B-Instruct}.
+
+\bibitem{llama32}
+Meta AI, ``Llama-3.2-1B-Instruct'', Hugging Face model repository, \url{https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct}.
+
+\bibitem{radford2021}
+A. Radford \textit{et al.}, ``Learning Transferable Visual Models From Natural
+Language Supervision'', Proceedings of the 38th International Conference on Machine
+Learning (ICML), PMLR 139, pp. 8748-8763, 2021.
+
+\bibitem{brown2020}
+T. Brown \textit{et al.}, ``Language Models are Few-Shot Learners'', Advances in
+Neural Information Processing Systems (NeurIPS), Vol. 33, pp. 1877-1901, 2020.
+
+\bibitem{hu2022}
+E. J. Hu \textit{et al.}, ``LoRA: Low-Rank Adaptation of Large Language Models'',
+International Conference on Learning Representations (ICLR), 2022.
+
+\bibitem{dettmers2023}
+T. Dettmers, A. Pagnoni, A. Holtzman, L. Zettlemoyer, ``QLoRA: Efficient
+Finetuning of Quantized LLMs'', Advances in Neural Information Processing
+Systems (NeurIPS), Vol. 36, 2023.
+
+\bibitem{flame3}
+B. Hopkins, L. ONeill, M. Marinaccio, E. Rowell, R. Parsons, S. Flanary, I. Nazim,
+C. Seielstad, F. Afghah, ``FLAME 3 Dataset: Unleashing the Power of Radiometric Thermal
+UAV Imagery for Wildfire Management'', arXiv:2412.02831, 2024.
+
+\bibitem{wildfirevqa}
+M. Habibpour, N. Alipour Talemi, J. Spodnik, C. J. Khoury, F. Afghah, ``WildFireVQA: A
+Large-Scale Radiometric Thermal VQA Benchmark for Aerial Wildfire Monitoring'',
+arXiv:2604.20190, 2026. Data and code: \url{https://github.com/mobiiin/WildFire_VQA}.
+
+\end{thebibliography}
+\end{singlespace}
+
+\end{document}

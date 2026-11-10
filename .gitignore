@@ -1,0 +1,9 @@
+/report/*.log
+/report/*.out
+/report/*.pdf
+/report/*.aux
+/report/.auctex-auto
+/report/*.lof
+/report/*.lot
+/report/*.synctex.gz
+/report/*.toc

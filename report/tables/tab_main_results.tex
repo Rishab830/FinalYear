@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Evaluation results for representative model configurations}
+  \label{tab:results}
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{P{1.85in}cccc}
+    \toprule
+    \textbf{Configuration} & \textbf{Trainable params} & \textbf{EM (\%)} & \textbf{ROUGE-L} & \textbf{Train time} \\
+    \midrule
+    Frozen baseline, $k{=}10$ (Qwen2.5-VL-3B; 200 queries) & 0 & 28.00 & 0.3760 & --- \\
+    LoRA $q,k,v,o$, $r{=}4$ (Qwen2-1.5B) & 5,816,320 & 86.62 & 0.8979 & 9 h 28 min \\
+    LoRA $q,v$, $r{=}8$ (Qwen2-1.5B) & 5,816,320 & 86.14 & 0.8932 & 7 h 58 min \\
+    LoRA $q,k,v,o$, $r{=}16$ (Qwen2-1.5B) & 9,084,928 & 84.13 & 0.8773 & 6 h 42 min \\
+    LoRA all-linear, $r{=}8$ (Qwen2-1.5B) & 13,959,168 & 84.85 & 0.8858 & 4 h 43 min \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize The frozen baseline is evaluated on 200 query samples as reference context (D-03, D-04); fine-tuned models are evaluated on all 2,482 test samples. Train time is the total duration over all epochs on a single GPU.}
+\end{table}

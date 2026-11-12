@@ -1,0 +1,32 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Training hyperparameters across all Qwen2-1.5B and Llama-3.2-1B fine-tuning runs}
+  \label{tab:hparams}
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{llccccccccc}
+    \toprule
+    \textbf{Backbone} & \textbf{Adapters, rank} & \textbf{Optimizer} & \textbf{LR} & \textbf{Scheduler} & \textbf{Epochs (plan)} & \textbf{Epochs (done)} & \textbf{BS} & \textbf{GA} & \textbf{Eff.\ BS} & \textbf{Patience} \\
+    \midrule
+    Qwen2-1.5B & $q,v$, $r{=}8$ & AdamW & 2e-4 & cosine+warmup & 100 & 12 & 4 & 4 & 16 & 3 \\
+    Qwen2-1.5B & $q,v$, $r{=}16$ & AdamW & 2e-4 & cosine+warmup & 100 & 12 & 4 & 4 & 16 & 3 \\
+    Qwen2-1.5B & $q,k,v,o$, $r{=}4$ & AdamW & 2e-4 & cosine+warmup & 100 & 14 & 4 & 4 & 16 & 3 \\
+    Qwen2-1.5B & $q,k,v,o$, $r{=}8$ & AdamW & 2e-4 & cosine+warmup & 100 & 13 & 4 & 4 & 16 & 3 \\
+    Qwen2-1.5B & $q,k,v,o$, $r{=}16$ & AdamW & 2e-4 & cosine+warmup & 100 & 10 & 4 & 4 & 16 & 3 \\
+    Qwen2-1.5B & $q,k,v,o$, $r{=}32$ & AdamW & 2e-4 & cosine+warmup & 100 & 13 & 4 & 4 & 16 & 3 \\
+    Qwen2-1.5B & all-linear, $r{=}8$ & AdamW & 2e-4 & cosine+warmup & 100 & 15 & 4 & 4 & 16 & 3 \\
+    Qwen2-1.5B & all-linear, $r{=}16$ & AdamW & 2e-4 & cosine+warmup & 100 & 13 & 4 & 4 & 16 & 3 \\
+    \midrule
+    Llama-3.2-1B & $q,v$, $r{=}8$ & AdamW & 2e-4 & cosine+warmup & 100 & 10 & 4 & 4 & 16 & 3 \\
+    Llama-3.2-1B & $q,v$, $r{=}16$ & \todo{missing} & 1.5e-4 & cosine+warmup & 10 & 7 & 4 & 4 & 16 & 3 \\
+    Llama-3.2-1B & $q,k,v,o$, $r{=}4$ & \todo{missing} & 1.5e-4 & \todo{missing} & 10 & 8 & 4 & 4 & 16 & 3 \\
+    Llama-3.2-1B & $q,k,v,o$, $r{=}8$ & AdamW & 1.5e-4 & cosine+warmup & 10 & 9 & 4 & 4 & 16 & 3 \\
+    Llama-3.2-1B & $q,k,v,o$, $r{=}16$ & AdamW & 1.5e-4 & cosine+warmup & 8 & 8 & 4 & 4 & 16 & 2 \\
+    Llama-3.2-1B & $q,k,v,o$, $r{=}32$ & AdamW & 1.5e-4 & cosine+warmup & 10 & 8 & 4 & 4 & 16 & 3 \\
+    Llama-3.2-1B & all-linear, $r{=}8$ & AdamW & 1.5e-4 & cosine+warmup & 10 & 9 & 4 & 4 & 16 & 3 \\
+    Llama-3.2-1B & all-linear, $r{=}16$ & AdamW & 1e-4 & cosine+warmup & 100 & 9 & 2 & 8 & 16 & 3 \\
+    \bottomrule
+  \end{tabular}}\\[2pt]
+  {\footnotesize BS: per-device batch size; GA: gradient accumulation steps; Eff.\ BS: effective batch size (BS $\times$ GA = 16 across all runs). Weight decay is 0.01, LoRA dropout is 0.05, LoRA $\alpha = 2r$, and warmup ratio is 0.05 for all runs. Missing entries indicate values not recorded in configuration files.}
+\end{table}

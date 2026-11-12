@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Trainable parameters of the Qwen2-1.5B variants}
+  \label{tab:params}
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Variant} & \textbf{LoRA parameters} & \textbf{Projectors + modality embeddings} & \textbf{Total trainable} \\
+    \midrule
+    $q,v$, $r{=}8$ & 1,089,536 & 4,726,784 & 5,816,320 \\
+    $q,k,v,o$, $r{=}4$ & 1,089,536 & 4,726,784 & 5,816,320 \\
+    $q,k,v,o$, $r{=}8$ & 2,179,072 & 4,726,784 & 6,905,856 \\
+    $q,v$, $r{=}16$ & 2,179,072 & 4,726,784 & 6,905,856 \\
+    $q,k,v,o$, $r{=}16$ & 4,358,144 & 4,726,784 & 9,084,928 \\
+    $q,k,v,o$, $r{=}32$ & 8,716,288 & 4,726,784 & 13,443,072 \\
+    all-linear, $r{=}8$ & 9,232,384 & 4,726,784 & 13,959,168 \\
+    all-linear, $r{=}16$ & 18,464,768 & 4,726,784 & 23,191,552 \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize Projectors ($768\to 1024\to 1536$) and modality type embeddings contribute $2 \times (768\times 1024 + 1024 + 1024\times 1536 + 1536) + 2 \times 1536 = 4,726,784$ parameters across all runs. LoRA parameter counts are derived from $r(d_{\text{in}} + d_{\text{out}})$ per target matrix across 28 layers.}
+\end{table}

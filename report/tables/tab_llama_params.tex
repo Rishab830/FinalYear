@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Trainable parameters of the Llama-3.2-1B variants}
+  \label{tab:llama_params}
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Variant} & \textbf{LoRA parameters} & \textbf{Projectors + modality embeddings} & \textbf{Total trainable} \\
+    \midrule
+    $q,v$, $r{=}8$ & 851,968 & 5,777,408 & 6,629,376 \\
+    $q,k,v,o$, $r{=}4$ & 851,968 & 5,777,408 & 6,629,376 \\
+    $q,v$, $r{=}16$ & 1,703,936 & 5,777,408 & 7,481,344 \\
+    $q,k,v,o$, $r{=}8$ & 1,703,936 & 5,777,408 & 7,481,344 \\
+    $q,k,v,o$, $r{=}16$ & 3,407,872 & 5,777,408 & 9,185,280 \\
+    all-linear, $r{=}8$ & 5,636,096 & 5,777,408 & 11,413,504 \\
+    $q,k,v,o$, $r{=}32$ & 6,815,744 & 5,777,408 & 12,593,152 \\
+    all-linear, $r{=}16$ & 13,494,272 & 5,777,408 & 19,271,680 \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize Projectors ($768\to 1024\to 2048$) and learned modality type embeddings contribute $2 \times ((768\times 1024 + 1024) + (1024\times 2048 + 2048)) + 2 \times 2048 = 5,777,408$ parameters across all Llama-3.2-1B runs. LoRA parameter counts are computed from $r(d_{\text{in}} + d_{\text{out}})$ per target matrix across 16 layers with hidden dimension 2048.}
+\end{table}

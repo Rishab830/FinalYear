@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Validation checks verified programmatically in the dataset pipeline and training code}
+  \label{tab:tests}
+  \small
+  \begin{tabular}{P{1.8in}P{2.4in}c}
+    \toprule
+    \textbf{Validation check} & \textbf{Assertion / Verified condition in code} & \textbf{Fact ID} \\
+    \midrule
+    Radiometric pairing integrity & 738 source pairs (734 exact, 4 tolerance); 34 questions per image; resolved RGB $\neq$ thermal & DS-009, DS-013, DS-014 \\
+    Zero duplicate questions & Assertion \texttt{assert not duplicate\_questions.any()} & DS-037 \\
+    Split image disjointness & Disjoint train (592), validation (73), and test (73) sets for both modalities & DS-023--DS-026 \\
+    Zero baseline gradient updates & Assertion \texttt{assert trainable == 0} in baseline evaluation & FS-059, FS-072 \\
+    Trainable parameter scoping & Gradients strictly restricted to LoRA adapters, projectors, and type embeddings & balanced\_qkvo\_r16-006, 007 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

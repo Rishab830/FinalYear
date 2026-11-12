@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Qwen2-1.5B fine-tuning runs across adapter placement and rank (2,482 test rows; checkpoint selected by lowest validation loss)}
+  \label{tab:ablation}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lrccccc}
+    \toprule
+    \textbf{Adapters, rank} & \textbf{Trainable params} & \textbf{EM (\%)} & \textbf{ROUGE-L} & \textbf{Best val.\ loss} & \textbf{Epochs (best)} & \textbf{Time (min)} \\
+    \midrule
+    $q,k,v,o$, $r{=}4$ & 5,816,320 & 86.62 & 0.8979 & 0.1236 & 14 (11) & 568 \\
+    $q,k,v,o$, $r{=}8$ & 6,905,856 & 86.30 & 0.8928 & 0.1159 & 13 (10) & 512 \\
+    $q,v$, $r{=}8$ & 5,816,320 & 86.14 & 0.8932 & 0.1209 & 12 (9) & 478 \\
+    $q,v$, $r{=}16$ & 6,905,856 & 86.06 & 0.8937 & 0.1177 & 12 (9) & 456 \\
+    all-linear, $r{=}16$ & 23,191,552 & 85.74 & 0.8919 & 0.1209 & 13 (10) & 649 \\
+    $q,k,v,o$, $r{=}32$ & 13,443,072 & 85.50 & 0.8869 & 0.1191 & 13 (10) & 538 \\
+    all-linear, $r{=}8$ & 13,959,168 & 84.85 & 0.8858 & 0.1257 & 15 (12) & 283 \\
+    $q,k,v,o$, $r{=}16$ & 9,084,928 & 84.13 & 0.8773 & 0.1270 & 10 (7) & 402 \\
+    \bottomrule
+  \end{tabular}}\\[2pt]
+  {\footnotesize Time is total execution wall-clock time across all completed epochs on one GPU. Checkpoint selection is based on minimum validation loss. Note: for $q,v$ $r{=}8$ and all-linear $r{=}16$, the minimum validation loss values round to the same four-decimal figure (0.1209) but differ in higher precision (0.120888 vs 0.120863).}
+\end{table}

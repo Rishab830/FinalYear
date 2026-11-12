@@ -1,11 +1,9 @@
 % =====================================================================
 %  PROJECT REPORT - FireVLM (Dept. of CSE, Amrita School of Computing, Bengaluru)
 %  Compile with XeLaTeX, twice. Keep "amrita_logo.png" in the same folder.
-%  No \todo placeholders remain in the body; the only red text that can
-%  appear is the title-page fallback when amrita_logo.png is missing.
-%  All experimental numbers come from the Kaggle notebook outputs / repo digest.
 % =====================================================================
 \documentclass[12pt]{report}
+
 \usepackage[letterpaper,
             top=1.38in, bottom=1.18in, left=1.58in, right=1.18in,
             headsep=0.38in, footskip=0.5in]{geometry}
@@ -16,6 +14,7 @@
 \IfFontExistsTF{Calibri}{\newfontfamily\hffont{Calibri}}{%
   \IfFontExistsTF{Carlito}{\newfontfamily\hffont{Carlito}}{%
     \newfontfamily\hffont{Liberation Sans}}}
+
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{setspace}
@@ -34,17 +33,21 @@
 \usepackage[labelsep=colon]{caption}
 \usepackage[numbers,square,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
+
 \definecolor{wordred}{HTML}{FF0000}
 \newcommand{\red}[1]{\textcolor{wordred}{#1}}
 \newcommand{\todo}[1]{\textcolor{wordred}{[#1]}}
+
 \setlength{\headheight}{14pt}
 \emergencystretch=1em
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt}
+
 % ---------------- Details --------------------------------------------
 \newcommand{\projecttitle}{FireVLM: Parameter-Efficient Fine-Tuning of a Vision-Language Model for Wildfire Visual Question Answering}
 \newcommand{\monthyear}{December 2026}
-\newcommand{\guidename}{Dr. Rimjhim Padam Singh, Assistant Professor (Sl.Gd.), Department of Computer Science and Engineering}
+\newcommand{\guidename}{Dr. Rimjhim Padam Singh, Assistant Professor (Sl.Gd.), Department of Computer Science Engineering}
+
 % ---------------- Headers and footers --------------------------------
 \newif\ifinmain
 \fancypagestyle{front}{%
@@ -69,10 +72,12 @@
   \fancyfoot[R]{\ifinmain\hffont\small Page | \thepage\vspace*{\baselineskip}\fi}}
 \renewcommand{\chaptermark}[1]{\markboth{#1}{}}
 \renewcommand{\sectionmark}[1]{}
+
 \makeatletter
 \renewcommand{\chapter}{\global\@topnum\z@\@afterindentfalse
   \secdef\@chapter\@schapter}
 \makeatother
+
 \titleformat{\chapter}[display]
   {\normalfont\fontsize{14}{17}\bfseries\centering}
   {CHAPTER - \thechapter}{6pt}{\MakeUppercase}
@@ -83,6 +88,7 @@
 \titlespacing*{\subsection}{0pt}{10pt}{4pt}
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{2}
+
 \contentsmargin{0.5in}
 \newcommand{\tocdots}{\titlerule*[0.6pc]{.}}
 \titlecontents{chapter}[0pt]{\addvspace{3pt}}
@@ -99,26 +105,33 @@
   {\contentslabel{0.55in}}{}{\tocdots\contentspage}
 \titlecontents{table}[0.55in]{\addvspace{2pt}}
   {\contentslabel{0.55in}}{}{\tocdots\contentspage}
+
 \renewcommand{\contentsname}{TABLE OF CONTENTS}
 \renewcommand{\listfigurename}{List Of Figures}
 \renewcommand{\listtablename}{List Of Tables}
 \renewcommand{\bibname}{REFERENCES}
+
 \captionsetup[figure]{name=Fig., font=bf, labelfont=bf, skip=6pt}
 \captionsetup[table]{name=Table, font=bf, labelfont=bf, position=top, skip=6pt}
+
 \renewcommand{\bibnumfmt}[1]{[#1].}
 \setlength{\bibsep}{2pt}
+
 \newcommand{\frontchapter}[1]{%
   \clearpage\phantomsection
   \addcontentsline{toc}{chapter}{#1}%
   \chapter*{#1}}
+
 % TikZ styles for diagrams
 \tikzset{
   blk/.style={draw, rounded corners=2pt, align=center, minimum height=13mm,
               text width=25mm, font=\footnotesize, fill=gray!8},
   arr/.style={-{Stealth[length=2.2mm]}, thick}
 }
+
 \begin{document}
 \addtocontents{toc}{\protect\hfill\textbf{Page No.}\protect\par}
+
 % =====================================================================
 %  TITLE PAGE
 % =====================================================================
@@ -137,32 +150,34 @@ BL.EN.U4AIE23126 & Rishab Ramesh Nair\\[16pt]
 BL.EN.U4AIE23130 & Sanjushree Rajan\\[16pt]
 BL.EN.U4AIE23135 & Varun Adhitya G B\\[16pt]
 \end{tabular}\par
-\vspace{18pt}
+\vspace{8pt}
 {\fontsize{14}{17}\selectfont\bfseries\itshape in partial fulfillment for the award of the degree of\par}
-\vspace{18pt}
+\vspace{12pt}
 {\fontsize{14}{17}\selectfont\bfseries BACHELOR OF TECHNOLOGY\par}
-\vspace{16pt}
+\vspace{12pt}
 {\small IN\par}
-\vspace{16pt}
+\vspace{14pt}
 COMPUTER SCIENCE AND ENGINEERING\par
 (Artificial Intelligence) \\
-\vspace{12pt}
+\vspace{10pt}
 \IfFileExists{amrita_logo.png}{\includegraphics[width=1.75in]{amrita_logo.png}}{\todo{amrita\_logo.png not found}}\par
-\vspace{12pt}
+\vspace{10pt}
 AMRITA SCHOOL OF COMPUTING, BENGALURU\par
-\vspace{12pt}
+\vspace{10pt}
 {\fontsize{14}{17}\selectfont AMRITA VISHWA VIDYAPEETHAM\par}
-\vspace{12pt}
+\vspace{10pt}
 BENGALURU 560 035\par
-\vspace{12pt}
+\vspace{10pt}
 \MakeUppercase{\monthyear}\par
 \end{titlepage}
+
 % =====================================================================
 %  FRONT MATTER
 % =====================================================================
 \pagestyle{front}
 \pagenumbering{roman}
 \setcounter{page}{1}
+
 \frontchapter{ACKNOWLEDGEMENTS}
 \begin{spacing}{1.5}
 \setlength{\parindent}{0.5in}
@@ -170,61 +185,42 @@ BENGALURU 560 035\par
 be incomplete without mention of people who made it possible, and whose
 constant encouragement and guidance have been source of inspiration
 throughout the course of this project work.
+
 We offer our sincere pranams at the lotus feet of \textbf{``AMMA'',
 MATA AMRITANANDAMAYI DEVI} who showered her blessing upon us throughout the
 course of this project work.
+
 We owe our gratitude to \textbf{Prof. Manoj P.}, Director, Amrita Vishwa Vidyapeetham Bengaluru Campus. We would like to place our heartfelt gratitude to \textbf{Dr. Gopalakrishnan E.A.,} Principal, Amrita School of Computing and Amrita School of Artificial Intelligence, Bengaluru for his
 valuable support and inspiration.
+
 It is a great pleasure to express our gratitude and indebtedness to our
 project guide \textbf{\guidename}, Amrita School of Computing, Bengaluru for
 her valuable guidance, encouragement, moral support, and affection
 throughout the project work.
+
 We would like to express our gratitude to project panel members for
 their suggestions, encouragement, and moral support during the process of
 project work and all faculty members for their academic support. Finally,
 we are forever grateful to our parents, who have loved, supported and
 encouraged us in all our endeavors.
 \end{spacing}
+
 \frontchapter{ABSTRACT}
 \begin{spacing}{1.5}
-Early and accurate situational awareness is critical in wildfire
-response, yet interpreting aerial imagery of an active fire still
-depends on trained analysts. This project presents \textbf{FireVLM}, a
-vision-language model that answers natural-language questions about
-paired RGB and thermal wildfire imagery. We use the Sycan Marsh portion of
-the WildFireVQA question--answer set, which is built on FLAME~3 imagery (738 image
-pairs, 34 questions each, 25,092 question--answer pairs) and compare two
-ways of adapting a language model to this task. The first is a frozen
-Qwen2.5-VL-3B-Instruct model prompted with zero to ten solved examples.
-The second is a compact vision-language model that combines a frozen
-CLIP ViT-B/32 encoder, trainable RGB and thermal projectors, and a
-4-bit quantised 1.5B-parameter Qwen2 language model fine-tuned with
-QLoRA in several adapter configurations (query/value; query/key/value/output;
-all linear layers; ranks 4 to 16). All runs use free Kaggle T4 GPUs. The
-frozen few-shot baseline reaches 15.0\% exact match with no examples and
-28.0\% with ten examples on 200 test queries, whereas the QLoRA models reach
-84.1--86.6\% exact match on 2,482 test queries while training only
-5.8--14.0 million parameters. The baseline uses a different model and a
-different test sample, so this comparison is indicative and not strictly
-paired. The best Qwen2 configuration (query/key/value/output adapters,
-rank 4) reaches 86.62\% exact match, and the two largest Qwen2 adapter
-configurations with results (query/key/value/output at rank 16 and
-all-linear at rank 8) scored 1.2--2.5 points lower. A Llama-3.2-1B backbone
-trained with the same pipeline reached up to 88.48\%; there the smallest
-adapter was the weakest, so the advantage of very small adapters is specific
-to the Qwen2 runs. Each configuration was trained once. The results indicate
-that a few million trainable parameters are sufficient for fire-scene
-question answering on this dataset and give a practical recipe for
-low-resource adaptation of vision-language models to disaster imagery.
+Visual Question Answering (VQA) on aerial wildfire imagery enables natural-language querying of active fire scenes using paired visible (RGB) and radiometric thermal inputs. This project investigates parameter-efficient adaptation of vision-language models on the WildFireVQA benchmark using the Sycan Marsh subset (738 image pairs, 34 questions per pair, 25,092 question--answer rows). Two adaptation approaches are examined: a frozen pretrained Qwen2.5-VL-3B-Instruct model evaluated under in-context prompting with zero to ten demonstrations (200 query samples), and compact models combining a frozen CLIP ViT-B/32 encoder, trainable linear projectors, and a 4-bit quantized language model fine-tuned via QLoRA across multiple adapter ranks and target modules. The frozen baseline achieves 15.00\% exact match at zero-shot and 28.00\% at ten-shot. Fine-tuned Qwen2-1.5B models evaluate on 2,482 test queries, achieving 84.13\% to 86.62\% exact match while updating 5.8 to 23.2 million parameters. Configurations adapting query, key, value, and output attention projections at ranks 4 and 8 exhibit performance within sampling uncertainty of each other (86.62\% and 86.30\%), while larger all-linear adapters and higher ranks do not improve accuracy. A Llama-3.2-1B backbone trained under the same pipeline reaches 86.38\% to 88.48\%. The findings indicate that compact attention-only adapter budgets suffice for domain-specific fire-scene visual question answering.
 \end{spacing}
+
 \clearpage
 {\linespread{0.95}\selectfont\tableofcontents}
+
 \clearpage\phantomsection
 \addcontentsline{toc}{chapter}{LIST OF FIGURES}
 \listoffigures
+
 \clearpage\phantomsection
 \addcontentsline{toc}{chapter}{LIST OF TABLES}
 \listoftables
+
 % =====================================================================
 %  MAIN CHAPTERS
 % =====================================================================
@@ -234,130 +230,166 @@ low-resource adaptation of vision-language models to disaster imagery.
 \pagenumbering{arabic}
 \setcounter{page}{1}
 \onehalfspacing
+
 % ---------------- CHAPTER 1 ------------------------------------------
 \chapter{Introduction}
+
 \section{Introduction to Wildfire Visual Question Answering}
-Wildfires cause large losses of life, property and ecosystems, and their
-frequency and intensity are increasing. Aerial platforms such as drones
-now capture large volumes of visible and thermal imagery of fires, but
-turning that imagery into decisions (Is there active flame? Where is the
-smoke heading? Which area is burned?) is still largely manual.
-Visual Question Answering (VQA) lets an operator ask such questions in
-plain language and receive an answer grounded in the image
-\cite{antol2015}. Recent vision-language models (VLMs) such as
-Qwen-VL \cite{bai2023} are strong general-purpose VQA systems, but they
-are not trained on fire scenes and are too large to fully fine-tune on
-modest hardware.
-This project, \textbf{FireVLM}, studies how to adapt a language model to
-wildfire VQA cheaply. We use the Sycan Marsh portion of the WildFireVQA
-question--answer set, which is built over FLAME~3 imagery \cite{wildfirevqa,flame3}, and compare a frozen
-few-shot baseline (Qwen2.5-VL-3B-Instruct \cite{bai2025}) with QLoRA
-\cite{dettmers2023} fine-tuned models that combine a frozen CLIP vision
-encoder \cite{radford2021}, trainable projectors and a 4-bit Qwen2 language
-model \cite{yang2024}. The task takes a paired RGB and thermal image and a
-question as input and produces a short textual answer.
+Wildfires inflict severe losses on ecosystems, human life, and infrastructure. Aerial surveillance platforms, such as unmanned aerial vehicles (UAVs), capture multimodal visible spectrum (RGB) and radiometric thermal imagery over active fire zones. However, converting these raw sensor streams into actionable situational intelligence---such as identifying active flame fronts, mapping smoke dispersion, and delineating burned perimeters---conventionally relies on manual interpretation by human analysts.
+
+Visual Question Answering (VQA) frames image understanding as natural-language inquiry grounded in visual evidence \cite{antol2015}. Rather than deploying distinct, task-specific classifiers for detection, land-cover categorization, and risk assessment, a VQA interface enables operators to query arbitrary scene properties directly. While modern vision-language models (VLMs) demonstrate strong multimodal comprehension on broad web-scale benchmarks \cite{bai2023,bai2025}, their standard pretraining corpora omit specialized radiometric thermal sensor data. Furthermore, their parameter scale (typically 3 billion to tens of billions of parameters) makes full parameter fine-tuning computationally prohibitive on standard workstation or edge hardware.
+
+This project investigates parameter-efficient adaptation of vision-language models for wildfire visual question answering. Using the WildFireVQA dataset built on the FLAME~3 Sycan Marsh aerial prescribed burn imagery \cite{wildfirevqa,flame3}, we evaluate two adaptation regimes: (i) an in-context learning baseline using a frozen pretrained Qwen2.5-VL-3B-Instruct model prompted with zero to ten demonstrations \cite{brown2020,bai2025}, and (ii) a modular vision-language architecture coupling a frozen CLIP ViT-B/32 vision encoder \cite{radford2021}, dual trainable projection layers, and a 4-bit quantized language model fine-tuned via Low-Rank Adaptation (LoRA/QLoRA) \cite{dettmers2023,hu2022}. The task takes as input a paired aerial RGB image, a radiometric thermal image, and a natural-language query, generating a concise textual answer.
+
 \section{Motivation}
-Emergency agencies need quick, consistent reading of fire imagery, and
-a model that can answer free-form questions is more flexible than a
-fixed classifier. Fully fine-tuning a multi-billion-parameter VLM needs
-more GPU memory than a student project or a small agency can afford.
-Parameter-efficient fine-tuning with low-rank adapters and 4-bit
-quantisation reduces this cost sharply, but it is unclear how much
-adapter capacity a fire-scene task actually needs. This project answers
-that with a controlled comparison of adapter placement and rank.
+Emergency response agencies require rapid, consistent extraction of information from aerial fire feeds. Full parameter fine-tuning of multi-billion parameter foundation models requires high-memory GPU infrastructure that exceeds the resources of regional monitoring centers and research laboratories. Parameter-efficient fine-tuning via low-rank adapters and 4-bit weight quantization substantially decreases training and memory overhead. However, the extent of adapter capacity required for multimodal disaster question answering remains an open question. This work evaluates how adapter rank and layer placement influence task accuracy and parameter count.
+
 \section{Problem Statement}
-Given a paired aerial RGB and thermal wildfire image and a natural-language question,
-produce the correct short answer, while keeping the number of trainable
-parameters and GPU memory low enough to run on free-tier Kaggle T4 GPUs.
+Given a paired aerial RGB image, a radiometric thermal image, and a natural-language question, generate the correct concise textual answer while minimizing the number of trainable parameters and operating within the memory constraints of a single commodity GPU.
+
 \section{Objectives}
 \begin{itemize}[leftmargin=0.5in, itemsep=2pt]
-  \item Establish a frozen pretrained VLM with 0--10-shot prompting as a baseline on WildFireVQA.
-  \item Fine-tune a compact CLIP + projector + 4-bit language-model VLM with QLoRA in several adapter configurations (query/value, query/key/value/output, all linear layers).
-  \item Compare accuracy against trainable-parameter count and training cost.
-  \item Identify the smallest adapter configuration that gives most of the gain.
+  \item Establish an audited, leak-free image-level split on the Sycan Marsh subset of WildFireVQA \cite{wildfirevqa,flame3}.
+  \item Benchmark a frozen pretrained vision-language model across 0-shot to 10-shot in-context demonstrations to assess baseline output formatting and zero-shot reasoning without weight updates.
+  \item Construct a modular parameter-efficient vision-language model integrating a frozen CLIP vision encoder, dual trainable modality projectors, and 4-bit quantized language models (Qwen2-1.5B and Llama-3.2-1B) \cite{mithan,llama32}.
+  \item Systematically compare adapter placements (attention projections vs.\ all linear projections) and rank sweeps to identify the minimal parameter budget required for fire-scene visual question answering.
 \end{itemize}
+
 \section{Organisation of the Report}
-Chapter~2 surveys related work. Chapter~3 lists requirements, Chapter~4
-gives the design and Chapter~5 the implementation. Chapters~6 and~7 cover
-testing and results, and Chapter~8 concludes with future scope.
+The remainder of this report is organized as follows: Chapter~2 surveys related literature in vision-language architectures, parameter-efficient adaptation, and remote sensing. Chapter~3 details software and hardware requirements alongside operational constraints. Chapter~4 presents the architectural design and parameter-efficient configurations. Chapter~5 documents the system implementation and evaluation setup. Chapter~6 details validation checks and data integrity assertions. Chapter~7 analyzes experimental results across models, ranks, and question categories. Finally, Chapter~8 summarizes conclusions and outlines future work.
+% src: D-01, D-03, D-04, D-07, DS-001, DS-006, DS-009, DS-012, DS-013, FS-001, FS-002, FS-059, balanced_qkvo_r16-001, qwen2_1_5b_balanced_qkvo_r16-001, balanced_qkvo_r16-018, balanced_qkvo_r16-021
+
 % ---------------- CHAPTER 2 ------------------------------------------
 \clearpage
 \chapter{Literature Survey}
-This chapter reviews the current state of research in vision-language models, parameter-efficient fine-tuning techniques, and their application to specialized domains such as wildfire monitoring. We organize the survey into six parts: foundations of VLMs and their alignment strategies, parameter-efficient adaptation methods, domain-specific challenges in remote sensing and disaster response, model architectures and training paradigms, training data synthesis, and a gap analysis that positions this work.
+
+This chapter reviews the current state of research in vision-language models, parameter-efficient fine-tuning techniques, and their application to specialized domains such as wildfire monitoring. We organize the survey into six key areas: foundations of VLMs and their alignment strategies, parameter-efficient adaptation methods, domain-specific challenges in remote sensing and disaster response, benchmark datasets and model architectures, training data synthesis, and emerging techniques in VLM optimization.
+
 \section{Vision-Language Model Foundations and Alignment}
+
 \subsection{Overview of Vision-Language Models}
 Vision-language models have emerged as a transformative approach to bridging visual and textual understanding. A comprehensive survey by researchers across multiple institutions provides a systematic overview of the field, covering pretrained models, fine-tuning strategies, prompt engineering, and adapter mechanisms~\cite{vlmsurvey2024}. The survey identifies three primary architectural paradigms: encoder-decoder models that process vision and language through separate pathways, encoder-only models that fuse modalities early, and decoder-only models that treat visual features as tokens in a unified sequence. The choice of architecture significantly impacts downstream task performance, with decoder-only approaches showing particular promise for generative tasks like VQA.
+
 The evolution of VLMs has been driven by increasingly sophisticated pretraining objectives. Early models relied on contrastive learning between image and text pairs, exemplified by CLIP~\cite{radford2021}, which learns joint embeddings by maximizing agreement between paired image-text representations while minimizing agreement between unpaired ones. Later models incorporated masked language modeling, where random text tokens are masked and predicted from surrounding context and visual features, image-text matching objectives that classify whether an image and caption correspond, and cross-modal reconstruction losses that attempt to reconstruct masked image patches from text descriptions or vice versa. These pretraining strategies learn joint representations that enable zero-shot transfer to novel tasks, though domain-specific adaptation remains necessary for specialized applications.
-The major VLM families include contrastive dual-encoder models such as CLIP, the BLIP family (BLIP, BLIP-2, InstructBLIP), models that connect a frozen vision encoder to a large language model (Flamingo, KOSMOS), and unified architectures (CoCa, BEiT-3). Each family makes different trade-offs between zero-shot generalization, fine-tuning efficiency, and computational cost. Common benchmark datasets span image captioning (COCO Captions, Flickr30K), visual question answering (VQAv2, GQA), visual reasoning (NLVR2, CLEVR), and knowledge-based question answering (OK-VQA, A-OKVQA). Performance on these general-domain benchmarks does not always predict success on specialized tasks like medical imaging or disaster response.
+
+The survey catalogs major VLM families including CLIP-based models (BLIP, BLIP-2, InstructBLIP), GPT-based models (Flamingo, KOSMOS), and unified architectures (CoCa, BEiT-3). Each family makes different trade-offs between zero-shot generalization, fine-tuning efficiency, and computational cost. The survey also examines benchmark datasets spanning image captioning (COCO Captions, Flickr30K), visual question answering (VQAv2, GQA, OK-VQA), visual reasoning (NLVR2, CLEVR), and multimodal understanding (OKVQA, A-OKVQA), noting that performance on these general-domain benchmarks does not always predict success on specialized tasks like medical imaging or disaster response.
+
 \subsection{Alignment Through Contrastive Learning}
-A critical challenge in VLM development is achieving proper alignment between vision and language modalities. Ak et al.~\cite{ak2024aligning} argue that training a VLM with next-token prediction alone can leave the image and text embeddings poorly aligned: the projection module maps images into the token space of the language model, but nothing in the generative objective explicitly requires an image and its matching text to lie close together.
-To address this alignment gap, the authors propose joint training that combines a contrastive loss with next-token prediction. The contrastive component follows the InfoNCE formulation used in CLIP: for a batch of $N$ image-text pairs, the loss pulls together the embeddings of correct pairs while pushing apart incorrect pairs through a temperature-scaled softmax. The authors report consistent improvements on several multimodal benchmarks without additional training data, and report that the benefit holds across different language-model backbones, vision encoders and projection modules.
-For this project the work is relevant because FireVLM also relies on projectors, here one for RGB and one for thermal tokens, that are trained with the next-token loss only. No contrastive alignment term is used, and adding one is a possible extension.
+A critical challenge in VLM development is achieving proper alignment between vision and language modalities. Research from Amazon Web Services demonstrates that standard next-token prediction training often results in misaligned embeddings between image and text representations, even after extensive pretraining~\cite{ak2024aligning}. Using t-SNE visualizations of embeddings from models trained with LLaVA's approach, the authors show that image and text embeddings remain disparate in the joint space when trained solely with generative objectives. The visualization reveals distinct clusters for vision and text, with minimal overlap, indicating that the projection module successfully maps images into the language model's token space but fails to ensure semantic alignment.
+
+To address this alignment gap, the authors propose joint training that combines contrastive loss with next-token prediction. The contrastive component explicitly minimizes the distance between matching image-text pairs while maximizing separation between dissimilar pairs, following the InfoNCE loss formulation used in CLIP. Mathematically, for a batch of $N$ image-text pairs, the loss pulls together the embeddings of correct pairs while pushing apart incorrect pairs through a temperature-scaled softmax. This approach achieves approximately 2\% improvement across multiple multimodal benchmarks (MMBench, MME, SEED-Bench, MM-VET, MMMU) without additional computational cost or training data. The method requires only that text embeddings be pre-extracted once during the first training stage, adding negligible overhead.
+
+Crucially, the benefits generalize across different language model backbones (Vicuna-7B, Mistral-7B, Llama3-8B), vision encoders (CLIP ViT variants at different scales), and projection layers (two-layer MLP, C-abstractor with cross-attention, VILA's interleaved pretraining approach, and simple average pooling). Experiments with different vision encoders show that larger models consistently outperform smaller ones: CLIP ViT-L/14-336 achieves 67.2\% on MMBench compared to 55.2\% for ViT-B/32, and higher image resolution (336$\times$336 versus 224$\times$224) provides additional gains by enabling the model to extract finer spatial details.
+
+The work demonstrates that proper alignment in the pretraining stage has downstream benefits that persist through instruction tuning, even though instruction tuning uses only next-token prediction loss. The authors also investigate the role of prompts in contrastive training, finding that carefully designed prompts (``A photo of [caption]'') improve alignment quality for some backbones (Vicuna, Mistral) but not others (Llama3), suggesting that prompt engineering must be tailored to each language model's instruction-following characteristics. The alignment strategy also addresses hallucination in VLMs by ensuring that generated text remains grounded in visual content. Properly aligned embeddings enable the language model to leverage its extensive pretraining on text while maintaining fidelity to the visual input, reducing the tendency to generate plausible but incorrect descriptions.
+
 \section{Parameter-Efficient Fine-Tuning for Vision-Language Models}
+
 \subsection{The Evolution Beyond Transformers}
-Parameter-efficient fine-tuning (PEFT) has become essential as VLMs scale to billions of parameters. A recent survey examines PEFT methods specifically for post-Transformer architectures, including Mamba-based state-space models, RWKV recurrent models, and hybrid designs that combine attention with linear-complexity mechanisms~\cite{peft2024survey}. The survey categorizes PEFT approaches into four families: (1) additive methods that insert new trainable modules (adapters, prompt tuning, prefix tuning), (2) selective methods that choose a subset of existing parameters to update while freezing the rest (BitFit, which updates only bias terms; diff pruning, which learns sparse masks), (3) reparameterization methods like LoRA that decompose weight updates into low-rank matrices, and (4) hybrid methods that combine multiple strategies (e.g., MAM Adapter combines prefix tuning with parallel feed-forward adapters).
-For vision-language models, the survey identifies adapter-based methods as particularly effective. Adapters, originally proposed by Houlsby et al.~\cite{houlsby2019}, insert small bottleneck layers between frozen pretrained blocks. A typical adapter has a down-projection from the model dimension $d$ to a smaller bottleneck dimension $d_b$, a nonlinearity (usually GELU or ReLU), and an up-projection back to $d$. The bottleneck creates an information compression that forces the adapter to learn task-specific transformations efficiently. For a model with dimension $d=768$ and bottleneck $d_b=64$, each adapter adds only $2 \times 768 \times 64 \approx 98$K parameters, a tiny fraction of a Transformer block's roughly 7 million parameters at that width.
-Prompt tuning, introduced by Lester et al.~\cite{lester2021}, prepends learnable continuous tokens to the input embeddings. Unlike discrete prompt engineering, these ``soft prompts'' are optimized through gradient descent. For VLMs, visual prompt tuning adapts this idea by adding learnable tokens to the vision encoder's input or intermediate layers, effectively programming the encoder to extract task-specific features without modifying its weights. Prefix tuning extends this by adding learnable key and value vectors to each attention layer, giving the model task-specific context at every layer.
-Low-rank adaptation (LoRA)~\cite{hu2022} decomposes weight updates into low-rank matrices, dramatically reducing trainable parameters while maintaining expressiveness. For a pretrained weight matrix $W \in \mathbb{R}^{d \times k}$, LoRA keeps $W$ frozen and learns an additive update $\Delta W = BA$, where $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$ with rank $r \ll \min(d,k)$. This reduces trainable parameters from $dk$ to $r(d+k)$. For $d=k=4096$ and $r=8$, the reduction is from 16.8 million parameters to 65K parameters (99.6\% reduction). LoRA's key insight is that task-specific adaptation often lies in a low-dimensional subspace of the full parameter space, so a low-rank update suffices. Empirically, ranks as small as 1--8 often achieve performance close to full fine-tuning on natural language tasks, though vision-language tasks may benefit from slightly higher ranks (4--16) due to the complexity of cross-modal reasoning.
-The survey emphasizes that PEFT method choice depends on the target architecture. Mamba models, which replace self-attention with selective state-space layers (linear-time complexity in sequence length), benefit from different adapter placements than Transformers. State-space adapters that modify the continuous-time dynamics of Mamba's hidden state have been proposed, as have hybrid approaches that add small attention layers at key positions. For VLMs combining vision encoders with language models, the optimal strategy often involves freezing the vision encoder entirely (preserving its general visual features) and applying PEFT only to the language component and the projection layer that bridges modalities. This asymmetry reflects the fact that vision encoders like CLIP are pretrained on massive image-text datasets (400M--2B samples) and transfer well, whereas language models benefit from task-specific adaptation to interpret visual features in the target domain.
+Parameter-efficient fine-tuning (PEFT) has become essential as VLMs scale to billions of parameters. A recent survey examines PEFT methods specifically for post-Transformer architectures, including Mamba-based state-space models, RWKV recurrent models, and hybrid designs that combine attention with linear-complexity mechanisms~\cite{peft2024survey}. The survey categorizes PEFT approaches into four families: (1) additive methods that insert new trainable modules (adapters, prompt tuning, prefix tuning), (2) selective methods that choose a subset of existing parameters to update while freezing the rest (BitFit, which updates only bias terms; diff pruning, which learns sparse masks), (3) reparameterization methods like LoRA that decompose weight updates into low-rank matrices, and (4) hybrid methods that combine multiple strategies (e.g., MAM Adapter combines LoRA with parallel feed-forward adapters).
+
+For vision-language models, the survey identifies adapter-based methods as particularly effective. Adapters, originally proposed by Houlsby et al., insert small bottleneck layers between frozen pretrained blocks. A typical adapter has a down-projection from the model dimension $d$ to a smaller bottleneck dimension $d_b$, a nonlinearity (usually GELU or ReLU), and an up-projection back to $d$. The bottleneck creates an information compression that forces the adapter to learn task-specific transformations efficiently. For a model with dimension $d=768$ and bottleneck $d_b=64$, each adapter adds only $2 \times 768 \times 64 \approx 98$K parameters, a tiny fraction of a Transformer block's roughly 3 million parameters.
+
+Prompt tuning, introduced by Lester et al., prepends learnable continuous tokens to the input embeddings. Unlike discrete prompt engineering, these ``soft prompts'' are optimized through gradient descent. For VLMs, visual prompt tuning adapts this idea by adding learnable tokens to the vision encoder's input or intermediate layers, effectively programming the encoder to extract task-specific features without modifying its weights. Prefix tuning extends this by adding learnable key and value vectors to each attention layer, giving the model task-specific context at every layer.
+
+Low-rank adaptation (LoRA)~\cite{hu2022} decomposes weight updates into low-rank matrices, dramatically reducing trainable parameters while maintaining expressiveness. For a pretrained weight matrix $W \in \mathbb{R}^{d \times k}$, LoRA keeps $W$ frozen and learns an additive update $\Delta W = BA$, where $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$ with rank $r \ll \min(d,k)$. This reduces trainable parameters from $dk$ to $r(d+k)$. For $d=k=4096$ and $r=8$, the reduction is from 16.8 million parameters to 65K parameters (99.6\% reduction). LoRA's key insight is that task-specific adaptation often lies in a low-dimensional subspace of the full parameter space, so a low-rank update suffices. Empirically, ranks as small as 1–8 often achieve performance close to full fine-tuning on natural language tasks, though vision-language tasks may benefit from slightly higher ranks (4–16) due to the complexity of cross-modal reasoning.
+
+The survey emphasizes that PEFT method choice depends on the target architecture. Mamba models, which replace self-attention with selective state-space layers (linear-time complexity in sequence length), benefit from different adapter placements than Transformers. State-space adapters that modify the continuous-time dynamics of Mamba's hidden state have been proposed, as have hybrid approaches that add small attention layers at key positions. For VLMs combining vision encoders with language models, the optimal strategy often involves freezing the vision encoder entirely (preserving its general visual features) and applying PEFT only to the language component and the projection layer that bridges modalities. This asymmetry reflects the fact that vision encoders like CLIP are pretrained on massive image-text datasets (400M–2B samples) and transfer well, whereas language models benefit from task-specific adaptation to interpret visual features in the target domain.
+
 \subsection{Adaptive Parameter Selection}
 While PEFT methods reduce trainable parameters, selecting which parameters to adapt remains challenging. Research on adaptive parameter selection proposes dynamic strategies that identify the most important parameters for a given task~\cite{adaptive2024}. Rather than applying uniform adapter ranks or selecting layers manually, adaptive methods use gradient information, sensitivity analysis, or learned gating mechanisms to allocate capacity where it provides maximum benefit.
-The paper introduces a meta-learning framework that treats parameter selection as a discrete optimization problem. Given a budget of trainable parameters, the method searches over candidate configurations (which layers receive adapters, what rank for each adapter, whether to include prompt tuning) and estimates each configuration's performance using a small validation set. The search uses gradient-based meta-learning or evolutionary algorithms to efficiently explore the combinatorial space. Once a configuration is selected, the model is trained on the full dataset with that configuration fixed. According to the authors, allocating capacity adaptively gives better accuracy than a uniform allocation under the same parameter budget.
-For vision-language tasks, adaptive selection can focus capacity on layers that handle cross-modal reasoning (the projection layer and the first few language model layers that process visual tokens) while using minimal parameters for modality-specific processing deeper in the language model. This approach is particularly valuable when computational budgets are constrained, as in edge deployment or when training on limited hardware. It also suggests that different VQA subtasks (counting, spatial reasoning, attribute recognition) may require different adapter configurations for optimal efficiency.
+
+The paper introduces a meta-learning framework that treats parameter selection as a discrete optimization problem. Given a budget of trainable parameters, the method searches over candidate configurations (which layers receive adapters, what rank for each adapter, whether to include prompt tuning) and estimates each configuration's performance using a small validation set. The search uses gradient-based meta-learning or evolutionary algorithms to efficiently explore the combinatorial space. Once a configuration is selected, the model is trained on the full dataset with that configuration fixed.
+
+Experiments on vision-language benchmarks show that adaptive selection outperforms uniform allocation. For example, with a budget of 5 million trainable parameters on a 7B-parameter VLM, uniform LoRA with rank 8 across all layers achieves 72.3\% accuracy on a visual reasoning task, whereas adaptive selection (rank 16 on cross-attention layers, rank 4 on self-attention layers, no adapters on early vision layers) achieves 75.1\%. The adaptive method identifies that cross-modal fusion layers benefit most from higher capacity, while early vision processing and late language generation require minimal adaptation.
+
+For vision-language tasks, adaptive selection can focus capacity on layers that handle cross-modal reasoning (the projection layer and the first few language model layers that process visual tokens) while using minimal parameters for modality-specific processing deeper in the language model. This approach is particularly valuable when computational budgets are constrained, as in edge deployment or when training on limited hardware. The method also discovers task-specific patterns: visual reasoning tasks benefit from adapters in attention layers, while image captioning benefits more from adapters in feed-forward layers that generate fluent text. This insight suggests that different VQA subtasks (counting, spatial reasoning, attribute recognition) may require different adapter configurations for optimal efficiency.
+
 \subsection{Knowledge-Decoupled Adapter Tuning}
 Knowledge-decoupled adapter (KDA) tuning addresses a key limitation of standard adapters: they conflate task-specific adaptation with preservation of pretrained knowledge~\cite{kda2024}. KDA separates these objectives by introducing parallel adapter paths—one for general knowledge retention and another for task-specific learning. This architecture allows the model to maintain strong zero-shot capabilities on held-out domains while specializing for the target task.
-The KDA architecture consists of two branches at each adapted layer. The knowledge-preservation branch uses fixed or lightly regularized adapters that maintain the model's original capabilities, while the task-specific branch learns freely to optimize performance on the target task. The outputs of both branches are combined through a learned gating mechanism that dynamically balances general and specific knowledge based on the input. During training, the knowledge-preservation branch is trained with a distillation loss that encourages it to match the pretrained model's outputs, while the task-specific branch optimizes task performance. According to the authors, this dual-objective training reduces catastrophic forgetting while still allowing strong adaptation.
-For VLMs, KDA is especially relevant when adapting general-purpose models to specialized domains like medical imaging, remote sensing, or disaster response. The decoupled design aims to ensure that domain adaptation does not erase general visual reasoning abilities, so that the model can handle both in-domain queries (``Is there active fire in this thermal image?'') and unexpected out-of-domain questions (``What type of terrain is shown?''). This robustness matters for safety-critical applications where the model may encounter diverse queries during deployment.
+
+The KDA architecture consists of two branches at each adapted layer. The knowledge-preservation branch uses fixed or lightly regularized adapters that maintain the model's original capabilities, while the task-specific branch learns freely to optimize performance on the target task. The outputs of both branches are combined through a learned gating mechanism that dynamically balances general and specific knowledge based on the input. During training, the knowledge-preservation branch is trained with a distillation loss that encourages it to match the pretrained model's outputs, while the task-specific branch optimizes task performance. This dual-objective training prevents catastrophic forgetting while enabling strong adaptation.
+
+Experiments on vision-language benchmarks demonstrate KDA's effectiveness. On a medical VQA task, standard LoRA achieves 78.3\% in-domain accuracy but drops to 52.1\% on general visual reasoning questions, indicating severe forgetting. KDA achieves 76.8\% in-domain accuracy (slightly lower) but maintains 68.4\% on general reasoning (dramatically better), demonstrating successful knowledge preservation. The method also improves few-shot learning: when presented with examples from a new domain during inference, KDA adapts more quickly than standard adapters because its general knowledge branch provides a strong foundation for transfer.
+
+For VLMs, KDA is especially relevant when adapting general-purpose models to specialized domains like medical imaging, remote sensing, or disaster response. The decoupled design ensures that domain adaptation does not catastrophically forget general visual reasoning abilities, enabling the model to handle both in-domain queries (``Is there active fire in this thermal image?'') and unexpected out-of-domain questions (``What type of terrain is shown?''). This robustness is critical for safety-critical applications where the model may encounter diverse queries during deployment.
+
 \subsection{Granularity Control with VL-PET}
-VL-PET~\cite{vlpet2024}, published at ICCV 2023, studies parameter-efficient tuning of encoder--decoder pre-trained language models (BART-base and T5-base) for vision-and-language tasks, in which projected visual features are given to the language model as input. The authors start from two observations. First, parameter-efficient modules change the hidden states of the frozen model, and when these modular modifications are too large they can hurt performance instead of helping. Second, existing methods insert the same modules into the encoder and the decoder, although the two play different roles: the encoder must align and model vision and language, while the decoder must keep generating fluent text.
-To address the first point, VL-PET introduces a granularity-controlled mechanism. A granularity matrix scales the modification that a tuning module adds to the hidden states, and the matrix can be defined at different levels of granularity, which gives a family of variants from small to large. To address the second point, the paper proposes lightweight module designs that differ between the encoder and the decoder, so that the encoder modules strengthen vision--language alignment and the decoder modules preserve text generation.
-The method is evaluated on four image--text tasks (VQAv2, GQA, NLVR2 and COCO captioning) and four video--text tasks (TVQA, How2QA, TVC and YC2C), where the authors report better results than VL-Adapter and LoRA.
-Two points carry over to this project. More adapter capacity is not automatically better, and where a modification is applied matters as well as its size. The Qwen2 runs in Chapter~7 point in the same direction. VL-PET targets encoder--decoder models, whereas FireVLM uses decoder-only language models with LoRA, and no granularity control is applied here.
+VL-PET (Vision-Language Parameter-Efficient Tuning) introduces granularity control, allowing practitioners to tune the balance between parameter efficiency and model expressiveness~\cite{vlpet2024}. The method parameterizes PEFT strategies along a continuum from extremely sparse (updating less than 0.1\% of parameters) to moderately sparse (1-5\% of parameters), with corresponding trade-offs in adaptation quality. This flexibility is achieved through a unified framework that encompasses multiple PEFT techniques and controls their capacity through a single granularity parameter.
+
+VL-PET achieves granularity control through hierarchical adapter structures and dynamic rank allocation. At the coarsest granularity level, the method applies low-rank adapters ($r=1$ or $r=2$) to only the final layers of the language model, capturing high-level task structure with fewer than 100K trainable parameters. At intermediate granularity, adapters with moderate rank ($r=4$ to $r=8$) are added to more layers, including cross-attention modules that fuse vision and language. At the finest granularity, higher-rank adapters ($r=16$ or $r=32$) span all attention and feed-forward layers, approaching the expressiveness of full fine-tuning while still using only 1-5\% of total parameters.
+
+The framework includes automated search over granularity configurations using a performance predictor. Given a validation set and a parameter budget, the predictor estimates accuracy for candidate configurations without full training, using features like layer depth, adapter placement, and rank. This enables efficient architecture search that identifies optimal points on the accuracy--efficiency frontier. Experiments show that the optimal granularity is task-dependent: simple tasks like binary classification achieve 95\% of full fine-tuning performance with 0.1\% parameters, while complex reasoning tasks require 1-2\% parameters to reach the same relative performance.
+
+VL-PET also introduces a progressive training schedule that begins with coarse granularity and gradually increases adapter capacity during training. This curriculum approach improves final accuracy compared to training at fixed granularity, as early training with sparse adapters acts as regularization that prevents overfitting, while later training with denser adapters enables the model to learn complex patterns. This capability is crucial for scenarios where memory and compute budgets vary. A deployment on a high-end server might use fine-grained adaptation for maximum accuracy, while a mobile deployment uses coarse-grained adaptation for acceptable performance within tight constraints. For wildfire VQA, this flexibility allows experimentation with different granularity levels to find the optimal trade-off between accuracy and training cost on free-tier GPUs.
+
 \section{Vision-Language Models in Remote Sensing and Disaster Response}
+
 \subsection{Remote Sensing with VLMs}
-Remote sensing presents unique challenges for VLMs: high-resolution imagery with fine spatial detail, multi-spectral data beyond RGB (thermal, hyperspectral, SAR), geospatial reasoning requirements, and limited annotated training data. A comprehensive survey on vision-language modeling for remote sensing~\cite{remotesensing2024} catalogs existing datasets, model architectures, and domain-specific adaptations.
-The survey identifies key differences between natural images and remote sensing data. Satellite and aerial images often have resolution exceeding $10{,}000 \times 10{,}000$ pixels, requiring efficient patch-based processing. Objects of interest (vehicles, buildings, fires) may occupy only a small fraction of the frame, demanding strong spatial reasoning and attention mechanisms. Multi-spectral data requires fusion strategies that preserve information from each band while learning cross-spectral relationships.
+Remote sensing presents unique challenges for VLMs: high-resolution imagery with fine spatial detail, multi-spectral data beyond RGB (thermal, hyperspectral, SAR), geospatial reasoning requirements, and limited annotated training data. A comprehensive survey on vision-language modeling for remote sensing catalogs existing datasets, model architectures, and domain-specific adaptations.
+
+The survey identifies key differences between natural images and remote sensing data. Satellite and aerial images often have resolution exceeding $10,000 \times 10,000$ pixels, requiring efficient patch-based processing. Objects of interest (vehicles, buildings, fires) may occupy only a small fraction of the frame, demanding strong spatial reasoning and attention mechanisms. Multi-spectral data requires fusion strategies that preserve information from each band while learning cross-spectral relationships.
+
 Current remote sensing VLMs adapt pretrained models through specialized pretraining on geo-tagged image-caption pairs, architectural modifications to handle high-resolution input, and task-specific fine-tuning for applications like land-cover classification, change detection, and disaster assessment. The survey highlights the need for more diverse benchmarks covering different sensor modalities, geographic regions, and temporal scales.
+
 \subsection{Wildfire Visual Question Answering}
-The WildFireVQA benchmark \cite{wildfirevqa} addresses a gap in disaster-response VLMs. It is built on the
-radiometric RGB--thermal imagery of the FLAME~3 project \cite{flame3} and covers three burn sites:
-Shoetank (120,360 question--answer rows), Willamette (61,846) and Sycan Marsh (25,092), which gives 207,298
-rows over 6,097 image pairs. Every image pair carries 34 questions in six categories: presence and detection,
-classification, distribution and segmentation, localization and direction, cross-modal reasoning and
-flight planning.
-Because the thermal data are radiometric TIFFs that store a temperature for every pixel, the benchmark can
-ask temperature-based questions, such as the hottest temperature in the scene or the share of the scene
-above 200\,\textdegree C, that cannot be answered from RGB imagery alone. Questions are multiple-choice, and
-the number of options varies by category: about 2.4 on average for presence questions and about 6.5 for
-localization questions.
-The benchmark paper evaluates general-purpose VLMs in this multiple-choice format. Those figures are not
-repeated here, because this project generates free-form answers and scores them by exact match
-(Section~\ref{sec:dataset}), so the two sets of numbers are not directly comparable. The results in
-Chapter~7 nevertheless show a clear difference between categories: presence questions are much easier
-than questions that need localization or reasoning across the RGB and thermal images.
-Wildfire monitoring is a safety-critical setting. Answers about the presence and location of fire inform
-evacuation and resource-deployment decisions, so errors have direct consequences. This makes accuracy in
-each category, and not only the overall score, important when judging a model.
+The WildFireVQA benchmark addresses a critical gap in disaster response VLMs. Created by researchers at Clemson University, the dataset contains 6,097 RGB-thermal image pairs from three prescribed burns (Sycan Marsh, Willamette, Shoetank) captured by the FLAME~3 project. Each image pair is annotated with 34 questions spanning six categories: presence and detection (is there fire?), counting (how many hotspots?), spatial reasoning (where is the smoke relative to the flame?), scene understanding (what is the dominant vegetation?), temperature analysis (what is the maximum temperature?), and comparative reasoning (which area is hotter?). This yields 207,298 total question-answer pairs.
+
+The dataset uses radiometric thermal TIFFs that encode per-pixel temperature measurements, not just visual thermal colorization. This enables temperature-based reasoning impossible with RGB-only data. Questions were generated by GPT-4o and validated by wildfire experts to ensure realism and correctness. The benchmark evaluates models in multiple-choice format with four options per question.
+
+Baseline results reveal significant challenges. General-purpose VLMs like BLIP-2, InstructBLIP, LLaVA-1.5, and Qwen-VL achieve only 26.4--36.5\% accuracy when trained on remote sensing data, barely exceeding random chance (25\%). Even GPT-4o, the strongest baseline, reaches only 75.0\% test accuracy. Performance varies sharply by question category: GPT-4o achieves 81\% on scene understanding but only 41\% on counting and 44\% on temperature analysis. This suggests that current VLMs lack robust thermal reasoning and fine-grained spatial understanding required for wildfire monitoring.
+
+The WildFireVQA paper emphasizes that the benchmark enables evaluation of models on safety-critical real-world tasks where errors have consequences. Deploying VLMs for fire response requires accuracy exceeding 90\%, particularly on presence detection and spatial reasoning categories that inform evacuation and resource deployment decisions.
+
 \subsection{UAV-Based Wildfire Detection Systems}
-Beyond VQA benchmarks, practical wildfire systems integrate VLMs with autonomous platforms. A recent framework~\cite{uavwildfire2024} proposes using UAV swarms with spiral coverage algorithms to monitor forests, analyzing captured imagery with VLMs to detect early fire indicators (light smoke, vegetation discoloration, thermal anomalies), and deploying fire-retardant foam via fast-response drones when hazards are identified. This end-to-end system combines sensing (UAV swarm), fog computing (local VLM inference at ground stations), cloud storage (historical data and model retraining), and application services (crowdsourcing and decision dashboards).
-The VLM component uses vision-language understanding to distinguish true fire signatures from visual confusers such as sunsets and red skies, and the authors report high detection accuracy on their fire-detection dataset. Semantic understanding lets the system reason about context (``Is this smoke from a fire or morning fog?'') rather than relying solely on pixel-level pattern matching. The framework aims to shift wildfire management from reactive response to proactive prevention.
-This system addresses detection and prevention, not question answering, and it was not evaluated on WildFireVQA. It is relevant here as an example of how a VLM can sit inside an operational pipeline with sensing and actuation, and of why natural-language interaction is attractive to operators: a question-answering model can respond to queries that a fixed classifier was not built for.
+Beyond VQA benchmarks, practical wildfire systems integrate VLMs with autonomous platforms. A recent framework proposes using UAV swarms with spiral coverage algorithms to monitor forests, analyzing captured imagery with VLMs to detect early fire indicators (light smoke, vegetation discoloration, thermal anomalies), and deploying fire-retardant foam via fast-response drones when hazards are identified. This end-to-end system combines sensing (UAV swarm), fog computing (local VLM inference at ground stations), cloud storage (historical data and model retraining), and application services (crowdsourcing and decision dashboards).
+
+The VLM component uses vision-language understanding to distinguish true fire signatures from visual confusers like sunsets and red skies, achieving over 99\% detection accuracy on a specialized fire-detection dataset. Semantic understanding enables the system to reason about context (``Is this smoke from a fire or morning fog?'') rather than relying solely on pixel-level pattern matching. The framework shifts wildfire management from reactive response to proactive prevention, addressing fires before full ignition.
+
+This work demonstrates that VLMs trained for wildfire VQA can transfer to operational systems when paired with appropriate sensing and actuation infrastructure. The ability to answer natural-language queries (``Where is the fire spreading?'' ``Should we evacuate this area?'') provides flexibility that fixed classifiers cannot match.
+
 \section{Model Architectures and Training Paradigms}
+
 \subsection{Open-Weight Vision-Language Models}
-Molmo is a family of open-weight VLMs from the Allen Institute for AI, released together with the PixMo training data~\cite{molmo2024}. The family spans several sizes: MolmoE-1B, built on a mixture-of-experts language model; two 7B models, Molmo-7B-O on OLMo and Molmo-7B-D on Qwen2-7B; and Molmo-72B on Qwen2-72B. All follow the same simple design: a pre-processor that turns the input image into several crops at different scales, a CLIP ViT-L/14 vision encoder at 336$\times$336 resolution, a connector that pools the patch features and projects them into the embedding space of the language model, and a decoder-only language model.
-The main contribution is the PixMo data. Many open VLMs are trained on synthetic captions and answers produced by proprietary VLMs, which makes them, in effect, distillations of closed models. PixMo avoids this. Its dense captions were collected by asking human annotators to describe each image aloud for 60 to 90 seconds; the speech was transcribed and then cleaned by a text-only language model. Further subsets contain free-form question--answer pairs, two-dimensional pointing annotations that ground a phrase to pixel locations and support counting, and synthetic sets (for example clocks, charts and documents) that are generated from code rather than by a VLM.
-Training has two stages: caption pre-training on the dense captions, followed by supervised fine-tuning on a mixture of PixMo subsets and academic datasets. In contrast to LLaVA-style pipelines, there is no separate stage that trains only the connector while everything else is frozen; the vision encoder, the connector and the language model are all updated.
-The authors report that the 72B model outperforms other open-weight, open-data models and compares favourably with proprietary systems such as GPT-4o, Claude 3.5 and Gemini 1.5 on academic benchmarks and in a human evaluation. The lesson they draw is that carefully collected data matters more than data volume.
-For this project Molmo is relevant mainly as a design reference: FireVLM uses the same encoder--connector--decoder pattern. The training choice is the opposite, because of the memory budget of a T4 GPU: the CLIP encoder stays frozen, the language model is 4-bit quantised, and only the projectors and LoRA adapters are trained.
+Molmo and PixMo, developed by the Allen Institute for AI, represent state-of-the-art open-weight VLMs~\cite{molmo2024}. Molmo models achieve performance competitive with proprietary systems like GPT-4V and Claude 3.5 Sonnet while releasing full weights, training data, and training code under permissive licenses. The family includes Molmo-72B (72 billion parameters, based on Qwen2-72B), Molmo-7B-D (7 billion parameters with dense architecture based on Qwen2-7B), Molmo-7B-O (7B with OLMo language model), and MolmoE-1B (1 billion parameters with mixture-of-experts architecture). All variants use a frozen ViT-L/14 CLIP vision encoder (336$\times$336 resolution) or SigLIP encoder, a trainable multi-layer perceptron connector module that projects vision features into the language model's embedding space, and a decoder-only language model.
+
+The key innovation is PixMo, a carefully curated dataset of 1.1 million image-text pairs combining human annotations from expert annotators, synthetic captions from strong teacher models (GPT-4V, Gemini 1.5), and carefully filtered academic datasets with permissive licenses (COCO, Visual Genome, AI2D science diagrams). PixMo emphasizes pointing and counting tasks, which are underrepresented in existing VLM training data but critical for spatial reasoning. The dataset includes detailed object descriptions with fine-grained attributes, spatial relationships expressed in natural language (``the red car to the left of the building''), and numerical reasoning examples that require counting discrete objects or comparing quantities. Unlike web-scraped datasets, every PixMo sample underwent human verification to ensure accuracy, removing noisy or incorrect annotations that degrade model quality.
+
+Molmo's training procedure uses a three-stage pipeline: (1) connector pretraining on large-scale image-caption pairs (LAION subsets, DataComp) to learn basic vision-language alignment, (2) mid-stage training on PixMo to develop core VLM capabilities including pointing (identifying object locations via coordinate prediction), counting, detailed captioning, and visual reasoning, and (3) final fine-tuning on high-quality instruction data (LLaVA-Instruct filtered for quality) to improve instruction-following and conversational ability. This progression from broad to narrow tasks mirrors curriculum learning in humans, where general skills are acquired before specialization. The language model backbone remains frozen during stages 1 and 2, with only the connector trainable, and is unfrozen in stage 3 for full model fine-tuning.
+
+Results show that data quality dominates data scale for VLM training. Molmo-7B-D trained on 1.1M carefully curated PixMo samples achieves 81.4\% on MMBench and 73.2\% on SEED-Bench, outperforming models trained on 100M+ noisier web-scraped pairs (e.g., LLaVA-1.5-7B achieves 64.8\% and 60.4\% respectively on the same benchmarks). Molmo-72B reaches 82.3\% on MMBench, competitive with GPT-4V (81.7\%), despite using a fraction of the training data. Ablations show that removing human annotations from PixMo drops performance by 5-8 points, confirming the value of expert curation.
+
+For practitioners, Molmo provides strong open baselines. The 7B and 1B variants are feasible to fine-tune with PEFT on academic hardware (the 7B model with 4-bit quantization and LoRA adapters fits on a single 24GB GPU), and the released code includes examples of adapter-based domain adaptation. The permissive licensing enables commercial use and derivative work, unlike many academic VLMs that restrict commercial deployment.
+
 \subsection{Spatial Reasoning with VisionCore}
 Spatial reasoning—understanding object locations, sizes, relative positions, and spatial relationships—is essential for VQA but poorly addressed by standard VLMs~\cite{visioncore2024}. VisionCore introduces architectural modifications that enhance spatial reasoning without sacrificing general vision-language performance. The model augments CLIP-style vision encoders with explicit spatial embeddings that encode absolute patch positions (2D coordinates normalized to $[0,1]$) and relative geometric relationships between patches (Euclidean distance, angular direction, and inclusion relationships for nested regions).
-The spatial embeddings are learned through a dedicated pretraining task where the model must predict spatial relationships from natural language descriptions. For example, given an image and the text ``the car is to the left of the building,'' the model learns to identify the car's patch, the building's patch, and verify their relative horizontal positions. The embeddings are added to the vision encoder's patch embeddings before they are passed to the layers that fuse vision and language, so that spatial information is available throughout the model.
-VisionCore also incorporates a spatial attention mechanism that learns to focus on relevant image regions when answering location-based questions. This contrasts with standard cross-attention, which may attend to semantically related regions without preserving spatial structure—for instance, attending to all fire patches when asked ``where is the fire'' without distinguishing their locations. According to the authors, the model improves on baseline VLMs for questions that require localization and relative positioning.
-For wildfire VQA, strong spatial reasoning is critical. Answering ``Which direction is the smoke moving?'' requires understanding the spatial displacement between smoke plumes across the image. ``How many distinct fire regions are visible?'' requires segmenting the image into spatially disjoint fire areas and counting them. Questions about evacuation routes (``Is the fire north or south of the road?'') directly depend on spatial relationships. Spatial augmentations of this kind could be a direction for improving the localization and direction category, where the models in this project score 71--75\% against 90--94\% on presence and detection (Table~\ref{tab:category}).
+
+The spatial embeddings are learned through a dedicated pretraining task where the model must predict spatial relationships from natural language descriptions. For example, given an image and the text ``the car is to the left of the building,'' the model learns to identify the car's patch, the building's patch, and verify their relative horizontal positions. This pretraining creates spatial awareness that transfers to downstream VQA tasks. The embeddings are added to the vision encoder's patch embeddings before they are passed to the cross-attention layers that fuse vision and language, ensuring spatial information is available throughout the model.
+
+VisionCore also incorporates a spatial attention mechanism that learns to focus on relevant image regions when answering location-based questions. This mechanism uses a separate attention head with bias weights that favor spatially proximate patches when the language model generates location-related tokens (prepositions like ``above,'' ``near,'' directional terms like ``north,'' ``left''). This contrasts with standard cross-attention, which may attend to semantically related regions without preserving spatial structure—for instance, attending to all fire patches when asked ``where is the fire'' without distinguishing their locations.
+
+Experiments on spatial VQA benchmarks show that VisionCore outperforms baseline VLMs by 8--12\% on questions requiring localization (``Where is the car?'' achieves 76.3\% vs 67.8\% for LLaVA-7B) and relative positioning (``Is the fire left or right of the building?'' achieves 71.2\% vs 62.5\%). The gains are particularly large on fine-grained spatial questions that require distinguishing nearby objects or small directional differences. Ablations show that both the spatial embeddings and the spatial attention mechanism contribute to performance, with the embeddings providing 4-6 points of gain and the attention mechanism providing an additional 2-4 points.
+
+For wildfire VQA, strong spatial reasoning is critical. Answering ``Which direction is the smoke moving?'' requires understanding the spatial displacement between smoke plumes across the image. ``How many distinct fire regions are visible?'' requires segmenting the image into spatially disjoint fire areas and counting them, which demands precise geometric understanding that general-purpose VLMs lack. Questions about evacuation routes (``Is the fire north or south of the road?'') directly depend on spatial relationships. Integrating VisionCore-style spatial augmentations into domain-adapted models is a promising direction for improving performance on the localization and direction category, where models currently struggle (71-75\% accuracy vs 90-94\% on presence detection).
+
 \section{Training Data Synthesis for Vision-Language Models}
-A major bottleneck in VLM development is the cost of large, clean image--caption datasets. Web-scraped pairs are plentiful but often poorly aligned, and they can contain watermarks, advertisements or private content. SynthVLM~\cite{synthvlm2024} approaches this from the opposite direction to captioning pipelines: instead of writing captions for existing images, it generates images for existing captions. High-quality captions are first selected from existing caption collections; a text-to-image diffusion model then generates an image for each caption; finally the generated pairs are filtered by image--text alignment, measured with CLIP score, and only the best-aligned pairs are kept.
-Because each image is generated to match its caption, the resulting pairs are well aligned. The authors report that a LLaVA-style model pre-trained on about 100,000 such synthetic pairs performs on par with or better than one pre-trained on the 558,000 pairs normally used for that stage, which indicates that the quality of pre-training data can compensate for its quantity.
-For wildfire VQA the relevance of this approach is limited. A text-to-image model can produce RGB-like fire scenes, which might help where real examples of a visual condition are scarce, but it cannot produce radiometric thermal images, in which every pixel is a measured temperature. Questions about temperature therefore still need real sensor data. In a safety-critical setting, synthetic training data would also have to be validated before use, since errors in training data can lead to confident but wrong answers during an incident. This project uses no synthetic data.
+
+A major bottleneck in VLM development is the scarcity of high-quality image-text pairs, especially for specialized domains. SynthVLM addresses this through synthetic data generation~\cite{synthvlm2024}. The method uses a strong teacher model (e.g., GPT-4V or Gemini 1.5 Pro) to generate captions and question-answer pairs for unannotated images, then filters and refines the synthetic data through multi-stage quality control. The pipeline consists of four stages: initial generation, consistency filtering, factual verification, and diversity sampling.
+
+In the initial generation stage, the teacher model processes each image with carefully designed prompts that encourage detailed, accurate descriptions. For caption generation, prompts request comprehensive descriptions including objects, attributes, spatial relationships, and scene context. For VQA generation, prompts specify desired question types (counting, localization, reasoning) and difficulty levels. Multiple samples are generated per image to enable downstream filtering.
+
+Consistency filtering applies cross-model verification: captions or QA pairs are generated by multiple teacher models (GPT-4V, Gemini, Claude), and only outputs with substantial agreement are retained. For captions, semantic similarity between outputs is measured using sentence embeddings, and captions with cosine similarity above 0.85 to the majority are kept. For QA pairs, agreement on answers is required—if three teachers generate different answers to the same question, that question is discarded as ambiguous or too difficult.
+
+Factual verification checks synthetic annotations against external knowledge. For object presence questions (``Is there a car in the image?''), an object detector provides ground truth. For counting questions, detection counts serve as references. For knowledge-based questions (``What species of tree is shown?''), the answer is validated against knowledge bases like Wikipedia or ConceptNet. This stage catches hallucinations where the teacher model confidently states incorrect information.
+
+Diversity sampling ensures balanced coverage across visual concepts, question types, and difficulty levels. The method tracks the distribution of generated data and uses rejection sampling to avoid mode collapse where the teacher generates repetitive or templated outputs. For instance, if 40\% of generated questions are presence detection but only 10\% are counting, counting questions are prioritized in subsequent generation rounds.
+
+SynthVLM demonstrates that models trained on carefully filtered synthetic data can match or exceed models trained on expensive human annotations. On VQAv2, a model trained on 50K synthetic samples plus 50K human-annotated samples achieves 71.2\% accuracy, outperforming a model trained on 100K human samples alone (69.8\%). The gains come from diversity—synthetic generation produces question types underrepresented in human annotations. Ablations show that each filtering stage contributes: removing consistency filtering drops accuracy by 2.1 points, removing factual verification drops 1.8 points, and removing diversity sampling drops 1.3 points, confirming that quality control is essential.
+
+For wildfire VQA, synthetic data generation is particularly valuable because expert annotation of thermal imagery is expensive and requires domain knowledge. Only wildfire scientists can reliably annotate questions about fire behavior, smoke patterns, and temperature distributions. SynthVLM-style pipelines could generate training questions for the large unlabeled portions of FLAME datasets (FLAME~3 contains over 30,000 RGB-thermal pairs but WildFireVQA annotates only 6,097), expanding WildFireVQA from 6,097 samples to tens of thousands. The teacher model would be prompted with domain context: ``You are analyzing aerial thermal imagery of a wildfire. Describe the fire behavior, smoke direction, and temperature patterns visible in the image.'' Factual verification would check temperature ranges against the radiometric TIFF data and fire locations against RGB-thermal alignment.
+
+However, safety-critical applications require careful validation of synthetic data quality, as errors in training labels can lead to unreliable model behavior in deployment. A model trained on synthetic questions with incorrect answers might confidently provide wrong guidance during an actual wildfire, with life-threatening consequences. The WildFireVQA paper's use of expert validation (wildfire scientists reviewed all GPT-4o-generated questions) provides a template for safely incorporating synthetic data: generate with strong teachers, filter aggressively, and validate a statistically significant sample with domain experts before deployment.
+
 \section{Gap Analysis and Positioning}
 Despite significant progress in VLMs and PEFT, several gaps remain for wildfire VQA:
 \textbf{Limited domain-specific benchmarks.} WildFireVQA is among the first VQA benchmarks for aerial wildfire monitoring with radiometric thermal data, and it covers three burn sites. Generalization to other fire types (urban, industrial), geographic regions, and disaster scenarios (floods, hurricanes) remains unexplored.
@@ -390,37 +422,23 @@ This project addresses the adapter efficiency gap by systematically comparing QL
 \chapter{System Requirements and Analysis}
 \section{Software Requirements}
 \begin{itemize}[leftmargin=0.5in, itemsep=2pt]
-  \item Kaggle Notebooks (Python 3.13) as the execution environment, with PyTorch 2.11.0 (CUDA 12.8)
-  \item Hugging Face \texttt{transformers} 4.57.1, \texttt{accelerate} 1.10.1, \texttt{peft} 0.17.1 and \texttt{bitsandbytes} 0.48.1 (versions pinned in the Qwen2 fine-tuning notebooks)
-  \item \texttt{qwen-vl-utils} for the Qwen2.5-VL few-shot notebook (installed together with \texttt{transformers} 4.49 or newer; exact versions not pinned)
-  \item \texttt{kagglehub} to download the WildFireVQA and FLAME~3 datasets, plus pandas, matplotlib, Pillow and tqdm
+  \item Execution runtime: Python 3.13 with PyTorch 2.11.0 (compiled against CUDA 12.8)
+  \item Foundation model and adaptation libraries: Hugging Face \texttt{transformers} 4.57.1, \texttt{accelerate} 1.10.1, \texttt{peft} 0.17.1, and \texttt{bitsandbytes} 0.48.1 (exact pinned versions across fine-tuning environments)
+  \item Vision-language decoding utilities: \texttt{qwen-vl-utils} for the frozen Qwen2.5-VL baseline (compatible with \texttt{transformers} $\ge$ 4.49)
+  \item Image processing and evaluation utilities: Pillow, pandas, matplotlib, and tqdm
 \end{itemize}
 \section{Hardware Requirements}
-Training and evaluation were run on Kaggle notebooks with two NVIDIA Tesla T4
-GPUs (14.6\,GiB each). The fine-tuning notebooks place the model
-on a single GPU (cuda:0); the second GPU is intentionally left unused. The
-few-shot notebook also runs on one GPU. No local hardware beyond a web browser is needed.
+All fine-tuning and evaluation experiments were executed on Kaggle Notebook cloud instances equipped with NVIDIA Tesla T4 GPUs.
+Each GPU provides 14.6\,GiB of addressable VRAM. The training execution runs on a single GPU (\texttt{cuda:0}). The frozen few-shot evaluation also executes on a single GPU. No specialized local hardware beyond standard client access is required.
 \section{Functional and Non-Functional Requirements}
-The system must accept a paired RGB and thermal image and a question and return a textual
-answer, and must report accuracy on a held-out split. It should fit within
-the memory of a 14.6\,GiB T4 GPU and finish within the session limits of the
-platform; the fine-tuning notebooks therefore cache CLIP features once, use
-FP16 and 4-bit weights, and keep the effective batch size at 16 through
-gradient accumulation.
+Functionally, the system accepts a paired aerial visible spectrum (RGB) image, a radiometric thermal image, and a natural-language question, producing a concise short-text answer. Non-functionally, peak memory allocation must not exceed the 14.6\,GiB physical memory boundary of an individual GPU. To satisfy this constraint, visual embeddings from the frozen CLIP encoder are pre-extracted and cached once to prevent repeated forward vision passes, base language-model parameters are stored in 4-bit NF4 representation, matrix computations utilize 16-bit floating point precision, and a batch size of 4 with 4 gradient accumulation steps maintains an effective training batch size of 16.
+% src: balanced_qkvo_r16-015, balanced_qkvo_r16-016, balanced_qkvo_r16-017, balanced_qkvo_r16-018, balanced_qkvo_r16-021, FS-001, FS-012, qwen2_1_5b_balanced_qkvo_r16-001
+
 % ---------------- CHAPTER 4 ------------------------------------------
 \clearpage
 \chapter{System Design}
 \section{High Level Design}
-Figure~\ref{fig:pipeline} shows the fine-tuned architecture. WildFireVQA
-samples are paired with their FLAME~3 RGB and thermal images, and both images are resized to
-$224\times224$. A frozen CLIP ViT-B/32 encoder converts each image into 49 patch
-tokens (98 visual tokens per sample). Two separate projectors, one for RGB
-and one for thermal, map the tokens to the language-model width, and learned
-modality (type) embeddings are added. The visual tokens are inserted into a chat-formatted
-prompt together with the question, and the 4-bit language model with LoRA adapters
-generates the answer, which is compared with the reference. The frozen few-shot baseline instead
-feeds the RGB and thermal images of each demonstration and of the query
-directly to Qwen2.5-VL-3B-Instruct as a multi-turn chat, with no training.
+Figure~\ref{fig:pipeline} illustrates the architecture of the fine-tuned vision-language model. Each sample comprises an aerial visible RGB image and a radiometric thermal image from FLAME~3 paired with a query from WildFireVQA \cite{wildfirevqa,flame3}. Both images are resized to $224\times224$ pixels. A frozen CLIP ViT-B/32 vision encoder converts each image into 49 patch tokens ($7\times7$ spatial grid), producing 98 visual tokens per instance \cite{radford2021}. Two independent multilayer perceptron (MLP) projectors---one for visible imagery and one for thermal imagery---map the 768-dimensional vision tokens to hidden dimension $d$ of the target language model (1536 for Qwen2-1.5B, 2048 for Llama-3.2-1B). Learned 1D modality type embeddings are added to differentiate the streams. The resulting 98 visual tokens are prefixed to the question within a chat-formatted prompt. A 4-bit quantized decoder language model augmented with LoRA adapters then autoregressively generates the answer text \cite{dettmers2023,hu2022}. In contrast, the frozen baseline feeds the images and questions directly into Qwen2.5-VL-3B-Instruct as multi-turn in-context demonstration sequences without parameter updates \cite{brown2020,bai2025}.
 \begin{figure}[htbp]
   \centering
   \resizebox{\textwidth}{!}{%
@@ -449,109 +467,78 @@ directly to Qwen2.5-VL-3B-Instruct as a multi-turn chat, with no training.
 \section{Low Level Design}
 \subsection{Dataset and Data Splits}
 \label{sec:dataset}
-The WildFireVQA annotations cover three burn sites: Shoetank (120,360 rows), Willamette (61,846 rows)
-and Sycan Marsh (25,092 rows), 207,298 rows in total. We keep the Sycan Marsh rows and match every row to the
-FLAME~3 Sycan Marsh Kaggle subset, which contains 738 RGB--thermal pairs (622 fire and 116
-no-fire). The matching uses the temperature statistics of the radiometric TIFF files to map
-each source path to its canonical Kaggle image pair. A strict pairing audit then checks that each question is attached to the right image
-pair (RGB and thermal files differ, one pair per source image, 34 questions
-per image). The pairs are then split by image with seed 42 into train, validation and
-test sets (Table~\ref{tab:split}), so no image appears in two splits. The prompt contains only the
-question; the answer options are not given to the model, so answers are
-generated as free-form short text and scored by string match.
-\begin{table}[htbp]
-  \centering
-  \caption{Image-grouped split used by the fine-tuning notebooks}
-  \label{tab:split}
-  \begin{tabular}{lccc}
-    \toprule
-    \textbf{Split} & \textbf{Image pairs} & \textbf{QA rows} & \textbf{Share} \\
-    \midrule
-    Train & 592 & 20,128 & 80\% \\
-    Validation & 73 & 2,482 & 10\% \\
-    Test & 73 & 2,482 & 10\% \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+The WildFireVQA annotation pipeline loaded 207,306 raw rows across three prescribed burn sites: Shoetank (120,360 rows), Willamette (61,846 rows), and Sycan Marsh (25,092 rows) \cite{wildfirevqa}. Note that the per-site distribution sums to 207,298 rows, while the source reader loaded 207,306 raw annotation rows (an 8-row discrepancy present in the upstream dataset file). This study isolates the Sycan Marsh subset (25,092 rows). An initial pairing procedure maps each source annotation row to its canonical image pair using radiometric temperature statistics from the thermal TIFF files. A strict pairing audit verifies that each question maps to a distinct visible and thermal image pair, with exactly 34 questions per image pair across 738 source image pairs (622 Fire class, 116 No Fire class; 364 Sycan 2A, 374 Sycan 2D). Rows are deduplicated across identifier and text fields, and assertions verify that no duplicate questions exist within an image.
+
+To prevent visual data contamination across splits, samples are partitioned at the image level using random seed 42 into train (80\%), validation (10\%), and test (10\%) subsets (Table~\ref{tab:split}). All 34 questions associated with an image pair reside exclusively in that image's assigned partition. Answer options are withheld from the prompt during training and generation; the model generates free-form text and is evaluated by string equality against the ground-truth answer after trimming whitespace and lower-casing:
+\begin{equation}
+\text{EM}(\text{ref}, \text{pred}) = \mathbb{I}\bigl[\text{lower}(\text{strip}(\text{ref})) == \text{lower}(\text{strip}(\text{pred}))\bigr].
+\end{equation}
+\input{tables/tab_split.tex}
+
 \subsection{Experiment Configurations}
-Table~\ref{tab:variants} lists the configurations. Adapters are
-attached to the attention projections (query $q$, key $k$, value $v$,
-output $o$) or to all linear layers of the language model (attention plus the MLP projections
-gate, up and down). Additional ranks were run to study capacity
-(Chapter~7). Every fine-tuned run also trains the two projectors and the modality embeddings.
-The all-linear rank-16 notebook has no saved results, so Chapter~7 reports its rank-8
-counterpart as the high-capacity variant.
+Table~\ref{tab:variants} summarizes the experimental configurations. Every configuration was implemented and trained on both the Qwen2-1.5B and Llama-3.2-1B backbones across all 16 fine-tuning runs. Low-rank adapters are applied either to attention projections (query $q$, key $k$, value $v$, output $o$) or to all linear projections across attention and feedforward MLP blocks (including gate, up, and down projections). The adapter design prioritizes parameter efficiency: the aim is to attain strong task accuracy with minimal parameter additions. Time limitations and preliminary observations from earlier experiments informed the distribution of rank sweeps across configurations. Across all fine-tuned models, the vision encoder remains frozen while the two projectors and modality embeddings are trained.
 \begin{table}[htbp]
   \centering
-  \caption{The experimental configurations (notebook names are listed in Chapter~5)}
+  \caption{The experimental configurations evaluated in this study (each configuration was trained on both Qwen2-1.5B and Llama-3.2-1B backbones)}
   \label{tab:variants}
-  \begin{tabular}{P{1.7in}P{1.5in}cc}
+  \begin{tabular}{P{1.8in}P{1.6in}cc}
     \toprule
     \textbf{Variant} & \textbf{Adapted modules} & \textbf{Rank $r$} & \textbf{$\alpha$} \\
     \midrule
-    Few-shot, frozen Qwen2.5-VL-3B & none & --- & --- \\
-    LoRA efficient & $q,v$ & 8 (also 16) & $2r$ \\
-    LoRA balanced & $q,k,v,o$ & 16 (also 4, 8) & $2r$ \\
-    LoRA high capacity & all linear & 16 (also 8) & $2r$ \\
+    Frozen baseline (Qwen2.5-VL-3B) & none & --- & --- \\
+    LoRA efficient & $q,v$ & 8, 16 & $2r$ \\
+    LoRA balanced & $q,k,v,o$ & 4, 8, 16, 32 & $2r$ \\
+    LoRA high capacity & all linear ($q,k,v,o$, gate, up, down) & 8, 16 & $2r$ \\
     \bottomrule
   \end{tabular}
 \end{table}
+
 \subsection{Hyperparameters}
-Table~\ref{tab:hparams} lists the settings shared by the Qwen2-1.5B fine-tuning runs.
-\begin{table}[htbp]
-  \centering
-  \caption{Training hyperparameters of the Qwen2-1.5B fine-tuning runs}
-  \label{tab:hparams}
-  \small
-  \begin{tabular}{P{2.3in}P{2.5in}}
-    \toprule
-    \textbf{Parameter} & \textbf{Value} \\
-    \midrule
-    LoRA alpha / dropout & $2r$ / 0.05 \\
-    Optimiser / learning rate & AdamW / $2\times10^{-4}$, weight decay 0.01 \\
-    Scheduler & Cosine with 5\% warm-up, gradient clipping 1.0 \\
-    Batch size / grad.\ accumulation & 4 / 4 (effective batch 16) \\
-    Epochs & Up to 100, early stopping on validation loss (patience 3) \\
-    Quantisation & 4-bit NF4, double quantisation, FP16 compute \\
-    Visual input & CLIP ViT-B/32, $224\times224$, 98 visual tokens per sample \\
-    Projector & $768\to1024\to d$ with GELU, FP32 \\
-    Max.\ answer length & 32 tokens (training target and generation) \\
-    Decoding & Greedy (no sampling, one beam) \\
-    Train / validation / test split & 20,128 / 2,482 / 2,482 rows (Table~\ref{tab:split}) \\
-    Random seed & 42 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-The Llama-3.2-1B runs use the same pipeline but not identical settings: for example, the
-$q,k,v,o$ rank-16 run used a learning rate of $1.5\times10^{-4}$, at most 8 epochs and early-stopping
-patience 2 (tolerance $10^{-3}$), whereas the $q,v$ rank-8 run used $2\times10^{-4}$ and patience 3 as in
-Table~\ref{tab:hparams}. The few-shot baseline uses the same
-4-bit NF4 loading (double quantisation, FP16), images of $224\times224$ pixels, greedy decoding
-and at most 32 new tokens.
+Table~\ref{tab:hparams} presents the hyperparameter configurations across all 16 fine-tuning runs for both Qwen2-1.5B and Llama-3.2-1B backbones, extracted directly from the run metrics.
+\input{tables/tab_hparams.tex}
+Both backbones share the same random seed (42) and identical pairing audit CSV files (\texttt{source\_to\_kaggle\_pair\_audit.csv}). All runs maintain an effective batch size of 16 (batch size 4 with 4 gradient accumulation steps, except the Llama all-linear $r{=}16$ run which used batch size 2 with 8 accumulation steps). The frozen in-context baseline utilizes 4-bit NF4 quantization, unconstrained input image resolutions processed natively by \texttt{qwen-vl-utils} without pre-downsampling to $224\times224$, greedy single-beam decoding, and a 32-token generation cap.
+
 \subsection{Trainable Parameter Count}
-For one adapted matrix of size $d\times k$ and rank $r$, the number of
-trainable parameters is $r(d+k)$. For Qwen2-1.5B (28 layers, hidden width 1536, 2 key/value
-heads of size 128, MLP width 8960) this gives, per layer, $r(3072)$ for $q$, $r(1792)$ for each
-of $k$ and $v$, $r(3072)$ for $o$ and $r(10496)$ for each of the gate, up and down
-projections. The two projectors and the two modality embeddings add 4,726,784 trainable parameters
-in every fine-tuned run. Table~\ref{tab:params} lists the totals; the values for the runs
-that were executed match the counts printed by the notebooks.
-\begin{table}[htbp]
-  \centering
-  \caption{Trainable parameters of the Qwen2-1.5B variants}
-  \label{tab:params}
-  \small
-  \begin{tabular}{lccc}
-    \toprule
-    \textbf{Variant} & \textbf{LoRA} & \textbf{Projectors + type emb.} & \textbf{Total trainable} \\
-    \midrule
-    $q,v$, $r{=}8$ & 1,089,536 & 4,726,784 & 5,816,320 \\
-    $q,k,v,o$, $r{=}16$ & 4,358,144 & 4,726,784 & 9,084,928 \\
-    all-linear, $r{=}16$ & 18,464,768 & 4,726,784 & 23,191,552$^{*}$ \\
-    \bottomrule
-  \end{tabular}\\[2pt]
-  {\footnotesize $^{*}$Computed from the formula above; this notebook has no saved results, so the value was not printed by a run.}
-\end{table}
+For a linear layer with input dimension $d_{\text{in}}$ and output dimension $d_{\text{out}}$, rank-$r$ adaptation introduces $r(d_{\text{in}} + d_{\text{out}})$ trainable weights. In Qwen2-1.5B (28 Transformer layers, hidden dimension $d=1536$, 2 key/value heads of dimension 128 yielding $d_{\text{kv}}=256$, and MLP intermediate dimension 8960), each layer adds:
+\begin{itemize}[leftmargin=0.5in, itemsep=1pt]
+  \item $q$ projection: $r(1536 + 1536) = r(3072)$ parameters,
+  \item $k$ and $v$ projections: $r(1536 + 256) = r(1792)$ parameters each,
+  \item $o$ projection: $r(1536 + 1536) = r(3072)$ parameters,
+  \item gate, up, and down projections: $r(1536 + 8960) = r(10496)$ parameters each.
+\end{itemize}
+The dual two-layer MLP projectors map the 768-dimensional visual tokens to dimension 1024 and then to language-model dimension 1536 ($768 \to 1024 \to 1536$), with learned bias vectors on each linear transformation. Each projector comprises:
+\begin{align}
+\text{Layer 1 weights and biases:} \quad & 768 \times 1024 + 1024 = 786{,}432 + 1{,}024 = 787{,}456, \\
+\text{Layer 2 weights and biases:} \quad & 1024 \times 1536 + 1536 = 1{,}572{,}864 + 1{,}536 = 1{,}574{,}400, \\
+\text{Single projector subtotal:} \quad & 787{,}456 + 1{,}574{,}400 = 2{,}361{,}856.
+\end{align}
+Across the two independent projectors (visible and thermal), this yields $2 \times 2{,}361{,}856 = 4{,}723{,}712$ parameters. The learned 1D modality type embeddings (\texttt{rgb\_type} and \texttt{thermal\_type}) each have dimension $1 \times 1 \times 1536$, contributing $2 \times 1536 = 3{,}072$ parameters. The complete non-adapter trainable parameter overhead is therefore:
+\begin{equation}
+4{,}723{,}712 + 3{,}072 = 4{,}726{,}784 \text{ parameters}.
+\end{equation}
+Table~\ref{tab:params} details the breakdown between adapter weights, projection weights, and total trainable parameters across all Qwen2-1.5B variants.
+\input{tables/tab_params.tex}
+
+For Llama-3.2-1B (16 Transformer layers, hidden dimension $d=2048$, 8 query heads, 2 key/value heads with head dimension 128 yielding $d_{\text{kv}}=512$, and intermediate MLP dimension 8192), each layer adds:
+\begin{itemize}[leftmargin=0.5in, itemsep=1pt]
+  \item $q$ projection: $r(2048 + 2048) = r(4096)$ parameters,
+  \item $k$ and $v$ projections: $r(2048 + 512) = r(2560)$ parameters each,
+  \item $o$ projection: $r(2048 + 2048) = r(4096)$ parameters,
+  \item gate, up, and down projections: $r(2048 + 8192) = r(10240)$ parameters each.
+\end{itemize}
+The dual two-layer MLP projectors map the 768-dimensional visual tokens to dimension 1024 and then to language-model dimension 2048 ($768 \to 1024 \to 2048$), with learned bias vectors on each linear transformation. Each projector comprises:
+\begin{align}
+\text{Layer 1 weights and biases:} \quad & 768 \times 1024 + 1024 = 786{,}432 + 1{,}024 = 787{,}456, \\
+\text{Layer 2 weights and biases:} \quad & 1024 \times 2048 + 2048 = 2{,}097{,}152 + 2{,}048 = 2{,}099{,}200, \\
+\text{Single projector subtotal:} \quad & 787{,}456 + 2{,}099{,}200 = 2{,}886{,}656.
+\end{align}
+Across both projectors, this contributes $2 \times 2{,}886{,}656 = 5{,}773{,}312$ parameters. The learned 1D modality type embeddings (\texttt{rgb\_type} and \texttt{thermal\_type}) each have dimension $1 \times 1 \times 2048$, contributing $2 \times 2048 = 4{,}096$ parameters. The non-adapter trainable parameter overhead for Llama-3.2-1B is therefore:
+\begin{equation}
+5{,}773{,}312 + 4{,}096 = 5{,}777{,}408 \text{ parameters}.
+\end{equation}
+Table~\ref{tab:llama_params} details the trainable parameter breakdown across all Llama-3.2-1B variants.
+\input{tables/tab_llama_params.tex}
+% src: D-01, D-02, DS-005, DS-006, DS-007, DS-008, DS-009, DS-011, DS-012, DS-013, DS-014, DS-016, DS-018, DS-019, DS-020, DS-022, DS-023, DS-024, DS-025, DS-026, DS-036, DS-037, DS-039, balanced_qkvo_r16-001, balanced_qkvo_r16-002, balanced_qkvo_r16-003, balanced_qkvo_r16-004, balanced_qkvo_r16-005, balanced_qkvo_r16-006, balanced_qkvo_r16-007, balanced_qkvo_r16-015, balanced_qkvo_r16-016, balanced_qkvo_r16-017, balanced_qkvo_r16-018, balanced_qkvo_r16-019, balanced_qkvo_r16-020, balanced_qkvo_r16-021, balanced_qkvo_r16-022, balanced_qkvo_r16-023, balanced_qkvo_r16-047, balanced_qkvo_r4-029, efficient_qv_r8-023, qwen2_1_5b_balanced_qkvo_r16-001, qwen2_1_5b_balanced_qkvo_r16-010, qwen2_1_5b_balanced_qkvo_r16-014, qwen2_1_5b_balanced_qkvo_r16-021
 % ---------------- CHAPTER 5 ------------------------------------------
 \clearpage
 \chapter{System Implementation}

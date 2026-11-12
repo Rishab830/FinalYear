@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Exact match (\%) by question category computed from \texttt{test\_predictions.csv}}
+  \label{tab:category}
+  \small
+  \begin{tabular}{P{2.2in}cccc}
+    \toprule
+    \textbf{Category (sample count $n$)} & \textbf{Qwen2 $q,k,v,o$ $r{=}4$} & \textbf{Qwen2 $q,k,v,o$ $r{=}16$} & \textbf{Llama $q,v$ $r{=}8$} & \textbf{Llama $q,k,v,o$ $r{=}8$} \\
+    \midrule
+    Presence and Detection ($n{=}584$) & 94.01 & 90.75 & 94.35 & 95.21 \\
+    Distribution and Segmentation ($n{=}584$) & 86.82 & 85.96 & 90.41 & 89.73 \\
+    Flight Planning ($n{=}292$) & 83.90 & 85.27 & 85.27 & 86.99 \\
+    Classification ($n{=}438$) & 83.56 & 85.84 & 81.96 & 86.30 \\
+    Cross-Modal Reasoning ($n{=}292$) & 85.96 & 76.37 & 81.85 & 89.73 \\
+    Localization and Direction ($n{=}292$) & 79.45 & 71.23 & 74.66 & 76.03 \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize Results are computed from the 2,482 test predictions for each indicated run. Columns represent representative compact and higher-rank configurations for both backbones.}
+\end{table}

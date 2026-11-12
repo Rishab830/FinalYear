@@ -1,0 +1,24 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Frozen Qwen2.5-VL-3B-Instruct performance across demonstration counts $k$ (200 test queries; brackets indicate 95\% bootstrap confidence intervals)}
+  \label{tab:shots}
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{cccccc}
+    \toprule
+    \textbf{$k$} & \textbf{EM (\%) [95\% CI]} & \textbf{ROUGE-L} & \textbf{Words / answer} & \textbf{Latency (s)} & \textbf{Input tokens} \\
+    \midrule
+    0 & 15.00 [10.5, 20.0] & 0.2438 & 2.51 & 0.40 & 211 \\
+    1 & 20.00 [15.0, 25.5] & 0.3113 & 1.73 & 0.51 & 381 \\
+    2 & 23.50 [18.5, 29.5] & 0.3280 & 1.54 & 0.65 & 552 \\
+    3 & 23.50 [18.0, 30.0] & 0.3290 & 1.54 & 0.80 & 723 \\
+    4 & 24.50 [18.5, 30.5] & 0.3362 & 1.60 & 0.98 & 893 \\
+    5 & 25.50 [19.5, 32.0] & 0.3421 & 1.66 & 1.14 & 1,064 \\
+    6 & 26.00 [20.0, 32.0] & 0.3474 & 1.67 & 1.33 & 1,235 \\
+    7 & 27.00 [21.5, 33.5] & 0.3585 & 1.66 & 1.54 & 1,405 \\
+    8 & 26.00 [20.5, 32.5] & 0.3468 & 1.66 & 1.76 & 1,576 \\
+    9 & 27.50 [21.5, 34.0] & 0.3668 & 1.64 & 1.99 & 1,747 \\
+    10 & 28.00 [22.0, 34.0] & 0.3760 & 1.61 & 2.23 & 1,919 \\
+    \bottomrule
+  \end{tabular}
+\end{table}

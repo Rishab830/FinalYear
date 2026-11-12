@@ -95,7 +95,8 @@ def check_doc():
             d = json.loads(l); facts[d["id"]] = d
     dec = decision_ids()
     errors, warns, in_open, in_fence, checked = [], [], False, False, 0
-    for ln, line in enumerate(kp.read_text(encoding="utf-8").splitlines(), 1):
+    lines = kp.read_text(encoding="utf-8").splitlines()
+    for ln, line in enumerate(lines, 1):
         s = line.strip()
         if s.startswith("```"):
             in_fence = not in_fence; continue
@@ -105,6 +106,11 @@ def check_doc():
             in_open = "open question" in s.lower(); continue
         if re.fullmatch(r"[|\s:-]+", s) or s.startswith("<!--"):
             continue
+        # Skip table headers: a line starting with | followed by a separator line
+        if s.startswith("|") and ln < len(lines):
+            next_line = lines[ln].strip() if ln < len(lines) else ""
+            if re.fullmatch(r"[|\s:-]+", next_line):
+                continue
         ids = []
         for grp in re.findall(r"\[([^\]]+)\]", s):
             parts = [x.strip() for x in grp.split(",")]
@@ -121,9 +127,13 @@ def check_doc():
         corpus = " ".join(f"{facts[i]['claim']} {facts[i]['value']} {facts[i]['quote']}" for i in ids if i in facts)
         body = re.sub(r"\[[^\]]*\]", " ", s)
         body = re.sub(r"^\s*(\d+\.|[-*])\s+", "", body)
+        is_table_row = s.startswith("|")
         for tok in re.findall(r"(?<![\w.])\d+(?:\.\d+)?", body):
             if tok not in corpus:
-                warns.append(f"line {ln}: number {tok} not found in cited facts")
+                if is_table_row:
+                    errors.append(f"line {ln}: number {tok} not in cited facts")
+                else:
+                    warns.append(f"line {ln}: number {tok} not found in cited facts")
     for w in warns: print("WARN ", w)
     for e in errors: print("ERROR", e)
     print(f"\n{checked} content lines checked; {len(errors)} errors; {len(warns)} warnings")

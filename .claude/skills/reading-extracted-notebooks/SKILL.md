@@ -13,6 +13,7 @@ Never open raw `.ipynb` files or anything under `models/` directly. Scripts have
 - Charts and images are NOT in these files. Never describe a plot.
 - Some notebooks are small because their outputs were cleared. If a result is not in the notebook, take it from the metrics files, not from guessing.
 - Read the whole notebook in chunks (use Read with offset/limit). Do not skim and then summarize.
+- **Ignore notebook titles, markdown headings and markdown text that describes settings.** Only code cells, code outputs, config files, metrics files and run folder names count as evidence. If a heading disagrees with code, say nothing about the heading.
 
 ## facts/metrics/metrics_long.csv
 Columns `run,source,key,value`. One citable line per value. Use Grep for `^<run name>,` to get one run. Quote a full line.

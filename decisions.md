@@ -33,3 +33,7 @@ Why: (stated as the project goal)
 ## D-08
 Decision: Wildfire_Generative_Custom_VLM_Kaggle.ipynb was a trial run only.
 Why: Early experiment before the main runs.
+
+## D-09
+Decision: Notebook titles and headings are not evidence; only code and file/folder names are trusted.
+Why: Titles were copied between notebooks and are not reliable.

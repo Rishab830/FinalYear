@@ -43,6 +43,25 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt}
 
+
+\usepackage{listings}
+\usepackage{longtable}
+\usepackage{needspace}
+\usetikzlibrary{fit,backgrounds,decorations.pathreplacing}
+\lstdefinestyle{code}{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{gray},
+  stringstyle=\color{black},
+  columns=fullflexible, keepspaces=true,
+  breaklines=true, breakatwhitespace=false, breakindent=0pt,
+  postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
+  frame=single, rulecolor=\color{gray!60}, backgroundcolor=\color{gray!6},
+  xleftmargin=4pt, xrightmargin=4pt, framexleftmargin=4pt, framexrightmargin=4pt,
+  aboveskip=6pt, belowskip=4pt, showstringspaces=false}
+\lstset{style=code}
+
 % ---------------- Details --------------------------------------------
 \newcommand{\projecttitle}{FireVLM: Parameter-Efficient Fine-Tuning of a Vision-Language Model for Wildfire Visual Question Answering}
 \newcommand{\monthyear}{December 2026}
@@ -256,7 +275,7 @@ Given a paired aerial RGB image, a radiometric thermal image, and a natural-lang
 \end{itemize}
 
 \section{Organisation of the Report}
-The remainder of this report is organized as follows: Chapter~2 surveys related literature in vision-language architectures, parameter-efficient adaptation, and remote sensing. Chapter~3 details software and hardware requirements alongside operational constraints. Chapter~4 presents the architectural design and parameter-efficient configurations. Chapter~5 documents the system implementation and evaluation setup. Chapter~6 details validation checks and data integrity assertions. Chapter~7 analyzes experimental results across models, ranks, and question categories. Finally, Chapter~8 summarizes conclusions and outlines future work.
+The remainder of this report is organized as follows: Chapter~2 surveys related literature in vision-language architectures, parameter-efficient adaptation, and remote sensing. Chapter~3 details software and hardware requirements alongside operational constraints. Chapter~4 presents the architectural design and parameter-efficient configurations. Chapter~5 documents the system implementation and evaluation setup. Chapter~6 describes system testing: the test levels, the data-integrity and model-scoping assertions, the end-to-end checks and the defects they exposed. Chapter~7 analyzes experimental results across models, ranks, and question categories. Finally, Chapter~8 summarizes conclusions and outlines future work.
 % src: D-01, D-03, D-04, D-07, DS-001, DS-006, DS-009, DS-012, DS-013, FS-001, FS-002, FS-059, balanced_qkvo_r16-001, qwen2_1_5b_balanced_qkvo_r16-001, balanced_qkvo_r16-018, balanced_qkvo_r16-021
 
 % ---------------- CHAPTER 2 ------------------------------------------
@@ -288,9 +307,9 @@ The work demonstrates that proper alignment in the pretraining stage has downstr
 \subsection{The Evolution Beyond Transformers}
 Parameter-efficient fine-tuning (PEFT) has become essential as VLMs scale to billions of parameters. A recent survey examines PEFT methods specifically for post-Transformer architectures, including Mamba-based state-space models, RWKV recurrent models, and hybrid designs that combine attention with linear-complexity mechanisms~\cite{peft2024survey}. The survey categorizes PEFT approaches into four families: (1) additive methods that insert new trainable modules (adapters, prompt tuning, prefix tuning), (2) selective methods that choose a subset of existing parameters to update while freezing the rest (BitFit, which updates only bias terms; diff pruning, which learns sparse masks), (3) reparameterization methods like LoRA that decompose weight updates into low-rank matrices, and (4) hybrid methods that combine multiple strategies (e.g., MAM Adapter combines LoRA with parallel feed-forward adapters).
 
-For vision-language models, the survey identifies adapter-based methods as particularly effective. Adapters, originally proposed by Houlsby et al., insert small bottleneck layers between frozen pretrained blocks. A typical adapter has a down-projection from the model dimension $d$ to a smaller bottleneck dimension $d_b$, a nonlinearity (usually GELU or ReLU), and an up-projection back to $d$. The bottleneck creates an information compression that forces the adapter to learn task-specific transformations efficiently. For a model with dimension $d=768$ and bottleneck $d_b=64$, each adapter adds only $2 \times 768 \times 64 \approx 98$K parameters, a tiny fraction of a Transformer block's roughly 3 million parameters.
+For vision-language models, the survey identifies adapter-based methods as particularly effective. Adapters, originally proposed by Houlsby et al.~\cite{houlsby2019}, insert small bottleneck layers between frozen pretrained blocks. A typical adapter has a down-projection from the model dimension $d$ to a smaller bottleneck dimension $d_b$, a nonlinearity (usually GELU or ReLU), and an up-projection back to $d$. The bottleneck creates an information compression that forces the adapter to learn task-specific transformations efficiently. For a model with dimension $d=768$ and bottleneck $d_b=64$, each adapter adds only $2 \times 768 \times 64 \approx 98$K parameters, a tiny fraction of a Transformer block's roughly 3 million parameters.
 
-Prompt tuning, introduced by Lester et al., prepends learnable continuous tokens to the input embeddings. Unlike discrete prompt engineering, these ``soft prompts'' are optimized through gradient descent. For VLMs, visual prompt tuning adapts this idea by adding learnable tokens to the vision encoder's input or intermediate layers, effectively programming the encoder to extract task-specific features without modifying its weights. Prefix tuning extends this by adding learnable key and value vectors to each attention layer, giving the model task-specific context at every layer.
+Prompt tuning, introduced by Lester et al.~\cite{lester2021}, prepends learnable continuous tokens to the input embeddings. Unlike discrete prompt engineering, these ``soft prompts'' are optimized through gradient descent. For VLMs, visual prompt tuning adapts this idea by adding learnable tokens to the vision encoder's input or intermediate layers, effectively programming the encoder to extract task-specific features without modifying its weights. Prefix tuning extends this by adding learnable key and value vectors to each attention layer, giving the model task-specific context at every layer.
 
 Low-rank adaptation (LoRA)~\cite{hu2022} decomposes weight updates into low-rank matrices, dramatically reducing trainable parameters while maintaining expressiveness. For a pretrained weight matrix $W \in \mathbb{R}^{d \times k}$, LoRA keeps $W$ frozen and learns an additive update $\Delta W = BA$, where $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$ with rank $r \ll \min(d,k)$. This reduces trainable parameters from $dk$ to $r(d+k)$. For $d=k=4096$ and $r=8$, the reduction is from 16.8 million parameters to 65K parameters (99.6\% reduction). LoRA's key insight is that task-specific adaptation often lies in a low-dimensional subspace of the full parameter space, so a low-rank update suffices. Empirically, ranks as small as 1–8 often achieve performance close to full fine-tuning on natural language tasks, though vision-language tasks may benefit from slightly higher ranks (4–16) due to the complexity of cross-modal reasoning.
 
@@ -326,14 +345,14 @@ VL-PET also introduces a progressive training schedule that begins with coarse g
 \section{Vision-Language Models in Remote Sensing and Disaster Response}
 
 \subsection{Remote Sensing with VLMs}
-Remote sensing presents unique challenges for VLMs: high-resolution imagery with fine spatial detail, multi-spectral data beyond RGB (thermal, hyperspectral, SAR), geospatial reasoning requirements, and limited annotated training data. A comprehensive survey on vision-language modeling for remote sensing catalogs existing datasets, model architectures, and domain-specific adaptations.
+Remote sensing presents unique challenges for VLMs: high-resolution imagery with fine spatial detail, multi-spectral data beyond RGB (thermal, hyperspectral, SAR), geospatial reasoning requirements, and limited annotated training data. A comprehensive survey on vision-language modeling for remote sensing~\cite{remotesensing2024} catalogs existing datasets, model architectures, and domain-specific adaptations.
 
 The survey identifies key differences between natural images and remote sensing data. Satellite and aerial images often have resolution exceeding $10,000 \times 10,000$ pixels, requiring efficient patch-based processing. Objects of interest (vehicles, buildings, fires) may occupy only a small fraction of the frame, demanding strong spatial reasoning and attention mechanisms. Multi-spectral data requires fusion strategies that preserve information from each band while learning cross-spectral relationships.
 
 Current remote sensing VLMs adapt pretrained models through specialized pretraining on geo-tagged image-caption pairs, architectural modifications to handle high-resolution input, and task-specific fine-tuning for applications like land-cover classification, change detection, and disaster assessment. The survey highlights the need for more diverse benchmarks covering different sensor modalities, geographic regions, and temporal scales.
 
 \subsection{Wildfire Visual Question Answering}
-The WildFireVQA benchmark addresses a critical gap in disaster response VLMs. Created by researchers at Clemson University, the dataset contains 6,097 RGB-thermal image pairs from three prescribed burns (Sycan Marsh, Willamette, Shoetank) captured by the FLAME~3 project. Each image pair is annotated with 34 questions spanning six categories: presence and detection (is there fire?), counting (how many hotspots?), spatial reasoning (where is the smoke relative to the flame?), scene understanding (what is the dominant vegetation?), temperature analysis (what is the maximum temperature?), and comparative reasoning (which area is hotter?). This yields 207,298 total question-answer pairs.
+The WildFireVQA benchmark~\cite{wildfirevqa} addresses a critical gap in disaster response VLMs. Created by researchers at Clemson University, the dataset contains 6,097 RGB-thermal image pairs from three prescribed burns (Sycan Marsh, Willamette, Shoetank) captured by the FLAME~3 project~\cite{flame3}. Each image pair is annotated with 34 questions spanning six categories: presence and detection (is there fire?), counting (how many hotspots?), spatial reasoning (where is the smoke relative to the flame?), scene understanding (what is the dominant vegetation?), temperature analysis (what is the maximum temperature?), and comparative reasoning (which area is hotter?). This yields 207,298 total question-answer pairs.
 
 The dataset uses radiometric thermal TIFFs that encode per-pixel temperature measurements, not just visual thermal colorization. This enables temperature-based reasoning impossible with RGB-only data. Questions were generated by GPT-4o and validated by wildfire experts to ensure realism and correctness. The benchmark evaluates models in multiple-choice format with four options per question.
 
@@ -342,7 +361,7 @@ Baseline results reveal significant challenges. General-purpose VLMs like BLIP-2
 The WildFireVQA paper emphasizes that the benchmark enables evaluation of models on safety-critical real-world tasks where errors have consequences. Deploying VLMs for fire response requires accuracy exceeding 90\%, particularly on presence detection and spatial reasoning categories that inform evacuation and resource deployment decisions.
 
 \subsection{UAV-Based Wildfire Detection Systems}
-Beyond VQA benchmarks, practical wildfire systems integrate VLMs with autonomous platforms. A recent framework proposes using UAV swarms with spiral coverage algorithms to monitor forests, analyzing captured imagery with VLMs to detect early fire indicators (light smoke, vegetation discoloration, thermal anomalies), and deploying fire-retardant foam via fast-response drones when hazards are identified. This end-to-end system combines sensing (UAV swarm), fog computing (local VLM inference at ground stations), cloud storage (historical data and model retraining), and application services (crowdsourcing and decision dashboards).
+Beyond VQA benchmarks, practical wildfire systems integrate VLMs with autonomous platforms. A recent framework~\cite{uavwildfire2024} proposes using UAV swarms with spiral coverage algorithms to monitor forests, analyzing captured imagery with VLMs to detect early fire indicators (light smoke, vegetation discoloration, thermal anomalies), and deploying fire-retardant foam via fast-response drones when hazards are identified. This end-to-end system combines sensing (UAV swarm), fog computing (local VLM inference at ground stations), cloud storage (historical data and model retraining), and application services (crowdsourcing and decision dashboards).
 
 The VLM component uses vision-language understanding to distinguish true fire signatures from visual confusers like sunsets and red skies, achieving over 99\% detection accuracy on a specialized fire-detection dataset. Semantic understanding enables the system to reason about context (``Is this smoke from a fire or morning fog?'') rather than relying solely on pixel-level pattern matching. The framework shifts wildfire management from reactive response to proactive prevention, addressing fires before full ignition.
 
@@ -388,7 +407,7 @@ SynthVLM demonstrates that models trained on carefully filtered synthetic data c
 
 For wildfire VQA, synthetic data generation is particularly valuable because expert annotation of thermal imagery is expensive and requires domain knowledge. Only wildfire scientists can reliably annotate questions about fire behavior, smoke patterns, and temperature distributions. SynthVLM-style pipelines could generate training questions for the large unlabeled portions of FLAME datasets (FLAME~3 contains over 30,000 RGB-thermal pairs but WildFireVQA annotates only 6,097), expanding WildFireVQA from 6,097 samples to tens of thousands. The teacher model would be prompted with domain context: ``You are analyzing aerial thermal imagery of a wildfire. Describe the fire behavior, smoke direction, and temperature patterns visible in the image.'' Factual verification would check temperature ranges against the radiometric TIFF data and fire locations against RGB-thermal alignment.
 
-However, safety-critical applications require careful validation of synthetic data quality, as errors in training labels can lead to unreliable model behavior in deployment. A model trained on synthetic questions with incorrect answers might confidently provide wrong guidance during an actual wildfire, with life-threatening consequences. The WildFireVQA paper's use of expert validation (wildfire scientists reviewed all GPT-4o-generated questions) provides a template for safely incorporating synthetic data: generate with strong teachers, filter aggressively, and validate a statistically significant sample with domain experts before deployment.
+However, safety-critical applications require careful validation of synthetic data quality, as errors in training labels can lead to unreliable model behavior in deployment. A model trained on synthetic questions with incorrect answers might confidently provide wrong guidance during an actual wildfire, with life-threatening consequences. The WildFireVQA paper~\cite{wildfirevqa}'s use of expert validation (wildfire scientists reviewed all GPT-4o-generated questions) provides a template for safely incorporating synthetic data: generate with strong teachers, filter aggressively, and validate a statistically significant sample with domain experts before deployment.
 
 \section{Gap Analysis and Positioning}
 Despite significant progress in VLMs and PEFT, several gaps remain for wildfire VQA:
@@ -467,7 +486,42 @@ Figure~\ref{fig:pipeline} illustrates the architecture of the fine-tuned vision-
 \section{Low Level Design}
 \subsection{Dataset and Data Splits}
 \label{sec:dataset}
-The WildFireVQA dataset annotations contain 207,306 rows loaded by the pipeline across three prescribed burn sites: Shoetank (120,360 rows), Willamette (61,846 rows), and Sycan Marsh (25,092 rows).\footnote{The per-site breakdown sums to 207,298 rows, while the source reader loaded 207,306 rows.} This study isolates the Sycan Marsh subset (25,092 rows). An initial pairing procedure maps each source annotation row to its canonical image pair using radiometric temperature statistics from the thermal TIFF files. A strict pairing audit verifies that each question maps to a distinct visible and thermal image pair, with exactly 34 questions per image pair across 738 source image pairs (622 Fire class, 116 No Fire class; 364 Sycan 2A, 374 Sycan 2D). Rows are deduplicated across identifier and text fields, and assertions verify that no duplicate questions exist within an image.
+The WildFireVQA dataset annotations contain 207,306 rows loaded by the pipeline across three prescribed burn sites: Shoetank (120,360 rows), Willamette (61,846 rows), and Sycan Marsh (25,092 rows). This study isolates the Sycan Marsh subset (25,092 rows). An initial pairing procedure maps each source annotation row to its canonical image pair using radiometric temperature statistics from the thermal TIFF files. A strict pairing audit verifies that each question maps to a distinct visible and thermal image pair, with exactly 34 questions per image pair across 738 source image pairs (622 Fire class, 116 No Fire class; 364 Sycan 2A, 374 Sycan 2D). Rows are deduplicated across identifier and text fields, and assertions verify that no duplicate questions exist within an image.
+
+Fig.~\ref{fig:sites} shows how the loaded rows divide across the three burn sites; the three counts sum to 207,298, eight fewer than the 207,306 rows loaded, and the cause was not established. Fig.~\ref{fig:funnel} follows the Sycan Marsh subset from 25,092 rows to the 738 audited image pairs and the three splits.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[node distance=7mm]
+    \node[blk, text width=62mm] (raw) {WildFireVQA annotations\\207,306 rows loaded, 3 burn sites};
+    \node[blk, text width=62mm, below=of raw] (syc) {Sycan Marsh subset\\25,092 rows};
+    \node[blk, text width=62mm, below=of syc] (pairs) {738 image pairs $\times$ 34 questions\\(622 Fire, 116 No Fire)};
+    \node[blk, below=12mm of pairs, xshift=-42mm, text width=36mm, fill=blue!8] (tr) {Train\\592 pairs, 20,128 rows};
+    \node[blk, below=12mm of pairs, text width=36mm, fill=blue!8] (va) {Validation\\73 pairs, 2,482 rows};
+    \node[blk, below=12mm of pairs, xshift=42mm, text width=36mm, fill=blue!8] (te) {Test\\73 pairs, 2,482 rows};
+    \draw[arr] (raw)--node[right, font=\footnotesize]{site filter: Sycan}(syc);
+    \draw[arr] (syc)--node[right, font=\footnotesize]{radiometric pairing, deduplication}(pairs);
+    \draw[arr] (pairs)--(tr); \draw[arr] (pairs)--(va); \draw[arr] (pairs)--(te);
+  \end{tikzpicture}
+  \caption{From the raw WildFireVQA annotations to the image-grouped train, validation and test splits (all questions of an image stay in one split; seed 42).}
+  \label{fig:funnel}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[xbar, width=0.8\textwidth, height=4.6cm, bar width=14pt,
+      symbolic y coords={Sycan Marsh, Willamette, Shoetank}, ytick=data,
+      xlabel={Annotation rows}, xmin=0, xmax=150000, grid=major, grid style={gray!25}, scaled x ticks=false,
+      xtick={0,50000,100000,150000}, x tick label style={/pgf/number format/fixed, /pgf/number format/1000 sep={,}},
+      nodes near coords={\pgfmathprintnumber[fixed,precision=0,1000 sep={,}]{\pgfplotspointmeta}},
+      nodes near coords align={horizontal}, every node near coord/.append style={font=\footnotesize}]
+      \addplot[fill=blue!55!black] coordinates {(25092,Sycan Marsh) (61846,Willamette) (120360,Shoetank)};
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Annotation rows per burn site. Only the Sycan Marsh subset (25,092 rows) is used in this study.}
+  \label{fig:sites}
+\end{figure}
 
 To prevent visual data contamination across splits, samples are partitioned at the image level using random seed 42 into train (80\%), validation (10\%), and test (10\%) subsets (Table~\ref{tab:split}). All 34 questions associated with an image pair reside exclusively in that image's assigned partition. Answer options are withheld from the prompt during training and generation; the model generates free-form text and is evaluated by string equality against the ground-truth answer after trimming whitespace and lower-casing:
 \begin{equation}
@@ -475,8 +529,45 @@ To prevent visual data contamination across splits, samples are partitioned at t
 \end{equation}
 \input{tables/tab_split.tex}
 
+Fig.~\ref{fig:sample} shows an example visible and thermal pair; each pair carries 34 questions, all of which stay in the same split.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{./figures/sample_rgb.jpeg}{\includegraphics[width=0.47\textwidth]{./figures/sample_rgb.jpeg}}{\fbox{\parbox[c][4.5cm][c]{0.44\textwidth}{\centering\todo{figures/sample\_rgb.jpeg not found}}}}\hfill
+  \IfFileExists{./figures/sample_thermal.jpeg}{\includegraphics[width=0.47\textwidth]{./figures/sample_thermal.jpeg}}{\fbox{\parbox[c][4.5cm][c]{0.44\textwidth}{\centering\todo{figures/sample\_thermal.jpeg not found}}}}\\[4pt]
+  \small(a) Visible image \hspace{0.32\textwidth} (b) Thermal image
+  \caption{Example test image pair from the Sycan Marsh subset.}
+  \label{fig:sample}
+\end{figure}
+
 \subsection{Experiment Configurations}
-Table~\ref{tab:variants} summarizes the experimental configurations. Every configuration was implemented and trained on both the Qwen2-1.5B and Llama-3.2-1B backbones across all 16 fine-tuning runs. Low-rank adapters are applied either to attention projections (query $q$, key $k$, value $v$, output $o$) or to all linear projections across attention and feedforward MLP blocks (including gate, up, and down projections). The adapter design prioritizes parameter efficiency: the aim is to attain strong task accuracy with minimal parameter additions. Time limitations and preliminary observations from earlier experiments informed the distribution of rank sweeps across configurations. Across all fine-tuned models, the vision encoder remains frozen while the two projectors and modality embeddings are trained.
+ Table~\ref{tab:variants} and Fig.~\ref{fig:placement} summarize the experimental configurations. Every configuration was implemented and trained on both the Qwen2-1.5B and Llama-3.2-1B backbones across all 16 fine-tuning runs. Low-rank adapters are applied either to attention projections (query $q$, key $k$, value $v$, output $o$) or to all linear projections across attention and feedforward MLP blocks (including gate, up, and down projections). The adapter design prioritizes parameter efficiency: the aim is to attain strong task accuracy with minimal parameter additions. Time limitations and preliminary observations from earlier experiments informed the distribution of rank sweeps across configurations. Across all fine-tuned models, the vision encoder remains frozen while the two projectors and modality embeddings are trained.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[x=1.25cm, y=0.9cm, every node/.style={font=\footnotesize},
+      mod/.style={draw, minimum width=1.1cm, minimum height=0.65cm, rounded corners=1pt},
+      on/.style={mod, fill=orange!35}]
+    \foreach \m [count=\i] in {q,k,v,o,gate,up,down}{
+      \foreach \r in {0,-1,-2}{ \node[mod] at (\i,\r) {\m}; } }
+    % adapted modules
+    \foreach \i/\m in {1/q,3/v}{ \node[on] at (\i,0) {\m}; }
+    \foreach \i/\m in {1/q,2/k,3/v,4/o}{ \node[on] at (\i,-1) {\m}; }
+    \foreach \i/\m in {1/q,2/k,3/v,4/o,5/gate,6/up,7/down}{ \node[on] at (\i,-2) {\m}; }
+    \node[anchor=east] at (0.35,0) {$q,v$};
+    \node[anchor=east] at (0.35,-1) {$q,k,v,o$};
+    \node[anchor=east] at (0.35,-2) {all-linear};
+    \node[anchor=west] at (7.65,0) {$r\in\{8,16\}$};
+    \node[anchor=west] at (7.65,-1) {$r\in\{4,8,16,32\}$};
+    \node[anchor=west] at (7.65,-2) {$r\in\{8,16\}$};
+    \draw[decorate, decoration={brace, amplitude=4pt}] (0.6,0.55) -- (4.4,0.55) node[midway, above=4pt] {self-attention};
+    \draw[decorate, decoration={brace, amplitude=4pt}] (4.6,0.55) -- (7.4,0.55) node[midway, above=4pt] {MLP};
+  \end{tikzpicture}}
+  \caption{Linear modules of a decoder layer that receive LoRA adapters (shaded) in each configuration, and the ranks tested for it, for both backbones.}
+  \label{fig:placement}
+\end{figure}
+
 \begin{table}[htbp]
   \centering
   \caption{The experimental configurations evaluated in this study (each configuration was trained on both Qwen2-1.5B and Llama-3.2-1B backbones)}
@@ -566,79 +657,187 @@ An early trial script with subsampled data ($N=3000$) served as a preliminary pi
 The few-shot baseline evaluates Qwen2.5-VL-3B-Instruct in 4-bit precision with all parameters frozen ($trainable = 0$). Test queries consist of 200 question--answer rows sampled from held-out images. For each query, a deterministic ordered pool of 10 demonstration examples from the same question category is constructed. The $k$-shot evaluation evaluates the first $k$ demonstration pairs ($k \in \{0, 1, \dots, 10\}$), providing strictly paired incremental context. Prompts include the visible and thermal images of each demonstration and query, formatted with system instructions to return concise answers. Confidence intervals are estimated using 1,000 bootstrap resamples.
 
 \subsection{QLoRA Parameter-Efficient Fine-Tuning}
-For the Qwen2 fine-tuning runs, the model is initialized from the \texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct} repository \cite{mithan}. Inspection of the model configuration confirms that this checkpoint provides an extracted \texttt{Qwen2ForCausalLM} language component without a vision tower:
-\begin{verbatim}
-`torch_dtype` is deprecated! Use `dtype` instead!
-pytorch_model.bin: 605M
-run_config['backbone_architecture'] = 'Qwen2ForCausalLM'
-\end{verbatim}
-The base weights are quantized to 4-bit NF4 representation and frozen. Only the low-rank adapter matrices, the dual modality projectors, and the two modality type embeddings require gradient updates. Training executes with effective batch size 16 (batch size 4, gradient accumulation steps 4; batch size 2 and accumulation 8 for Llama all-linear $r{=}16$). Validation loss is evaluated at the conclusion of each epoch, and the checkpoint achieving minimum validation loss is preserved for final evaluation on the 2,482 test rows.
+For the Qwen2 fine-tuning runs, the model is initialized from the \texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct} repository \cite{mithan}.
+The base weights are quantized to 4-bit NF4 representation and frozen. Only the low-rank adapter matrices, the dual modality projectors, and the two modality type embeddings require gradient updates. Training executes with effective batch size 16 (batch size 4, gradient accumulation steps 4; batch size 2 and accumulation 8 for Llama all-linear $r{=}16$). Validation loss is evaluated at the conclusion of each epoch, and the checkpoint achieving minimum validation loss is preserved for final evaluation on the 2,482 test rows. Fig.~\ref{fig:trainflow} summarises this procedure.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=5mm and 7mm]
+    \node[blk] (m) {Train manifest\\(20,128 rows)};
+    \node[blk, right=of m] (f) {Cached CLIP\\tokens};
+    \node[blk, right=of f] (t) {Forward pass,\\loss on answer tokens};
+    \node[blk, right=of t] (u) {AdamW update\\(adapters, projectors)};
+    \node[blk, below=10mm of u] (v) {Validation loss\\(each epoch)};
+    \node[blk, left=of v, text width=30mm] (es) {Early stopping\\(patience 2 or 3)};
+    \node[blk, left=of es, fill=green!12] (ck) {Keep best\\checkpoint};
+    \node[blk, left=of ck] (ts) {Evaluate on\\2,482 test rows};
+    \draw[arr] (m)--(f); \draw[arr] (f)--(t); \draw[arr] (t)--(u); \draw[arr] (u)--(v);
+    \draw[arr] (v)--(es); \draw[arr] (es)--(ck); \draw[arr] (ck)--(ts);
+  \end{tikzpicture}}
+  \caption{Training and checkpoint-selection procedure used for every fine-tuning run. The checkpoint with the lowest validation loss is the one evaluated.}
+  \label{fig:trainflow}
+\end{figure}
 
 \subsection{Answer Generation and Evaluation Protocol}
-Answer generation operates deterministically via greedy decoding (do\_sample = False, num\_beams = 1) up to 32 new tokens. Only the initial text line prior to any newline character is extracted. A prediction is scored as an exact match (EM = 1) if it strictly matches the reference string following lowercasing and leading/trailing whitespace removal; otherwise EM = 0. The evaluation also computes smoothed sentence BLEU-4 and ROUGE-L. Normalized exact match (which additionally strips articles and punctuation) is tracked in the baseline. Because the reference answers consist predominantly of concise one- or two-word phrases, exact match serves as the primary metric.
+Answer generation operates deterministically via greedy decoding (do\_sample = False, num\_beams = 1) up to 32 new tokens. Only the initial text line prior to any newline character is extracted. A prediction is scored as an exact match (EM = 1) if it strictly matches the reference string following lowercasing and leading/trailing whitespace removal; otherwise EM = 0. The evaluation also computes smoothed sentence BLEU-4 and ROUGE-L. Normalized exact match (which additionally strips articles and punctuation) is tracked in the baseline. Because the reference answers consist predominantly of concise one- or two-word phrases, exact match serves as the primary metric. Fig.~\ref{fig:emflow} shows the post-processing and scoring chain.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=6mm]
+    \node[blk] (g) {Greedy decoding\\(max.\ 32 tokens)};
+    \node[blk, right=of g] (l) {Keep first line\\of output};
+    \node[blk, right=of l] (n) {Lower-case,\\trim whitespace};
+    \node[blk, right=of n] (c) {String equality\\with reference};
+    \node[blk, right=of c, fill=green!12] (e) {EM $=1$ or $0$};
+    \draw[arr] (g)--(l); \draw[arr] (l)--(n); \draw[arr] (n)--(c); \draw[arr] (c)--(e);
+  \end{tikzpicture}}
+  \caption{Answer post-processing and exact-match scoring.}
+  \label{fig:emflow}
+\end{figure}
 % src: D-06, D-08, DS-004, DS-011, DS-027, DS-030, DS-031, DS-032, DS-033, DS-035, DS-038, FS-001, FS-004, FS-005, FS-006, FS-007, FS-009, FS-010, FS-011, FS-012, FS-013, FS-014, FS-015, FS-016, FS-056, FS-057, FS-059, FS-071, FS-072, balanced_qkvo_r16-008, balanced_qkvo_r16-010, balanced_qkvo_r16-011, balanced_qkvo_r16-012, balanced_qkvo_r16-016, balanced_qkvo_r16-017, balanced_qkvo_r16-018, balanced_qkvo_r16-019, balanced_qkvo_r16-020, balanced_qkvo_r16-023, balanced_qkvo_r16-024, balanced_qkvo_r16-025, balanced_qkvo_r16-026, balanced_qkvo_r16-047, balanced_qkvo_r16-048, balanced_qkvo_r16-049, balanced_qkvo_r4-029, qwen2_1_5b_balanced_qkvo_r16-010
 
 % ---------------- CHAPTER 6 ------------------------------------------
 \clearpage
-\chapter{Validation Checks}
-\section{Data Pipeline and Integrity Assertions}
-To verify dataset integrity and experimental isolation, multiple programmatic assertions were embedded directly into the pipeline and confirmed during execution:
-\begin{enumerate}[leftmargin=0.5in, itemsep=3pt]
-  \item \textbf{One-to-One Source-to-Target Mapping}: The pairing audit asserted a strict one-to-one mapping between source image keys and canonical target stems across all 16 fine-tuning notebooks:
-\begin{verbatim}
+\chapter{System Testing}
+\section{Testing Approach}
+The system is an offline experimental pipeline rather than an interactive application, so testing concentrates on three questions: whether the data fed to every run is correct and leak-free, whether each model trains only the parameters it is meant to train, and whether each complete run produces a full, internally consistent set of predictions. Checks are written as \texttt{assert} statements inside the notebooks, so a violated condition stops the run before any result is produced; they were therefore executed on every run of the corresponding notebook. Four levels were used (Fig.~\ref{fig:testlevels}), and Table~\ref{tab:testcases} lists the 14 test cases with their expected and observed results.
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item \textbf{Data validation tests} (TC-01 to TC-06): pairing, duplicates, split sizes, split disjointness and modality divergence.
+  \item \textbf{Model and training tests} (TC-07 to TC-10): frozen baseline, adapter scoping, trainable-parameter scope and GPU placement.
+  \item \textbf{System tests} (TC-11 to TC-14): end-to-end completion, metric consistency, reproducibility of inputs and baseline completion.
+  \item \textbf{Non-functional checks}: whether every run fits the single T4 GPU, plus the training time and baseline latency that were logged.
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=5mm and 6mm,
+      gate/.style={draw, dashed, rounded corners=2pt, fill=orange!12, font=\footnotesize, align=center, inner sep=2pt}]
+    % row 1: data stages
+    \node[blk] (a) {Raw\\annotations};
+    \node[blk, right=of a] (b) {Pairing\\audit};
+    \node[blk, right=of b] (c) {Deduplication};
+    \node[blk, right=of c] (d) {Image-grouped\\split};
+    \node[blk, right=of d] (e) {CLIP feature\\cache};
+    % row 2: model stages
+    \node[blk, below=14mm of e] (f) {Quantized LLM\\+ LoRA};
+    \node[blk, left=of f] (g) {Training\\(early stopping)};
+    \node[blk, left=of g] (h) {Test\\generation};
+    \node[blk, left=of h] (i) {Scoring\\(EM, ROUGE-L)};
+    \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d); \draw[arr] (d)--(e);
+    \draw[arr] (e)--(f); \draw[arr] (f)--(g); \draw[arr] (g)--(h); \draw[arr] (h)--(i);
+    % gates
+    \node[gate, above=4mm of b] {TC-01, TC-02\\pairing, 34 per pair};
+    \node[gate, above=4mm of c] {TC-03\\no duplicates};
+    \node[gate, above=4mm of d] {TC-04, TC-05\\disjoint, sizes};
+    \node[gate, above=4mm of e] {TC-06\\RGB $\ne$ thermal};
+    \node[gate, below=4mm of f] {TC-08 to TC-10\\adapters, scope, GPU};
+    \node[gate, below=4mm of h] {TC-11, TC-12\\2,482 rows, counts};
+    \node[gate, below=4mm of i] {TC-13\\same inputs};
+  \end{tikzpicture}}
+  \caption{Test levels and where each check sits in the pipeline. Dashed boxes are the checks of Table~\ref{tab:testcases}.}
+  \label{fig:testlevels}
+\end{figure}
+
+\section{Test Environment}
+All tests ran on the Kaggle Tesla T4 environment of Chapter~3 (single GPU, 14.6\,GiB, PyTorch 2.11.0, \texttt{transformers} 4.57.1, \texttt{peft} 0.17.1). No separate test machine or test framework was used: the checks live in the same notebooks that train and evaluate the models.
+
+\section{Data Validation Tests}
+\textbf{TC-01 to TC-03: pairing and duplicates.} The pairing audit asserted a one-to-one mapping between source image keys and canonical target stems, and an assertion after deduplication verified that no image carries a repeated question (all 16 fine-tuning notebooks).
+\begin{lstlisting}
 assert len(source_to_target) == len(source_meta)
-assert len(set((row.source_class, source_to_target[row.source_image_key])
-               for row in source_meta.itertuples())) == len(source_meta)
-\end{verbatim}
-  Printed execution outputs separately confirm that all 738 source image pairs were matched (734 exact matches and 4 tolerance matches) with exactly 34 questions per pair.
-  \item \textbf{Duplicate Question Assertion}: Following deduplication, an explicit assertion verified that no source image contains duplicate question records across all 16 fine-tuning notebooks:
-\begin{verbatim}
+assert len(set((row.source_class, source_to_target[row.source_image_key]) for row in source_meta.itertuples())) == len(source_meta)
 assert not duplicate_questions.any()
-\end{verbatim}
-  \item \textbf{Split Image Disjointness}: Image sets across train (592 images), validation (73 images), and test (73 images) partitions were asserted to be mutually disjoint for both visible and thermal file paths across all 16 fine-tuning notebooks:
-\begin{verbatim}
+\end{lstlisting}
+The printed output confirms that all 738 source image pairs were matched (734 exact and 4 tolerance matches) with 34 questions per pair.
+
+\textbf{TC-04 and TC-05: split disjointness and sizes.} The train (592 images), validation (73) and test (73) partitions were asserted to be mutually disjoint for both visible and thermal paths. Row counts follow from the 34 questions per image: $592\times34=20{,}128$, $73\times34=2{,}482$, and $20{,}128+2{,}482+2{,}482=25{,}092$, the size of the Sycan Marsh subset.
+\begin{lstlisting}
 assert train_paths.isdisjoint(val_paths)
 assert train_paths.isdisjoint(test_paths)
 assert val_paths.isdisjoint(test_paths)
 assert train_thermal.isdisjoint(val_thermal)
 assert train_thermal.isdisjoint(test_thermal)
 assert val_thermal.isdisjoint(test_thermal)
-\end{verbatim}
-  \item \textbf{Feature Modality Divergence}: An assertion checked that extracted CLIP visible and thermal feature patches were distinct ($\text{mean difference} > 10^{-4}$) across all 16 fine-tuning notebooks:
-\begin{verbatim}
-assert _diff > 1e-4, 'RGB and thermal features look identical; check path resolution.'
-\end{verbatim}
-\end{enumerate}
+\end{lstlisting}
 
-\section{Model Training and Parameter Scoping Assertions}
-\begin{enumerate}[leftmargin=0.5in, itemsep=3pt]
-  \item \textbf{Frozen Baseline Parameter and Disjointness Checks}: In the few-shot baseline, assertions verified that no backbone parameters required gradients and that demonstration support images were mutually disjoint from query images:
-\begin{verbatim}
-model.eval()
-for parameter in model.parameters():
-    parameter.requires_grad_(False)
+\textbf{TC-06: modality divergence.} To catch a path-resolution error that would feed the same image to both encoders, the extracted CLIP features of the visible and thermal images were required to differ.
+\begin{lstlisting}
+assert _diff > 1e-4, 'RGB and thermal features look identical; check path resolution.'
+\end{lstlisting}
+
+\section{Model and Training Tests}
+\textbf{TC-07: frozen baseline.} The few-shot baseline asserted that no parameter requires a gradient and that demonstration images never coincide with query images.
+\begin{lstlisting}
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 assert trainable == 0, 'Few-shot baseline must not update model weights.'
-
 assert set(support_df['rgb_resolved']).isdisjoint(set(test_df['rgb_resolved']))
 assert set(support_df['thermal_resolved']).isdisjoint(set(test_df['thermal_resolved']))
-\end{verbatim}
-  \item \textbf{Single GPU Placement Check}: Across all 16 fine-tuning notebooks, the backbone was asserted to allocate to \texttt{cuda:0}:
-\begin{verbatim}
-assert used_cuda_devices == {'cuda:0'}
-\end{verbatim}
-  \item \textbf{Adapter Target Scoping Check}: In the Qwen2 fine-tuning runs with adapter inspection, assertions verified adapter allocation per target module:
-\begin{verbatim}
+\end{lstlisting}
+
+\textbf{TC-08 to TC-10: adapters, parameter scope and GPU.} In the seven Qwen2 notebooks with adapter inspection, the number of adapted layers had to equal the number of target modules times the number of decoder layers, with the configured rank. Printed outputs confirm that the trainable parameters are only the adapter matrices, the two projectors and the two modality type embeddings. All 16 fine-tuning notebooks also asserted single-GPU placement.
+\begin{lstlisting}
 assert len(adapter_layers) == len(CFG.LORA_TARGET_MODULES) * backbone_config.num_hidden_layers
 assert all(name.endswith(adapter_suffixes) for name, _ in adapter_layers)
 assert all(module.lora_A['default'].weight.shape[0] == CFG.LORA_R for _, module in adapter_layers)
-\end{verbatim}
-  Printed execution outputs confirm that trainable parameters are strictly restricted to adapter matrices, multimodal projectors, and learned modality type embeddings.
-\end{enumerate}
+assert used_cuda_devices == {'cuda:0'}
+\end{lstlisting}
 
-Table~\ref{tab:tests} summarizes the validation checks verified in code alongside their supporting fact identifiers.
-\input{tables/tab_validation_checks.tex}
-% src: DS-009, DS-013, DS-014, DS-018, DS-023, DS-024, DS-025, DS-026, DS-037, FS-059, FS-072, balanced_qkvo_r16-006, balanced_qkvo_r16-007, qwen2_1_5b_balanced_qkvo_r16-018
+\section{System-Level Tests}
+\textbf{TC-11 and TC-12: completion and metric consistency.} Each of the 16 result files reports 2,482 scored samples, equal to the test manifest. The category counts (584, 584, 292, 438, 292, 292) sum to 2,482, and for the four runs analysed in Table~\ref{tab:category} the per-category correct counts sum to the run totals (2,150, 2,088, 2,144 and 2,196), so the reported percentages can be reproduced from integer counts.
+
+\textbf{TC-13: reproducibility of inputs.} The pairing audit file is byte-identical across all 16 runs and the train, validation and test manifests are byte-identical across the eight Qwen2 runs, with split seed 42. Differences between runs therefore come from the adapter configuration and training settings, not from different data.
+
+\textbf{TC-14: baseline completion.} The frozen baseline completed all 11 demonstration counts ($k=0,\dots,10$) on 200 queries each, 2{,}200 generations in total, with zero weight updates.
+
+\section{Non-Functional Checks}
+\textbf{Memory.} All 16 training runs and the baseline completed on a single 14.6\,GiB T4 using 4-bit NF4 weights, cached CLIP features and an effective batch size of 16. Peak GPU memory was not logged in the available outputs, so only completion without an out-of-memory error is claimed.
+
+\textbf{Time.} The logged cumulative training time per fine-tuning run ranges from 28.8 to 55.6 minutes (Fig.~\ref{fig:minutes}). The frozen baseline mean latency rises from 0.40\,s at $k=0$ to 2.23\,s at $k=10$ (Fig.~\ref{fig:cost}). Inference latency of the fine-tuned models was not recorded.
+
+\needspace{12\baselineskip}
+\section{Test Case Summary}
+{\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{P{0.4in}P{1.4in}P{1.4in}P{1.5in}P{0.4in}}
+\caption{System test cases, expected results and observed outcomes}\label{tab:testcases}\\
+\toprule
+\textbf{ID} & \textbf{Test} & \textbf{Expected} & \textbf{Observed} & \textbf{Result} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{l}{\textit{Table \thetable\ (continued)}}\\
+\toprule
+\textbf{ID} & \textbf{Test} & \textbf{Expected} & \textbf{Observed} & \textbf{Result} \\
+\midrule
+\endhead
+\midrule \multicolumn{5}{r}{\textit{Continued on next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+TC-01 & One-to-one source-to-target pairing (16 notebooks) & Every source image maps to one canonical pair & 738 pairs matched: 734 exact, 4 tolerance & Pass \\
+TC-02 & Questions per image pair & 34 per pair & 34 per pair; $738\times34=25{,}092$ rows & Pass \\
+TC-03 & Duplicate questions after deduplication & None within an image & None found & Pass \\
+TC-04 & Split image disjointness, visible and thermal paths & No image in two splits & Train 592, val 73, test 73, no overlap & Pass \\
+TC-05 & Split size consistency & Rows $=34\times$ images & $20{,}128+2{,}482+2{,}482=25{,}092$ & Pass \\
+TC-06 & Visible and thermal features differ & Mean difference $>10^{-4}$ & Assertion passed in all 16 notebooks & Pass \\
+TC-07 & Frozen baseline & 0 trainable parameters; support disjoint from query & Both assertions passed & Pass \\
+TC-08 & Adapter count and rank (7 Qwen2 notebooks) & Targets $\times$ layers adapters, rank $=r$ & Assertions passed & Pass \\
+TC-09 & Trainable-parameter scope & Adapters, projectors, type embeddings only & Confirmed by printed output & Pass \\
+TC-10 & Single GPU placement & All on \texttt{cuda:0} & Assertion passed in all 16 notebooks & Pass \\
+TC-11 & End-to-end completion & 2,482 scored rows per run & 2,482 in all 16 result files & Pass \\
+TC-12 & Metric consistency & Category counts and correct counts add up & 2,482 rows; 2,150, 2,088, 2,144, 2,196 correct & Pass \\
+TC-13 & Same inputs across runs & Identical audit file and manifests & Byte-identical (16 and 8 runs) & Pass \\
+TC-14 & Baseline completion & 11 shot counts, 2,200 generations & Completed; 0 weight updates & Pass \\
+\end{longtable}}
+
+\section{Defects Found and Limitations of the Testing}
+\textbf{Defects found.} The checks and the audit exposed two problems that were not repaired. First, the baseline notebook resolves image paths with a simpler mapping than the audited pipeline: it assigns the 25,092 annotation rows to only 480 distinct RGB files (about 52 rows per file) instead of 34 questions for each of 738 pairs, so some baseline questions may have been shown the wrong image (Section~\ref{sec:evalsetup}); the baseline was not rerun and is reported as indicative only. Second, the per-site row counts sum to 207,298 while the reader loaded 207,306 rows (Section~\ref{sec:dataset}); the cause was not established and the study uses only the Sycan Marsh subset, which is unaffected.
+
+\textbf{Limitations.} The tests are assertions inside notebooks, not an automated test suite that can be rerun independently. No adversarial, out-of-distribution or other-site input was tested, predictions were not reviewed by a wildfire expert, and the assertions confirm data and parameter correctness but not answer correctness, which is measured separately in Chapter~7.
+% src: DS-009, DS-011, DS-013, DS-014, DS-018, DS-019 to DS-027, FS-058, FS-059, FS-071, FS-072; metrics_table.csv (n_samples = 2482, minutes 28.77 to 55.58); tab_category.tex counts; 592x34=20,128; 73x34=2,482; 738x34=25,092
 % ---------------- CHAPTER 7 ------------------------------------------
 \clearpage 
 \chapter{Results and Analysis}
@@ -676,9 +875,47 @@ Table~\ref{tab:shots} and Fig.~\ref{fig:shots} give the frozen baseline for each
   \caption{Exact match and ROUGE-L of the frozen baseline against the number of demonstrations (200 queries).}
   \label{fig:shots}
 \end{figure}
-Exact match rises from 15.00\% at $k=0$ to 28.00\% at $k=10$, and ROUGE-L from 0.2438 to 0.3760. Relative to the zero-shot answers on the same queries, the gain is $+5.0$ points at $k=1$, $+8.5$ at $k=2$ and $k=3$, $+10.5$ at $k=5$, $+11.0$ at $k=8$ and $+13.0$ at $k=10$ (95\% bootstrap interval 8.0 to 18.5 points at $k=10$; 29 queries improved and 3 became worse). Most of the gain is reached by $k=2$. The curve is not monotone ($k=3$ equals $k=2$; $k=8$ is 1.0 point below $k=7$), and each 95\% interval in Table~\ref{tab:shots} is about 10 to 12.5 points wide, so differences between neighbouring values of $k$ are not resolved by 200 queries.
 
-The mean answer length falls from 2.51 words at $k=0$ to 1.73 at $k=1$ and 1.54 at $k=2$, and stays between 1.54 and 1.67 words for $k\ge 2$. This chapter does not test whether the change in length accounts for the change in EM. The cost grows with $k$: mean latency rises from 0.40\,s to 2.23\,s and the mean input from 211 to 1,919 tokens. Table~\ref{tab:fsexamples} shows ten queries; for the hottest-temperature question the reference is $>$500\textdegree C, the zero-shot answer is 400 and the ten-shot answer is 100.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[width=0.85\textwidth, height=6.2cm, xlabel={Number of demonstrations $k$},
+      ylabel={Exact match (\%)}, xmin=-0.3, xmax=10.3, ymin=0, ymax=40, xtick={0,1,...,10},
+      grid=major, grid style={gray!25}, every axis plot/.append style={thick}]
+      \addplot[mark=*, color=blue!70!black, error bars/.cd, y dir=both, y explicit]
+        plot coordinates {
+          (0,15)   +- (0,4.5) (1,20)   +- (0,5.0)
+          (2,23.5) +- (0,5.5) (3,23.5) +- (0,6.0)
+          (4,24.5) +- (0,6.0) (5,25.5) +- (0,6.5)
+          (6,26)   +- (0,6.0) (7,27)   +- (0,6.5)
+          (8,26)   +- (0,6.5) (9,27.5) +- (0,6.5) (10,28) +- (0,6.0)};
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Frozen-baseline exact match with 95\% bootstrap intervals (symmetrised to the larger half-width of Table~\ref{tab:shots}). The overlap of neighbouring intervals shows that adjacent values of $k$ cannot be separated with 200 queries.}
+  \label{fig:shotci}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[width=0.85\textwidth, height=6.2cm, xlabel={Number of demonstrations $k$},
+      axis y line*=left, ylabel={Mean latency (s)}, xmin=0, xmax=10, ymin=0, ymax=2.6,
+      xtick={0,1,...,10}, grid=major, grid style={gray!25}, every axis plot/.append style={thick}]
+      \addplot[mark=*, color=blue!70!black] coordinates {(0,0.40)(1,0.51)(2,0.65)(3,0.80)(4,0.98)(5,1.14)(6,1.33)(7,1.54)(8,1.76)(9,1.99)(10,2.23)};
+    \end{axis}
+    \begin{axis}[width=0.85\textwidth, height=6.2cm, axis y line*=right, axis x line=none,
+      ylabel={Mean input tokens}, xmin=0, xmax=10, ymin=0, ymax=3200,
+      every axis plot/.append style={thick}]
+      \addplot[mark=square*, color=red!70!black] coordinates {(0,211)(1,381)(2,552)(3,723)(4,893)(5,1064)(6,1235)(7,1405)(8,1576)(9,1747)(10,1919)};
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Cost of in-context prompting: mean latency (blue circles, left axis) and mean input tokens (red squares, right axis) against the number of demonstrations.}
+  \label{fig:cost}
+\end{figure}
+
+Exact match rises from 15.00\% at $k=0$ to 28.00\% at $k=10$, and ROUGE-L from 0.2438 to 0.3760. Relative to the zero-shot answers on the same queries, the gain is $+5.0$ points at $k=1$, $+8.5$ at $k=2$ and $k=3$, $+10.5$ at $k=5$, $+11.0$ at $k=8$ and $+13.0$ at $k=10$ (95\% bootstrap interval 8.0 to 18.5 points at $k=10$; 29 queries improved and 3 became worse). Most of the gain is reached by $k=2$. The curve is not monotone ($k=3$ equals $k=2$; $k=8$ is 1.0 point below $k=7$), and each 95\% interval in Table~\ref{tab:shots} is about 10 to 12.5 points wide, so differences between neighbouring values of $k$ are not resolved by 200 queries (Fig.~\ref{fig:shotci}). 
+
+The mean answer length falls from 2.51 words at $k=0$ to 1.73 at $k=1$ and 1.54 at $k=2$, and stays between 1.54 and 1.67 words for $k\ge 2$. This chapter does not test whether the change in length accounts for the change in EM. The cost grows with $k$ (Fig.~\ref{fig:cost}): mean latency rises from 0.40\,s to 2.23\,s and the mean input from 211 to 1,919 tokens. Table~\ref{tab:fsexamples} shows ten queries; for the hottest-temperature question the reference is $>$500\textdegree C, the zero-shot answer is 400 and the ten-shot answer is 100.
 \begin{table}[htbp]
   \centering
   \caption{Frozen few-shot predictions for ten test queries (exact match marked $\checkmark$)}
@@ -711,7 +948,7 @@ All eight runs lie between 84.13\% and 86.62\%. The four runs $q,k,v,o$ at $r=4$
 
 The four remaining runs ($q,k,v,o$ $r=32$, all-linear $r=16$ and $r=8$, and $q,k,v,o$ $r=16$) are about 0.9 to 2.5 points below the best run. Only for $q,k,v,o$ $r=16$ does the interval exclude zero ($+2.50$ points, interval $+1.14$ to $+3.97$); for all-linear $r=8$ the lower end is $-0.04$. Within the tested configurations, larger trainable counts did not give higher exact match: the three runs with the most trainable parameters (23.2, 14.0 and 13.4 million) score 85.74\%, 84.85\% and 85.50\%, below the four runs with 5.8 to 6.9 million. Of these 5.8 to 6.9 million parameters, 4.7 million are the projectors and modality embeddings in every run, which is 81\% of the total in the smallest configurations. Why the larger adapters score lower was not investigated.
 
-Every run was stopped by early stopping after 10 to 15 epochs of a planned 100. The lowest validation loss (0.1159, $q,k,v,o$ $r=8$) does not belong to the run with the highest test EM ($q,k,v,o$ $r=4$, minimum validation loss 0.1236, the third highest of the eight). Validation loss was used only to select the checkpoint of each run.
+Every run was stopped by early stopping after 10 to 15 epochs of a planned 100. The lowest validation loss (0.1159, $q,k,v,o$ $r=8$) does not belong to the run with the highest test EM ($q,k,v,o$ $r=4$, minimum validation loss 0.1236, the third highest of the eight). Validation loss was used only to select the checkpoint of each run. Fig.~\ref{fig:valloss} plots the minimum validation loss against test EM for all 16 runs.
 % src: D-01, D-02; metrics_table.csv via tools/recompute_ch7.py (EM, ROUGE-L, params, min val loss, epochs run); differences 0.564, 0.483, 0.322, 2.498, 1.128, 1.773, 0.886 (recompute_ch7.py); intervals from tools/cluster_bootstrap.py (see tab_bootstrap; to be rerun with 73 clusters); projector share 4,726,784 / 5,816,320 = 81.3\%
 
 \input{tables/tab_bootstrap.tex}
@@ -722,7 +959,7 @@ The same pipeline was run with \texttt{meta-llama/Llama-3.2-1B-Instruct} \cite{l
 \input{tables/tab_llama_ablation.tex}
 \textbf{The Llama runs are not a controlled comparison.} Table~\ref{tab:hparams} shows that the training settings differ between the Llama runs and from the Qwen2 runs: the learning rate is $2\times10^{-4}$ for Qwen2 and for Llama $q,v$ $r=8$, $1.5\times10^{-4}$ for six Llama runs and $1\times10^{-4}$ for Llama all-linear $r=16$; the planned number of epochs is 100 for Qwen2, 10 for five Llama runs, 8 for Llama $q,k,v,o$ $r=16$ and 100 for Llama $q,v$ $r=8$ and all-linear $r=16$; the early-stopping minimum improvement is $10^{-8}$ for Qwen2 and $10^{-3}$ for Llama; the patience is 2 for Llama $q,k,v,o$ $r=16$ and 3 elsewhere; and Llama all-linear $r=16$ uses batch size 2 with 8 accumulation steps instead of 4 with 4. Differences between Llama runs, and between Llama and Qwen2 runs, therefore cannot be attributed to rank or adapter placement.
 
-With that restriction, the observations are as follows. Llama scores higher than Qwen2 at the same placement and rank in seven of the eight pairs, by $+0.24$ ($q,v$ $r=8$) to $+4.03$ points ($q,k,v,o$ $r=16$), and lower in one (all-linear $r=16$, $-0.28$ points, a Llama run that also has a different learning rate, batch layout and planned epochs). The Llama run with the highest EM, $q,k,v,o$ $r=8$, is 2.10 points above Llama $q,v$ $r=8$ and 1.85 points above the best Qwen2 run, and both intervals exclude zero (Table~\ref{tab:bootstrap}); the second comparison mixes two backbones with different training settings. As for Qwen2, the lowest validation loss (0.1017, $q,k,v,o$ $r=16$) does not belong to the run with the highest EM. Fig.~\ref{fig:pareto} plots EM against trainable parameters for all 16 runs.
+With that restriction, the observations are as follows. Llama scores higher than Qwen2 at the same placement and rank in seven of the eight pairs, by $+0.24$ ($q,v$ $r=8$) to $+4.03$ points ($q,k,v,o$ $r=16$), and lower in one (all-linear $r=16$, $-0.28$ points, a Llama run that also has a different learning rate, batch layout and planned epochs). The Llama run with the highest EM, $q,k,v,o$ $r=8$, is 2.10 points above Llama $q,v$ $r=8$ and 1.85 points above the best Qwen2 run, and both intervals exclude zero (Table~\ref{tab:bootstrap}); the second comparison mixes two backbones with different training settings. As for Qwen2, the lowest validation loss (0.1017, $q,k,v,o$ $r=16$) does not belong to the run with the highest EM. Fig.~\ref{fig:pareto} plots EM against trainable parameters for all 16 runs, and Fig.~\ref{fig:emruns} shows the EM of each run by adapter placement and rank. Cumulative training time per run was 37.9 to 49.8 minutes for Qwen2 and 28.8 to 55.6 minutes for Llama (Fig.~\ref{fig:minutes}); the longest, Llama all-linear $r=16$, also used a different batch layout.
 \begin{figure}[htbp]
   \centering
   \begin{tikzpicture}
@@ -740,11 +977,84 @@ With that restriction, the observations are as follows. Llama scores higher than
   \caption{Exact match against trainable parameters (adapters, projectors and modality embeddings) for the 16 fine-tuning runs in Tables~\ref{tab:ablation} and~\ref{tab:llama}.}
   \label{fig:pareto}
 \end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[ybar, width=0.92\textwidth, height=7cm, bar width=7pt, ymin=82, ymax=90,
+      ylabel={Exact match (\%)}, symbolic x coords={qv r8,qv r16,qkvo r4,qkvo r8,qkvo r16,qkvo r32,all r8,all r16},
+      xtick=data, x tick label style={rotate=35, anchor=east, font=\footnotesize},
+      legend style={at={(0.5,1.03)}, anchor=south, legend columns=2, font=\footnotesize}, grid=major, grid style={gray!25},
+      enlarge x limits=0.08]
+      \addplot[fill=blue!60!black] coordinates {(qv r8,86.14)(qv r16,86.06)(qkvo r4,86.62)(qkvo r8,86.30)(qkvo r16,84.13)(qkvo r32,85.50)(all r8,84.85)(all r16,85.74)};
+      \addplot[fill=red!65!black] coordinates {(qv r8,86.38)(qv r16,87.63)(qkvo r4,87.15)(qkvo r8,88.48)(qkvo r16,88.15)(qkvo r32,86.83)(all r8,87.63)(all r16,85.46)};
+      \legend{Qwen2-1.5B, Llama-3.2-1B}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Test exact match of all 16 runs by adapter placement and rank (qv $=q,v$; qkvo $=q,k,v,o$; all $=$ all-linear; the vertical axis starts at 82\%). Training settings differ between some runs (Table~\ref{tab:hparams}).}
+  \label{fig:emruns}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[width=0.88\textwidth, height=6.4cm, xlabel={Minimum validation loss},
+      ylabel={Test exact match (\%)}, grid=major, grid style={gray!25},
+      legend style={at={(0.5,1.03)}, anchor=south, legend columns=2, font=\footnotesize}, xmin=0.098, xmax=0.136, ymin=83.5, ymax=89, scaled x ticks=false, xtick={0.10,0.11,0.12,0.13}, x tick label style={/pgf/number format/fixed, /pgf/number format/precision=2}]
+      \addplot[only marks, mark=*, mark size=2.6pt, color=blue!70!black] coordinates
+        {(0.1236,86.62)(0.1159,86.30)(0.1209,86.14)(0.1177,86.06)(0.1209,85.74)(0.1191,85.50)(0.1257,84.85)(0.1270,84.13)};
+      \addlegendentry{Qwen2-1.5B}
+      \addplot[only marks, mark=square*, mark size=2.6pt, color=red!70!black] coordinates
+        {(0.1057,88.48)(0.1017,88.15)(0.1096,87.63)(0.1099,87.63)(0.1046,87.15)(0.1142,86.83)(0.1233,86.38)(0.1330,85.46)};
+      \addlegendentry{Llama-3.2-1B}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Minimum validation loss against test exact match for the 16 runs. Within each backbone the lowest validation loss is not the run with the highest exact match.}
+  \label{fig:valloss}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[ybar, width=0.92\textwidth, height=6.6cm, bar width=7pt, ymin=0, ymax=62,
+      ylabel={Training time (min)}, symbolic x coords={qv r8,qv r16,qkvo r4,qkvo r8,qkvo r16,qkvo r32,all r8,all r16},
+      xtick=data, x tick label style={rotate=35, anchor=east, font=\footnotesize},
+      legend style={at={(0.5,1.03)}, anchor=south, legend columns=2, font=\footnotesize}, grid=major, grid style={gray!25}, enlarge x limits=0.08]
+      \addplot[fill=blue!60!black] coordinates {(qv r8,39.71)(qv r16,37.88)(qkvo r4,40.43)(qkvo r8,39.20)(qkvo r16,40.11)(qkvo r32,41.17)(all r8,47.07)(all r16,49.76)};
+      \addplot[fill=red!65!black] coordinates {(qv r8,30.03)(qv r16,28.77)(qkvo r4,29.77)(qkvo r8,29.62)(qkvo r16,30.76)(qkvo r32,31.83)(all r8,34.40)(all r16,55.58)};
+      \legend{Qwen2-1.5B, Llama-3.2-1B}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Cumulative training time logged at the last epoch of each run (qv $=q,v$; qkvo $=q,k,v,o$; all $=$ all-linear). The runs stopped after different numbers of epochs, and Llama all-linear $r{=}16$ used a different batch layout (Table~\ref{tab:hparams}), so the bars are not a like-for-like cost comparison.}
+  \label{fig:minutes}
+\end{figure}
+
 % src: metrics_table.csv via tools/recompute_ch7.py (EM range 85.46-88.48; differences Llama-Qwen2 by pair); hyperparameters from tab_hparams.tex (Llama rows come from the notebooks, not from the CSV: run_config is empty for the Llama runs); bootstrap values from tab_bootstrap.tex
 
 \section{Question Categories}
-Table~\ref{tab:category} gives EM by question category for four runs. The six categories contain 584, 584, 292, 438, 292 and 292 rows, i.e.\ 8, 8, 4, 6, 4 and 4 questions for each of the 73 images, so one image contributes 4 rows (1.4 points) to a cell of 292 rows. The percentages reproduce exactly from integer counts that sum to the total correct answers of each run (2,150, 2,088, 2,144 and 2,196).
+Table~\ref{tab:category} and Fig.~\ref{fig:categories} give EM by question category for four runs. The six categories contain 584, 584, 292, 438, 292 and 292 rows, i.e.\ 8, 8, 4, 6, 4 and 4 questions for each of the 73 images, so one image contributes 4 rows (1.4 points) to a cell of 292 rows. The percentages reproduce exactly from integer counts that sum to the total correct answers of each run (2,150, 2,088, 2,144 and 2,196).
+
 \input{tables/tab_category.tex}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[ybar, width=0.92\textwidth, height=7cm, bar width=6pt, ymin=60, ymax=100,
+      ylabel={Exact match (\%)}, symbolic x coords={Presence,Distribution,Flight,Classification,Cross-modal,Localization},
+      xtick=data, x tick label style={rotate=25, anchor=east, font=\footnotesize},
+      legend style={at={(0.5,1.03)}, anchor=south, legend columns=2, font=\scriptsize},
+      grid=major, grid style={gray!25}, enlarge x limits=0.1]
+      \addplot[fill=blue!35] coordinates {(Presence,94.01)(Distribution,86.82)(Flight,83.90)(Classification,83.56)(Cross-modal,85.96)(Localization,79.45)};
+      \addplot[fill=blue!75!black] coordinates {(Presence,90.75)(Distribution,85.96)(Flight,85.27)(Classification,85.84)(Cross-modal,76.37)(Localization,71.23)};
+      \addplot[fill=red!40] coordinates {(Presence,94.35)(Distribution,90.41)(Flight,85.27)(Classification,81.96)(Cross-modal,81.85)(Localization,74.66)};
+      \addplot[fill=red!75!black] coordinates {(Presence,95.21)(Distribution,89.73)(Flight,86.99)(Classification,86.30)(Cross-modal,89.73)(Localization,76.03)};
+      \legend{{Qwen2 $q,k,v,o$ $r{=}4$},{Qwen2 $q,k,v,o$ $r{=}16$},{Llama $q,v$ $r{=}8$},{Llama $q,k,v,o$ $r{=}8$}}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Exact match by question category for the four runs of Table~\ref{tab:category} (vertical axis starts at 60\%). Each category cell holds 292 to 584 rows from 73 images.}
+  \label{fig:categories}
+\end{figure}
+
 In all four runs presence and detection has the highest EM (90.75\% to 95.21\%) and localization and direction the lowest (71.23\% to 79.45\%). The 62 additional correct rows of Qwen2 $q,k,v,o$ $r=4$ over $r=16$ are concentrated in two categories: 28 in cross-modal reasoning (85.96\% against 76.37\%) and 24 in localization and direction (79.45\% against 71.23\%); the other four categories contribute $+10$ in total, and flight planning and classification favour $r=16$. Among the four runs, Llama $q,k,v,o$ $r=8$ has the highest value in four of the six categories (presence and detection, flight planning, classification, cross-modal reasoning). No error analysis was carried out, so why some categories are harder than others is not established. Cells of 292 rows from 73 images in a single run should not be read as stable differences of a few points.
 % src: tab_category.tex (computed from test_predictions.csv by the earlier script; consistency of counts re-checked in recompute_ch7.py); category counts = round(pct x n / 100): 19, 5, -4, -10, 28, 24 (sum 62 = 2,150 - 2,088)
 

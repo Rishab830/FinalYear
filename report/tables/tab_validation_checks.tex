@@ -5,13 +5,17 @@
   \small
   \begin{tabular}{P{1.8in}P{2.4in}c}
     \toprule
-    \textbf{Validation check} & \textbf{Assertion / Verified condition in code} & \textbf{Fact ID} \\
+    \textbf{Validation check} & \textbf{Assertion in code} & \textbf{Notebooks} \\
     \midrule
-    Radiometric pairing integrity & 738 source pairs (734 exact, 4 tolerance); 34 questions per image; resolved RGB $\neq$ thermal & DS-009, DS-013, DS-014 \\
-    Zero duplicate questions & Assertion \texttt{assert not duplicate\_questions.any()} & DS-037 \\
-    Split image disjointness & Disjoint train (592), validation (73), and test (73) sets for both modalities & DS-023--DS-026 \\
-    Zero baseline gradient updates & Assertion \texttt{assert trainable == 0} in baseline evaluation & FS-059, FS-072 \\
-    Trainable parameter scoping & Gradients strictly restricted to LoRA adapters, projectors, and type embeddings & balanced\_qkvo\_r16-006, 007 \\
+    One-to-one source-to-target mapping & \texttt{assert len(source\_to\_target) == len(source\_meta)} & All 16 fine-tuning \\
+    Zero duplicate questions & \texttt{assert not duplicate\_questions.any()} & All 16 fine-tuning \\
+    Split image disjointness & \texttt{assert train\_paths.isdisjoint(val\_paths)} (and test) & All 16 fine-tuning \\
+    Feature modality divergence & \texttt{assert \_diff > 1e-4} & All 16 fine-tuning \\
+    Single GPU allocation & \texttt{assert used\_cuda\_devices == \{'cuda:0'\}} & All 16 fine-tuning \\
+    Baseline frozen parameters & \texttt{assert trainable == 0} & Few-shot baseline \\
+    Baseline split disjointness & \texttt{assert set(support\_df['rgb\_resolved']).isdisjoint(\dots)} & Few-shot baseline \\
+    Adapter count per target & \texttt{assert len(adapter\_layers) == len(targets) * layers} & 7 Qwen2 notebooks \\
     \bottomrule
-  \end{tabular}
+  \end{tabular}\\[2pt]
+  {\footnotesize Printed execution outputs separately confirm: 738 source pairs with 34 questions per pair (734 exact matches and 4 tolerance matches, DS-009, DS-013, DS-014); trainable parameters strictly restricted to adapters, projectors, and type embeddings.}
 \end{table}

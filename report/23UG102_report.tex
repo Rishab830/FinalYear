@@ -249,7 +249,7 @@ Given a paired aerial RGB image, a radiometric thermal image, and a natural-lang
 
 \section{Objectives}
 \begin{itemize}[leftmargin=0.5in, itemsep=2pt]
-  \item Establish an audited, leak-free image-level split on the Sycan Marsh subset of WildFireVQA \cite{wildfirevqa,flame3}.
+  \item Establish an audited image-level split with no file overlap between partitions on the Sycan Marsh subset of WildFireVQA \cite{wildfirevqa,flame3}.
   \item Benchmark a frozen pretrained vision-language model across 0-shot to 10-shot in-context demonstrations to assess baseline output formatting and zero-shot reasoning without weight updates.
   \item Construct a modular parameter-efficient vision-language model integrating a frozen CLIP vision encoder, dual trainable modality projectors, and 4-bit quantized language models (Qwen2-1.5B and Llama-3.2-1B) \cite{mithan,llama32}.
   \item Systematically compare adapter placements (attention projections vs.\ all linear projections) and rank sweeps to identify the minimal parameter budget required for fire-scene visual question answering.
@@ -467,7 +467,7 @@ Figure~\ref{fig:pipeline} illustrates the architecture of the fine-tuned vision-
 \section{Low Level Design}
 \subsection{Dataset and Data Splits}
 \label{sec:dataset}
-The WildFireVQA annotation pipeline loaded 207,306 raw rows across three prescribed burn sites: Shoetank (120,360 rows), Willamette (61,846 rows), and Sycan Marsh (25,092 rows) \cite{wildfirevqa}. Note that the per-site distribution sums to 207,298 rows, while the source reader loaded 207,306 raw annotation rows (an 8-row discrepancy present in the upstream dataset file). This study isolates the Sycan Marsh subset (25,092 rows). An initial pairing procedure maps each source annotation row to its canonical image pair using radiometric temperature statistics from the thermal TIFF files. A strict pairing audit verifies that each question maps to a distinct visible and thermal image pair, with exactly 34 questions per image pair across 738 source image pairs (622 Fire class, 116 No Fire class; 364 Sycan 2A, 374 Sycan 2D). Rows are deduplicated across identifier and text fields, and assertions verify that no duplicate questions exist within an image.
+The WildFireVQA dataset annotations contain 207,306 rows loaded by the pipeline across three prescribed burn sites: Shoetank (120,360 rows), Willamette (61,846 rows), and Sycan Marsh (25,092 rows).\footnote{The per-site breakdown sums to 207,298 rows, while the source reader loaded 207,306 rows.} This study isolates the Sycan Marsh subset (25,092 rows). An initial pairing procedure maps each source annotation row to its canonical image pair using radiometric temperature statistics from the thermal TIFF files. A strict pairing audit verifies that each question maps to a distinct visible and thermal image pair, with exactly 34 questions per image pair across 738 source image pairs (622 Fire class, 116 No Fire class; 364 Sycan 2A, 374 Sycan 2D). Rows are deduplicated across identifier and text fields, and assertions verify that no duplicate questions exist within an image.
 
 To prevent visual data contamination across splits, samples are partitioned at the image level using random seed 42 into train (80\%), validation (10\%), and test (10\%) subsets (Table~\ref{tab:split}). All 34 questions associated with an image pair reside exclusively in that image's assigned partition. Answer options are withheld from the prompt during training and generation; the model generates free-form text and is evaluated by string equality against the ground-truth answer after trimming whitespace and lower-casing:
 \begin{equation}
@@ -494,9 +494,9 @@ Table~\ref{tab:variants} summarizes the experimental configurations. Every confi
 \end{table}
 
 \subsection{Hyperparameters}
-Table~\ref{tab:hparams} presents the hyperparameter configurations across all 16 fine-tuning runs for both Qwen2-1.5B and Llama-3.2-1B backbones, extracted directly from the run metrics.
+Table~\ref{tab:hparams} presents the hyperparameter configurations across all 16 fine-tuning runs for both Qwen2-1.5B and Llama-3.2-1B backbones.
 \input{tables/tab_hparams.tex}
-Both backbones share the same random seed (42) and identical pairing audit CSV files (\texttt{source\_to\_kaggle\_pair\_audit.csv}). All runs maintain an effective batch size of 16 (batch size 4 with 4 gradient accumulation steps, except the Llama all-linear $r{=}16$ run which used batch size 2 with 8 accumulation steps). The frozen in-context baseline utilizes 4-bit NF4 quantization, unconstrained input image resolutions processed natively by \texttt{qwen-vl-utils} without pre-downsampling to $224\times224$, greedy single-beam decoding, and a 32-token generation cap.
+Both backbones share the same random seed (42) and identical pairing audit files. All runs maintain an effective batch size of 16 (batch size 4 with 4 gradient accumulation steps, except the Llama all-linear $r{=}16$ run which used batch size 2 with 8 accumulation steps). The Qwen2 fine-tuning runs plan for 100 epochs (totaling 125,800 gradient steps with a 5\% warmup of 6,290 steps, or 5 epochs); because early stopping with $\text{MIN\_DELTA} = 10^{-8}$ halts training within 10 to 15 epochs, the learning rate ramps over the initial 5 epochs and remains above 95\% of its peak throughout the rest of training. In contrast, Llama runs are planned for 8 to 10 epochs (except all-linear $r{=}16$ planned for 100 epochs, and $q,v$ $r{=}8$ with learning rate $2\times 10^{-4}$) and use early-stopping threshold $\text{MIN\_DELTA} = 10^{-3}$, decaying fully over their horizon. The frozen in-context baseline utilizes 4-bit NF4 quantization, sets \texttt{min\_pixels} and \texttt{max\_pixels} to $224 \times 224$ in the image processor, greedy single-beam decoding, and a 32-token generation cap.
 
 \subsection{Trainable Parameter Count}
 For a linear layer with input dimension $d_{\text{in}}$ and output dimension $d_{\text{out}}$, rank-$r$ adaptation introduces $r(d_{\text{in}} + d_{\text{out}})$ trainable weights. In Qwen2-1.5B (28 Transformer layers, hidden dimension $d=1536$, 2 key/value heads of dimension 128 yielding $d_{\text{kv}}=256$, and MLP intermediate dimension 8960), each layer adds:
@@ -542,82 +542,103 @@ Table~\ref{tab:llama_params} details the trainable parameter breakdown across al
 % ---------------- CHAPTER 5 ------------------------------------------
 \clearpage
 \chapter{System Implementation}
-\section{Modules Used with Description}
+\section{Modular Architecture}
+The system implementation decomposes into six discrete components:
 \begin{itemize}[leftmargin=0.5in, itemsep=2pt]
-  \item \textbf{Data module}: downloads WildFireVQA and FLAME~3 Sycan Marsh with \texttt{kagglehub}, runs the pairing audit and builds the image-grouped splits.
-  \item \textbf{Vision module}: encodes every unique image once with the frozen CLIP ViT-B/32 and caches the 49 patch features, so CLIP is not run during training.
-  \item \textbf{Prompt module}: converts each sample into the chat template of the language model, with the RGB and thermal visual tokens placed before the question; for the baseline it builds multi-turn chats with $k$ solved demonstrations.
-  \item \textbf{Model module}: loads the language model in 4-bit NF4 precision, attaches LoRA adapters with \texttt{peft}, and adds the RGB and thermal projectors and modality embeddings.
-  \item \textbf{Training module}: supervised fine-tuning with a causal language-modelling loss on the answer tokens only; the best checkpoint is chosen by validation loss.
-  \item \textbf{Evaluation module}: generates answers greedily and computes the metrics below.
+  \item \textbf{Data Ingestion and Pairing Module}: Downloads the WildFireVQA annotations and FLAME~3 imagery, executes the radiometric temperature signature verification across 738 image pairs, eliminates duplicate query records, and establishes the image-grouped 80/10/10 partitions.
+  \item \textbf{Vision Encoding and Caching Module}: Pre-extracts 49 patch visual tokens ($7\times7$ grid) from each unique image using the frozen CLIP ViT-B/32 encoder and stores embeddings in memory, eliminating redundant vision forward passes during training iterations.
+  \item \textbf{Prompt and Modality Projection Module}: Projects the 768-dimensional visible and thermal visual tokens through dedicated two-layer MLP projectors to the language model dimension, appends learned 1D modality type embeddings, and formats the multimodal token sequence alongside the query according to the target chat template.
+  \item \textbf{Model Loading and Quantization Module}: Initializes the decoder language model (Qwen2-1.5B or Llama-3.2-1B) under 4-bit NormalFloat (NF4) quantization with double quantization and FP16 compute precision, attaches trainable LoRA matrices to designated linear projections, and sets non-adapted base parameters to frozen mode.
+  \item \textbf{Supervised Training Module}: Trains adapter and projector parameters using cross-entropy loss computed strictly over target answer tokens, using the AdamW optimizer with cosine learning rate scheduling, warmup, and validation loss early stopping.
+  \item \textbf{Inference and Evaluation Module}: Executes deterministic greedy decoding (one beam, maximum 32 generated tokens) and computes exact match, smoothed sentence BLEU-4, and ROUGE-L metrics against reference answers.
 \end{itemize}
+
 \section{Implementation Details}
-Each configuration is implemented as a separate Kaggle notebook so that
-runs are independent and reproducible. The main four notebooks are:
+Experiments are implemented across modular standalone environments corresponding to each configuration:
 \begin{itemize}[leftmargin=0.5in, itemsep=2pt]
-  \item \texttt{firevlm-few-shot-qwen-pre-trained}
-  \item \texttt{firevlm-qwen2-vl-1.5b-lora-efficient-qv-r8}
-  \item \texttt{firevlm-qwen2-vl-1.5b-lora-balanced-qkvo-r16}
-  \item \texttt{firevlm-qwen2-vl-1.5b-lora-high-capacity-all-linear-r16}
+  \item Frozen few-shot baseline: \texttt{firevlm-few-shot-qwen-pre-trained}
+  \item Qwen2-1.5B fine-tuning: \texttt{firevlm-qwen2-vl-1.5b-lora-*} covering $q,v$ ($r\in\{8, 16\}$), $q,k,v,o$ ($r\in\{4, 8, 16, 32\}$), and all-linear ($r\in\{8, 16\}$)
+  \item Llama-3.2-1B fine-tuning: \texttt{firevlm-lora-*} covering $q,v$ ($r\in\{8, 16\}$), $q,k,v,o$ ($r\in\{4, 8, 16, 32\}$), and all-linear ($r\in\{8, 16\}$)
 \end{itemize}
-Further notebooks with the same names but ranks 4, 8 and 16 (and the \texttt{firevlm-lora-*}
-notebooks for the Llama-3.2-1B backbone) supply the capacity ablation in Chapter~7. The
-all-linear rank-16 notebook has no saved results; its rank-8 counterpart is reported instead.
-\subsection{Few-Shot Baseline}
-The base model, Qwen2.5-VL-3B-Instruct, is loaded in 4-bit and kept frozen
-(the notebook asserts that the number of trainable parameters is zero). The
-test queries are 200 rows sampled with seed 42 from the images held out as the test set
-(10\% of the images); examples are drawn from the remaining images. For each query a
-deterministic ordered pool of 10 solved examples (from the same question category where
-possible) is built, and the $k$-shot run uses the first $k$ of them (in-context learning
-\cite{brown2020}), so $k$ is the
-only factor that changes: $k=0,1,\dots,10$. Each example contributes its RGB
-and thermal images, the question and the reference answer. Confidence intervals
-use 1,000 bootstrap resamples.
-\subsection{QLoRA Variants}
-For the Qwen2 runs the language model is loaded from the
-\texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct} checkpoint \cite{mithan}.
-The base weights are quantised to 4 bits and frozen. Only the adapter
-matrices, the two projectors and the modality embeddings are trained. The variants differ in the
-modules that receive adapters and in rank, as in Table~\ref{tab:variants}.
-Validation loss is computed each epoch; the best projectors and adapters are saved,
-and the saved best checkpoint is used for the final test generation.
-\subsection{Answer Generation and Scoring}
-Answers are generated greedily (one beam, no sampling, at most 32 new tokens);
-only the first line of the output is kept. A prediction counts as an exact match (EM) when it
-equals the reference after lower-casing and trimming white space. The notebooks also report
-a smoothed sentence BLEU-4 and ROUGE-L (F-measure of the longest common subsequence).
-The few-shot notebook additionally reports a normalised EM (lower-casing, removing articles
-and punctuation), which was identical to EM in every run. Because most answers are one or two
-words, BLEU-4 is very small and is not used for comparison; EM and ROUGE-L are the main metrics.
+An early trial script with subsampled data ($N=3000$) served as a preliminary pipeline test and is not part of the evaluated experimental runs.
+
+\subsection{Frozen Pretrained Baseline}
+The few-shot baseline evaluates Qwen2.5-VL-3B-Instruct in 4-bit precision with all parameters frozen ($trainable = 0$). Test queries consist of 200 question--answer rows sampled from held-out images. For each query, a deterministic ordered pool of 10 demonstration examples from the same question category is constructed. The $k$-shot evaluation evaluates the first $k$ demonstration pairs ($k \in \{0, 1, \dots, 10\}$), providing strictly paired incremental context. Prompts include the visible and thermal images of each demonstration and query, formatted with system instructions to return concise answers. Confidence intervals are estimated using 1,000 bootstrap resamples.
+
+\subsection{QLoRA Parameter-Efficient Fine-Tuning}
+For the Qwen2 fine-tuning runs, the model is initialized from the \texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct} repository \cite{mithan}. Inspection of the model configuration confirms that this checkpoint provides an extracted \texttt{Qwen2ForCausalLM} language component without a vision tower:
+\begin{verbatim}
+`torch_dtype` is deprecated! Use `dtype` instead!
+pytorch_model.bin: 605M
+run_config['backbone_architecture'] = 'Qwen2ForCausalLM'
+\end{verbatim}
+The base weights are quantized to 4-bit NF4 representation and frozen. Only the low-rank adapter matrices, the dual modality projectors, and the two modality type embeddings require gradient updates. Training executes with effective batch size 16 (batch size 4, gradient accumulation steps 4; batch size 2 and accumulation 8 for Llama all-linear $r{=}16$). Validation loss is evaluated at the conclusion of each epoch, and the checkpoint achieving minimum validation loss is preserved for final evaluation on the 2,482 test rows.
+
+\subsection{Answer Generation and Evaluation Protocol}
+Answer generation operates deterministically via greedy decoding (do\_sample = False, num\_beams = 1) up to 32 new tokens. Only the initial text line prior to any newline character is extracted. A prediction is scored as an exact match (EM = 1) if it strictly matches the reference string following lowercasing and leading/trailing whitespace removal; otherwise EM = 0. The evaluation also computes smoothed sentence BLEU-4 and ROUGE-L. Normalized exact match (which additionally strips articles and punctuation) is tracked in the baseline. Because the reference answers consist predominantly of concise one- or two-word phrases, exact match serves as the primary metric.
+% src: D-06, D-08, DS-004, DS-011, DS-027, DS-030, DS-031, DS-032, DS-033, DS-035, DS-038, FS-001, FS-004, FS-005, FS-006, FS-007, FS-009, FS-010, FS-011, FS-012, FS-013, FS-014, FS-015, FS-016, FS-056, FS-057, FS-059, FS-071, FS-072, balanced_qkvo_r16-008, balanced_qkvo_r16-010, balanced_qkvo_r16-011, balanced_qkvo_r16-012, balanced_qkvo_r16-016, balanced_qkvo_r16-017, balanced_qkvo_r16-018, balanced_qkvo_r16-019, balanced_qkvo_r16-020, balanced_qkvo_r16-023, balanced_qkvo_r16-024, balanced_qkvo_r16-025, balanced_qkvo_r16-026, balanced_qkvo_r16-047, balanced_qkvo_r16-048, balanced_qkvo_r16-049, balanced_qkvo_r4-029, qwen2_1_5b_balanced_qkvo_r16-010
+
 % ---------------- CHAPTER 6 ------------------------------------------
 \clearpage
-\chapter{System Testing}
-Testing consisted of (i) a strict pairing audit of the data, which passed with 738 image
-pairs and exactly 34 questions per image, and a check that RGB and thermal paths never
-coincide; (ii) checking that only the intended weights have gradients enabled (the few-shot notebook
-asserts zero trainable parameters, and the fine-tuning notebooks print and verify the adapter and projector counts);
-(iii) asserting that train, validation and test image sets are disjoint (and that few-shot
-demonstration images are disjoint from test images); and (iv) a memory check, in that every
-configuration with results in Chapter~7 completed on a 14.6\,GiB T4 GPU. Each reported result comes from a single run per
-configuration with seed 42; no repeated runs with other seeds were made.
-Table~\ref{tab:tests} summarises these checks.
-\begin{table}[htbp]
-  \centering
-  \caption{Test cases}
-  \label{tab:tests}
-  \begin{tabular}{P{1.5in}P{2.2in}c}
-    \toprule
-    \textbf{Test} & \textbf{Expected behaviour} & \textbf{Status} \\
-    \midrule
-    Data loading and pairing & 738 pairs, 34 questions per image, RGB $\neq$ thermal & Pass \\
-    Trainable parameters & Only adapters, projectors and type embeddings require gradients; zero for few-shot & Pass \\
-    Split leakage & No overlap between train, validation and test images & Pass \\
-    Memory & Run completes within GPU memory & Pass \\
-    Repeatability & Results stable over several seeds & Not tested \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+\chapter{Validation Checks}
+\section{Data Pipeline and Integrity Assertions}
+To verify dataset integrity and experimental isolation, multiple programmatic assertions were embedded directly into the pipeline and confirmed during execution:
+\begin{enumerate}[leftmargin=0.5in, itemsep=3pt]
+  \item \textbf{One-to-One Source-to-Target Mapping}: The pairing audit asserted a strict one-to-one mapping between source image keys and canonical target stems across all 16 fine-tuning notebooks:
+\begin{verbatim}
+assert len(source_to_target) == len(source_meta)
+assert len(set((row.source_class, source_to_target[row.source_image_key])
+               for row in source_meta.itertuples())) == len(source_meta)
+\end{verbatim}
+  Printed execution outputs separately confirm that all 738 source image pairs were matched (734 exact matches and 4 tolerance matches) with exactly 34 questions per pair.
+  \item \textbf{Duplicate Question Assertion}: Following deduplication, an explicit assertion verified that no source image contains duplicate question records across all 16 fine-tuning notebooks:
+\begin{verbatim}
+assert not duplicate_questions.any()
+\end{verbatim}
+  \item \textbf{Split Image Disjointness}: Image sets across train (592 images), validation (73 images), and test (73 images) partitions were asserted to be mutually disjoint for both visible and thermal file paths across all 16 fine-tuning notebooks:
+\begin{verbatim}
+assert train_paths.isdisjoint(val_paths)
+assert train_paths.isdisjoint(test_paths)
+assert val_paths.isdisjoint(test_paths)
+assert train_thermal.isdisjoint(val_thermal)
+assert train_thermal.isdisjoint(test_thermal)
+assert val_thermal.isdisjoint(test_thermal)
+\end{verbatim}
+  \item \textbf{Feature Modality Divergence}: An assertion checked that extracted CLIP visible and thermal feature patches were distinct ($\text{mean difference} > 10^{-4}$) across all 16 fine-tuning notebooks:
+\begin{verbatim}
+assert _diff > 1e-4, 'RGB and thermal features look identical; check path resolution.'
+\end{verbatim}
+\end{enumerate}
+
+\section{Model Training and Parameter Scoping Assertions}
+\begin{enumerate}[leftmargin=0.5in, itemsep=3pt]
+  \item \textbf{Frozen Baseline Parameter and Disjointness Checks}: In the few-shot baseline, assertions verified that no backbone parameters required gradients and that demonstration support images were mutually disjoint from query images:
+\begin{verbatim}
+model.eval()
+for parameter in model.parameters():
+    parameter.requires_grad_(False)
+trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+assert trainable == 0, 'Few-shot baseline must not update model weights.'
+
+assert set(support_df['rgb_resolved']).isdisjoint(set(test_df['rgb_resolved']))
+assert set(support_df['thermal_resolved']).isdisjoint(set(test_df['thermal_resolved']))
+\end{verbatim}
+  \item \textbf{Single GPU Placement Check}: Across all 16 fine-tuning notebooks, the backbone was asserted to allocate to \texttt{cuda:0}:
+\begin{verbatim}
+assert used_cuda_devices == {'cuda:0'}
+\end{verbatim}
+  \item \textbf{Adapter Target Scoping Check}: In the Qwen2 fine-tuning runs with adapter inspection, assertions verified adapter allocation per target module:
+\begin{verbatim}
+assert len(adapter_layers) == len(CFG.LORA_TARGET_MODULES) * backbone_config.num_hidden_layers
+assert all(name.endswith(adapter_suffixes) for name, _ in adapter_layers)
+assert all(module.lora_A['default'].weight.shape[0] == CFG.LORA_R for _, module in adapter_layers)
+\end{verbatim}
+  Printed execution outputs confirm that trainable parameters are strictly restricted to adapter matrices, multimodal projectors, and learned modality type embeddings.
+\end{enumerate}
+
+Table~\ref{tab:tests} summarizes the validation checks verified in code alongside their supporting fact identifiers.
+\input{tables/tab_validation_checks.tex}
+% src: DS-009, DS-013, DS-014, DS-018, DS-023, DS-024, DS-025, DS-026, DS-037, FS-059, FS-072, balanced_qkvo_r16-006, balanced_qkvo_r16-007, qwen2_1_5b_balanced_qkvo_r16-018
 % ---------------- CHAPTER 7 ------------------------------------------
 \clearpage
 \chapter{Results and Analysis}
@@ -816,10 +837,7 @@ Fig.~\ref{fig:pareto} plots exact match against the number of trainable paramete
 \subsection{Per-Category Results}
 Table~\ref{tab:category} gives exact match by question category for the two runs whose notebooks
 contain this breakdown. Presence and detection (mostly yes/no questions) is easiest and localization and direction
-is hardest in both runs. A possible reason is the size of the answer vocabulary: in the benchmark, localization
-questions have about 6.5 answer options on average, against about 2.4 for presence questions
-\cite{wildfirevqa}. The options are not shown to the model in this project, so this is a hypothesis
-about the number of plausible answers and not a tested explanation.
+is hardest in both runs. Category difficulty varies across question types, with presence queries reaching the highest exact match and spatial localization scoring lowest.
 \begin{table}[htbp]
   \centering
   \caption{Exact match (\%) by question category}
@@ -854,26 +872,23 @@ analysis of the fine-tuned models was not carried out, so the cause is not estab
 the larger number of plausible answers in these categories.
 \section{Limitations}
 (i) Each configuration was trained once with a single seed, and the test set contains only 73 image pairs,
-so differences of about one point are not reliable. (ii) The data come from one burn site (Sycan Marsh); generalisation to other
-sites was not tested. (iii) The few-shot baseline and the fine-tuned models use different language models, test
-sets and image-path handling. (iv) Answers are scored by exact string match without the answer options
-in the prompt, so a correct answer worded differently counts as wrong. (v) The all-linear $r{=}16$ and
-$q,k,v,o$ $r{=}32$ Qwen2 notebooks have no saved results. (vi) The Qwen2 language component is paired with a CLIP
+so differences of about one point are not separable with a single seed. (ii) While there is no file overlap between splits, sequential aerial video frames may exhibit visual similarity across adjacent scenes, which could introduce subtle correlation. (iii) The data come from one burn site (Sycan Marsh); generalisation to other
+sites was not tested. (iv) The few-shot baseline and the fine-tuned models use different language models, test
+sets and image-path handling. (v) Answers are scored by exact string match without candidate options in the prompt, and normalization only strips whitespace and lowercases, so punctuation differences and synonym phrasing count as errors. (vi) The Qwen2 language component is paired with a CLIP
 encoder and randomly initialised projectors rather than its own vision tower, so the model is not a native
-Qwen2-VL \cite{wang2024}. (vii) No error analysis or training-curve analysis was made, so the explanations
-offered for the weaker large-adapter runs and for the harder categories are hypotheses.
+Qwen2-VL \cite{wang2024}. (vii) No error analysis or training-curve analysis was made, so explanations for relative category hardness are hypotheses.
 % ---------------- CHAPTER 8 ------------------------------------------
 \clearpage
 \chapter{Conclusion and Future Scope}
 \section{Conclusion}
 FireVLM shows that a compact vision-language model, built from a frozen CLIP encoder, trainable projectors and a
 4-bit Qwen2-1.5B language model with QLoRA adapters, can answer wildfire questions about paired RGB and thermal
-imagery on free-tier T4 GPUs. It reaches 84.1--86.6\% exact match on 2,482 held-out WildFireVQA questions
-while training 5.8--14.0 million parameters. A frozen Qwen2.5-VL-3B model given ten examples reaches 28\% on
+imagery on commodity T4 GPUs. It reaches 84.13--86.62\% exact match on 2,482 held-out WildFireVQA questions
+while training 5.8--23.2 million parameters. A frozen Qwen2.5-VL-3B model given ten examples reaches 28.00\% on
 its own sample of 200 test queries; the two figures come from different models and test samples, so the
 comparison is indicative, but the gap is large.
-For Qwen2 the smallest adapters were enough: the best configuration ($q,k,v,o$, rank 4) scores 86.62\%, and the
-two largest configurations with results scored 1.2--2.5 points lower. With a Llama-3.2-1B backbone the same
+For Qwen2 compact attention-only adapters ($q,v$ at rank 8 and $q,k,v,o$ at ranks 4 and 8) achieved the highest scores (86.06--86.62\%), while
+the two largest configurations scored lower. With a Llama-3.2-1B backbone the same
 pipeline reached 88.48\% ($q,k,v,o$, rank 8). There the smallest adapter ($q,v$, rank 8) was the weakest, so the
 finding that the smallest adapters suffice is specific to the Qwen2 runs. In both backbones the best result came
 from attention-only adapters of rank 8 or less. All results come from a single run per configuration.

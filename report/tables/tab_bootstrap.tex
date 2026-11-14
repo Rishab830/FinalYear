@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+  \centering
+  \caption[Exploratory paired image-level bootstrap of exact-match differences]{Exploratory paired image-level bootstrap of exact-match differences (points; 95\% percentile interval).}
+  \label{tab:bootstrap}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{P{3.1in}cc}
+    \toprule
+    \textbf{Comparison (A $-$ B)} & \textbf{$\Delta$ EM} & \textbf{95\% interval} \\
+    \midrule
+    Qwen2 $q,k,v,o$ $r{=}4$ $-$ Qwen2 $q,k,v,o$ $r{=}8$ & $+0.32$ & $[-0.99, +1.63]$ \\
+    Qwen2 $q,k,v,o$ $r{=}4$ $-$ Qwen2 $q,v$ $r{=}8$ & $+0.48$ & $[-1.03, +1.92]$ \\
+    Qwen2 $q,v$ $r{=}8$ $-$ Qwen2 $q,v$ $r{=}16$ & $+0.08$ & $[-1.67, +1.88]$ \\
+    Qwen2 $q,k,v,o$ $r{=}4$ $-$ Qwen2 $q,k,v,o$ $r{=}16$ & $+2.50$ & $[+1.14, +3.97]$ \\
+    Qwen2 $q,k,v,o$ $r{=}4$ $-$ Qwen2 all-linear $r{=}8$ & $+1.77$ & $[-0.04, +3.55]$ \\
+    Llama $q,k,v,o$ $r{=}8$ $-$ Llama $q,v$ $r{=}8$ & $+2.10$ & $[+0.72, +3.51]$ \\
+    Llama $q,k,v,o$ $r{=}8$ $-$ Qwen2 $q,k,v,o$ $r{=}4$ & $+1.85$ & $[+0.37, +3.42]$ \\
+    \bottomrule
+  \end{tabular}\\[2pt]
+  {\footnotesize Each comparison resamples whole test images with replacement and keeps the 34 questions of an image together. The intervals reflect test-set sampling only; they do not include seed or training variance, and no correction was made for the seven comparisons. The last two rows compare runs whose training settings differ (Table~\ref{tab:hparams}).}
+\end{table}

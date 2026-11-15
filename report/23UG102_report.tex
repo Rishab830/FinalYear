@@ -657,7 +657,7 @@ An early trial script with subsampled data ($N=3000$) served as a preliminary pi
 The few-shot baseline evaluates Qwen2.5-VL-3B-Instruct in 4-bit precision with all parameters frozen ($trainable = 0$). Test queries consist of 200 question--answer rows sampled from held-out images. For each query, a deterministic ordered pool of 10 demonstration examples from the same question category is constructed. The $k$-shot evaluation evaluates the first $k$ demonstration pairs ($k \in \{0, 1, \dots, 10\}$), providing strictly paired incremental context. Prompts include the visible and thermal images of each demonstration and query, formatted with system instructions to return concise answers. Confidence intervals are estimated using 1,000 bootstrap resamples.
 
 \subsection{QLoRA Parameter-Efficient Fine-Tuning}
-For the Qwen2 fine-tuning runs, the model is initialized from the \texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct} repository \cite{mithan}.
+For the Qwen2 fine-tuning runs, the model is initialized from the \texttt{mit-han-lab/\allowbreak Qwen2-VL-1.5B-Instruct} repository \cite{mithan}.
 The base weights are quantized to 4-bit NF4 representation and frozen. Only the low-rank adapter matrices, the dual modality projectors, and the two modality type embeddings require gradient updates. Training executes with effective batch size 16 (batch size 4, gradient accumulation steps 4; batch size 2 and accumulation 8 for Llama all-linear $r{=}16$). Validation loss is evaluated at the conclusion of each epoch, and the checkpoint achieving minimum validation loss is preserved for final evaluation on the 2,482 test rows. Fig.~\ref{fig:trainflow} summarises this procedure.
 
 \begin{figure}[htbp]

@@ -1,11 +1,11 @@
 \begin{table}[htbp]
   \centering
-  \caption{Exact match (\%) by question category computed from \texttt{test\_predictions.csv}}
+  \caption[Exact match (\%) by question category computed from the test predictions]{Exact match (\%) by question category computed from \texttt{test\_predictions.csv}}
   \label{tab:category}
-  \small
-  \begin{tabular}{P{2.2in}cccc}
+  \footnotesize\setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}P{1.6in}*{4}{>{\centering\arraybackslash}p{0.9in}}@{}}
     \toprule
-    \textbf{Category (sample count $n$)} & \textbf{Qwen2 $q,k,v,o$ $r{=}4$} & \textbf{Qwen2 $q,k,v,o$ $r{=}16$} & \textbf{Llama $q,v$ $r{=}8$} & \textbf{Llama $q,k,v,o$ $r{=}8$} \\
+    \textbf{Category ($n$)} & \textbf{Qwen2 $q,k,v,o$ $r{=}4$} & \textbf{Qwen2 $q,k,v,o$ $r{=}16$} & \textbf{Llama $q,v$ $r{=}8$} & \textbf{Llama $q,k,v,o$ $r{=}8$} \\
     \midrule
     Presence and Detection ($n{=}584$) & 94.01 & 90.75 & 94.35 & 95.21 \\
     Distribution and Segmentation ($n{=}584$) & 86.82 & 85.96 & 90.41 & 89.73 \\

@@ -443,7 +443,7 @@ Functionally it takes a paired aerial visible-spectrum (RGB) image, a radiometri
 % ---------------- CHAPTER 4 ------------------------------------------
 \clearpage
 \chapter{System Design}
-\section{High Level Design}
+\section{High Level Design}\label{sec:highlevel}
 Figure~\ref{fig:pipeline} is the architecture of the fine-tuned model. Each sample is an aerial visible RGB image and a radiometric thermal image from FLAME~3, paired with a WildFireVQA question \cite{wildfirevqa,flame3}. The images are both resized to $224\times224$. A frozen CLIP ViT-B/32 vision encoder is used to turn each image into 49 patch tokens (i.e.\ a $7\times7$ spatial grid) so each instance has 98 visual tokens \cite{radford2021}. Two separate multilayer perceptron (MLP) projectors (one for the visible and one for the thermal) project the 768-dimensional vision tokens into the hidden dimension $d$ of the target language model (1536 for Qwen2-1.5B, 2048 for Llama-3.2-1B). A learned 1D modality type embedding is added so the model can distinguish between the two streams. The 98 visual tokens are placed in front of the question in a chat-style prompt and a 4-bit quantised decoder language model with LoRA adapters generates the answer text autoregressively \cite{dettmers2023,hu2022}. The frozen baseline operates differently in that the images and questions are simply fed directly into Qwen2.5-VL-3B-Instruct as multi-turn in-context demonstration sequences with no parameter updates \cite{brown2020,bai2025}.
 \begin{figure}[htbp]
   \centering
@@ -470,6 +470,164 @@ Figure~\ref{fig:pipeline} is the architecture of the fine-tuned model. Each samp
   \caption{Architecture of the fine-tuned FireVLM models. Each projector outputs tokens of width $d$, the hidden width of the language model (1536 for Qwen2-1.5B, 2048 for Llama-3.2-1B).}
   \label{fig:pipeline}
 \end{figure}
+\section{Architecture of the Component Models}
+\label{sec:components}
+FireVLM is assembled from pretrained networks rather than trained from scratch, so its behaviour depends on how each of them is built. Four pretrained networks are involved: the image tower of CLIP ViT-B/32 (frozen, used by all 16 fine-tuned runs), the Qwen2-1.5B and Llama-3.2-1B language models (4-bit, adapted with LoRA) and Qwen2.5-VL-3B-Instruct (frozen, used only as the in-context baseline). This section describes each of them. The two language models share a single decoder design, so that design is described once (Section~\ref{sec:decoder}), and the two models are then compared against it. Table~\ref{tab:components} at the end of the section puts the numbers side by side.
+
+\subsection{CLIP ViT-B/32 Image Encoder}
+\label{sec:clip}
+CLIP (Contrastive Language--Image Pre-training) trains an image encoder and a text encoder together on about 400 million web image--text pairs \cite{radford2021}. For a batch of $N$ pairs, both encoders map their inputs to vectors in a shared embedding space, and the cosine similarities $s_{ij}$ between all $N$ images and all $N$ captions form an $N\times N$ matrix. The training loss is a symmetric cross-entropy that makes each image most similar to its own caption and each caption most similar to its own image, with a learned temperature $\tau$:
+\begin{equation}
+\mathcal{L}=-\frac{1}{2N}\sum_{i=1}^{N}\left[\log\frac{e^{s_{ii}/\tau}}{\sum_{j}e^{s_{ij}/\tau}}+\log\frac{e^{s_{ii}/\tau}}{\sum_{j}e^{s_{ji}/\tau}}\right].
+\end{equation}
+Only the image encoder is used in this project; the text encoder is discarded. The image encoder in the ``ViT-B/32'' release is a Vision Transformer (ViT) \cite{dosovitskiy2021}: ``B'' is the Base model size and ``32'' is the patch size in pixels. An image passes through the following stages (Fig.~\ref{fig:clip}):
+\begin{enumerate}[leftmargin=0.5in, itemsep=2pt]
+  \item \textbf{Patch embedding.} The $224\times224\times3$ image is cut into non-overlapping $32\times32$ patches, giving a $7\times7$ grid of $49$ patches. Each patch is flattened to $32\cdot32\cdot3=3{,}072$ values and mapped to a 768-dimensional vector by one linear layer (implemented as a convolution with kernel and stride 32).
+  \item \textbf{Class token and position.} A learnable \texttt{[CLS]} token is prepended (50 tokens in all) and a learned position embedding is added to each token so the encoder knows where each patch came from.
+  \item \textbf{Transformer encoder.} Twelve identical blocks follow. Each block applies layer normalisation, multi-head self-attention (12 heads of dimension 64, every token attending to every other token, with no causal mask), a residual connection, layer normalisation, a two-layer MLP ($768\to3072\to768$ with a GELU-type activation) and a second residual connection \cite{vaswani2017}.
+  \item \textbf{Output.} The result is 50 vectors of width 768. In standard CLIP the \texttt{[CLS]} vector is projected to 512 dimensions and compared with the text embedding.
+\end{enumerate}
+The image tower has about 88 million parameters. FireVLM does not use the \texttt{[CLS]} summary or the 512-dimensional projection. As described in Section~\ref{sec:highlevel} and Chapter~5, it keeps the 49 patch tokens of width 768 so that the language model receives a spatial grid rather than one global vector, and each image therefore costs only 49 positions in the language model's context. The encoder is run once per image and its outputs are cached.
+
+Two properties of this encoder matter for the task. First, $32\times32$ patches are coarse: at $224\times224$ one token covers 1/49 of the frame, so a small hotspot occupies only part of a patch. We did not test whether this limits localization accuracy (see the question-category results in Chapter~7). Second, CLIP was pretrained on natural RGB photographs. The thermal frames (Fig.~\ref{fig:sample}) are supplied to the same frozen encoder as three-channel images, which it has never been trained on. The only parts of the model that are able to adapt to that modality are the thermal projector, its modality embedding and the language-model adapters.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=5mm]
+    \node[blk, text width=20mm] (img) {Image\\$224\times224\times3$};
+    \node[blk, text width=24mm, right=of img] (pt) {$32\times32$ patches\\$7\times7=49$};
+    \node[blk, text width=28mm, right=of pt] (emb) {Linear embedding\\to 768 dims\\+ position};
+    \node[blk, text width=32mm, right=of emb, fill=blue!8] (enc) {12 encoder blocks\\(12 heads, MLP 3072)};
+    \node[blk, text width=28mm, right=of enc, fill=green!12] (out) {49 patch tokens\\$\times\,768$\\(to projector)};
+    \node[blk, text width=32mm, dashed, fill=none, below=6mm of enc] (cls) {\texttt{[CLS]} token and 512-d\\projection: not used};
+    \draw[arr] (img)--(pt); \draw[arr] (pt)--(emb); \draw[arr] (emb)--(enc); \draw[arr] (enc)--(out);
+    \draw[-{Stealth[length=2mm]}, dashed] (enc)--(cls);
+  \end{tikzpicture}}
+  \caption{The CLIP ViT-B/32 image encoder as used in FireVLM. The encoder is frozen and its 49 patch tokens, not the global \texttt{[CLS]} embedding, are passed on.}
+  \label{fig:clip}
+\end{figure}
+
+\subsection{The Decoder-Only Transformer Shared by Qwen2 and Llama}
+\label{sec:decoder}
+Qwen2-1.5B and Llama-3.2-1B are decoder-only language models. Each maps a sequence of input vectors to a probability distribution over the next token and is trained on next-token prediction. A causal mask lets every position attend only to itself and earlier positions, so text is generated one token at a time, each new token being fed back as input. In FireVLM the input sequence starts with the 98 projected visual vectors, which take the place of word embeddings, followed by the embedded question; the answer is then generated after them (Fig.~\ref{fig:pipeline}). The decoder treats the visual vectors like any other earlier positions and reads them through its ordinary attention layers.
+
+Both models stack $N$ identical blocks ($N=28$ for Qwen2, $N=16$ for Llama) between a token-embedding table and a final normalisation and output layer, and both use the same four design choices, which differ from the original Transformer \cite{vaswani2017}:
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item \textbf{RMSNorm} \cite{zhang2019rmsnorm} in place of layer normalisation. It divides each vector by its root mean square and multiplies by a learned gain $\mathbf{g}$, with no mean subtraction, and is applied before each sub-layer.
+  \item \textbf{Grouped-query attention (GQA)} \cite{ainslie2023gqa}. There are $H_q$ query heads but only $H_{kv}<H_q$ key/value heads, and each key/value head is shared by $H_q/H_{kv}$ query heads. This shrinks the $k$ and $v$ projections and the key--value cache that is stored during generation.
+  \item \textbf{Rotary position embeddings (RoPE)} \cite{su2024rope}. Position is not added to the input. Instead the query and key vectors are rotated, pair by pair of dimensions, by an angle proportional to the token position, so that the attention score between two tokens depends on their relative distance.
+  \item \textbf{SwiGLU feed-forward network} \cite{shazeer2020glu}. The MLP has three matrices instead of two: a gated hidden layer $\mathrm{SiLU}(W_{\text{gate}}\mathbf{z})\odot W_{\text{up}}\mathbf{z}$ followed by a down-projection $W_{\text{down}}$.
+\end{itemize}
+Written out, $\mathrm{RMSNorm}(\mathbf{x})=\mathbf{x}\,\big/\sqrt{\tfrac{1}{d}\sum_i x_i^2+\epsilon}\,\odot\,\mathbf{g}$. With $\hat{\mathbf{x}}=\mathrm{RMSNorm}(\mathbf{x})$, one block computes
+\begin{align}
+\mathbf{h} &= \mathbf{x} + W_o\,\mathrm{Attn}\bigl(W_q\hat{\mathbf{x}},\,W_k\hat{\mathbf{x}},\,W_v\hat{\mathbf{x}}\bigr), \qquad \mathrm{Attn}(Q,K,V)=\mathrm{softmax}\!\Bigl(\tfrac{QK^{\top}}{\sqrt{d_h}}+M\Bigr)V,\\
+\mathbf{y} &= \mathbf{h} + W_{\text{down}}\bigl(\mathrm{SiLU}(W_{\text{gate}}\hat{\mathbf{h}})\odot W_{\text{up}}\hat{\mathbf{h}}\bigr), \qquad \hat{\mathbf{h}}=\mathrm{RMSNorm}(\mathbf{h}),
+\end{align}
+where $d_h$ is the head dimension and $M$ is the causal mask. Fig.~\ref{fig:block} shows this block. The seven weight matrices $W_q,W_k,W_v,W_o,W_{\text{gate}},W_{\text{up}},W_{\text{down}}$ are exactly the modules listed in Fig.~\ref{fig:placement}. A LoRA adapter on one of them replaces $W$ by $W+\tfrac{\alpha}{r}BA$ with $B\in\mathbb{R}^{d_{\text{out}}\times r}$ and $A\in\mathbb{R}^{r\times d_{\text{in}}}$ \cite{hu2022}; with $\alpha=2r$ (Table~\ref{tab:variants}) the scale $\alpha/r$ is 2 for every rank. In the QLoRA setting the frozen $W$ is stored in 4-bit NF4 and only $A$ and $B$ are trained \cite{dettmers2023}. The token-embedding table, the normalisation gains and the output layer stay frozen.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{0.78\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=3.5mm, every node/.style={font=\footnotesize},
+      sm/.style={draw, rounded corners=2pt, minimum height=6.5mm, minimum width=15mm, align=center, fill=gray!8},
+      ad/.style={sm, fill=orange!35}]
+    \node[sm, minimum width=60mm] (x) {Input embeddings (visual tokens, then question tokens)};
+    \node[sm, below=5mm of x] (n1) {RMSNorm};
+    \node[ad, below=5mm of n1, xshift=-19mm] (q) {$W_q$};
+    \node[ad, below=5mm of n1] (k) {$W_k$};
+    \node[ad, below=5mm of n1, xshift=19mm] (v) {$W_v$};
+    \node[sm, below=5mm of k, minimum width=60mm] (att) {RoPE on $q,k$; grouped-query causal attention};
+    \node[ad, below=of att] (o) {$W_o$};
+    \node[sm, below=of o, minimum width=12mm] (a1) {$+$};
+    \node[sm, below=6mm of a1] (n2) {RMSNorm};
+    \node[ad, below=5mm of n2, xshift=-12mm] (g) {$W_{\text{gate}}$};
+    \node[ad, below=5mm of n2, xshift=12mm] (u) {$W_{\text{up}}$};
+    \node[sm, below=5mm of n2, yshift=-12mm, minimum width=36mm] (act) {$\mathrm{SiLU}(\text{gate})\odot\text{up}$};
+    \node[ad, below=of act] (d) {$W_{\text{down}}$};
+    \node[sm, below=of d, minimum width=12mm] (a2) {$+$};
+    \node[sm, below=5mm of a2, minimum width=60mm] (y) {To next block ($\times N$), then final RMSNorm and output layer};
+    \draw[arr] (x)--(n1);
+    \draw[arr] (n1)--(q); \draw[arr] (n1)--(k); \draw[arr] (n1)--(v);
+    \draw[arr] (q)--(att.north -| q); \draw[arr] (k)--(att); \draw[arr] (v)--(att.north -| v);
+    \draw[arr] (att)--(o); \draw[arr] (o)--(a1);
+    \draw[arr] (a1)--(n2);
+    \draw[arr] (n2)--(g); \draw[arr] (n2)--(u);
+    \draw[arr] (g)--(act.north -| g); \draw[arr] (u)--(act.north -| u);
+    \draw[arr] (act)--(d); \draw[arr] (d)--(a2); \draw[arr] (a2)--(y);
+    \draw[arr] ($(x.south)+(0,-1.2mm)$) -- ++(-37mm,0) |- (a1.west);
+    \draw[arr] ($(a1.south)+(0,-1.2mm)$) -- ++(37mm,0) |- (a2.east);
+  \end{tikzpicture}}
+  \caption{One decoder block of Qwen2-1.5B and Llama-3.2-1B. Shaded boxes are the seven linear modules that can receive LoRA adapters (Fig.~\ref{fig:placement}); the paths along the sides are the residual connections.}
+  \label{fig:block}
+\end{figure}
+
+\subsection{Qwen2-1.5B}
+\label{sec:qwen2arch}
+Qwen2 is a family of open-weight decoder language models from Alibaba \cite{yang2024qwen2}. The 1.5B model has 28 blocks and a hidden width of $d=1536$. Attention uses 12 query heads and 2 key/value heads, each of dimension 128, so the key and value projections map $1536\to256$ (six query heads share each key/value head). The SwiGLU hidden width is 8,960. Qwen2 adds a bias term to the $q$, $k$ and $v$ projections but not to $o$. The vocabulary has about 152 thousand byte-level BPE tokens, the input and output embeddings are tied, and the model is trained for contexts of 32 thousand tokens. In total it has about 1.54 billion parameters, roughly 0.23 billion of them in the embedding table. We start from the instruction-tuned checkpoint \cite{mithan}. Only its language-model part is used: it is paired with CLIP through newly trained projectors and not with a native vision tower, so the resulting model is not Qwen2-VL \cite{wang2024} (see Threats to Validity in Chapter~7).
+
+The dimensions above give the adapter sizes quoted in Section~\ref{sec:paramcount}. At rank $r$, the $q,k,v,o$ adapters add $r(3072+1792+1792+3072)=9{,}728\,r$ parameters per block, or $272{,}384\,r$ over 28 blocks, which is 1,089,536 at $r=4$. The $q,v$ adapters at $r=8$ add $8\,(3072+1792)\times28=1{,}089{,}536$ as well, which is why those two runs have identical trainable counts.
+
+\subsection{Llama-3.2-1B}
+\label{sec:llamaarch}
+Llama-3.2-1B is the smallest text model of Meta's Llama 3 generation \cite{llama32,grattafiori2024llama3}. Meta reports that it was obtained by pruning a larger Llama~3.1 model and then recovering quality with knowledge distillation from larger Llama models; the instruction-tuned version used here is further trained with supervised fine-tuning and preference optimisation. It uses the same block as above but is shallower and wider than Qwen2-1.5B: 16 blocks, hidden width $d=2048$, 32 query heads and 8 key/value heads of dimension 64. The key and value projections therefore map $2048\to512$ (four query heads share each key/value head), and the SwiGLU hidden width is 8,192. No projection has a bias. The vocabulary has about 128 thousand tokens, embeddings are tied, and RoPE uses a larger base frequency with rescaling so that the model supports contexts of up to 128 thousand tokens. It has about 1.24 billion parameters, roughly 0.26 billion of them in the embedding table.
+
+At rank $r$ the $q,k,v,o$ adapters add $r(4096+2560+2560+4096)=13{,}312\,r$ parameters per block, or $212{,}992\,r$ over 16 blocks (1,703,936 at $r=8$). A rank-$r$ attention adapter is therefore larger per block than in Qwen2 but smaller over the whole network, because Qwen2 has 28 blocks. The wider hidden size also makes the second layer of each visual projector larger ($1024\to2048$ against $1024\to1536$, Section~\ref{sec:paramcount}).
+
+\subsection{Qwen2.5-VL-3B-Instruct (Frozen Baseline)}
+\label{sec:qwenvlarch}
+The in-context baseline uses a model that was trained as a vision-language model from the start \cite{bai2025}, and therefore differs from FireVLM in how images enter the network (Fig.~\ref{fig:qwenvl}). It has three parts.
+\begin{itemize}[leftmargin=0.5in, itemsep=2pt]
+  \item \textbf{Vision encoder.} A ViT of roughly 0.7 billion parameters, trained together with the rest of the model. It uses $14\times14$ patches and processes images at their native resolution instead of resizing them to a fixed square. It uses RMSNorm and SwiGLU, 2D rotary position embeddings and window attention in most layers, with full attention in only four of them, which keeps the cost manageable for large images.
+  \item \textbf{Merger.} Each $2\times2$ group of neighbouring patch features is concatenated and passed through an MLP that projects it to the language model's width. This cuts the number of visual tokens by a factor of four.
+  \item \textbf{Language model.} A Qwen2.5-3B decoder with 36 blocks, $d=2048$, 16 query heads and 2 key/value heads, using the same RMSNorm, GQA and SwiGLU design as above. Its position encoding (multimodal RoPE) splits the rotary angles into temporal, height and width components, so image tokens carry 2D positions.
+\end{itemize}
+In this study the image processor is set to $224\times224$ (Section~\ref{sec:fewshot}), so each image becomes $16\times16=256$ patches and 64 tokens after merging, which is 128 visual tokens for an RGB--thermal pair. Each demonstration adds one such pair plus its question and answer text, which is consistent with the mean input growing by about 170 tokens per demonstration (Fig.~\ref{fig:cost}). By comparison, FireVLM represents a pair with 98 tokens. The whole model, vision encoder and language model together, is frozen and stored in 4-bit NF4, so in the baseline nothing is adapted: the only thing that changes with $k$ is the context.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=5mm]
+    \node[blk, text width=24mm] (im) {RGB + thermal\\$224\times224$ each};
+    \node[blk, text width=30mm, right=of im, fill=blue!8] (vit) {ViT, $14\times14$ patches\\256 per image\\(window attention)};
+    \node[blk, text width=26mm, right=of vit, fill=blue!8] (mg) {$2\times2$ merger MLP\\64 tokens per image};
+    \node[blk, text width=32mm, right=of mg, fill=orange!15] (lm) {Qwen2.5-3B decoder\\36 blocks, M-RoPE};
+    \node[blk, text width=22mm, right=of lm] (an) {Answer text\\(max.\ 32 tokens)};
+    \draw[arr] (im)--(vit); \draw[arr] (vit)--(mg); \draw[arr] (mg)--(lm); \draw[arr] (lm)--(an);
+  \end{tikzpicture}}
+  \caption{Qwen2.5-VL-3B-Instruct as used for the frozen baseline. All parts are frozen; demonstrations are supplied as extra image--question--answer turns in the prompt.}
+  \label{fig:qwenvl}
+\end{figure}
+
+\subsection{Comparison of the Components}
+Table~\ref{tab:components} compares the three networks that FireVLM builds on. The three differ in direction of attention and in how position is encoded, as well as in size. CLIP is a bidirectional encoder with learned absolute positions that is run once per image, while the two language models are causal decoders with rotary positions that are run once per generated token. This is why the vision side can be cached, as in Chapter~3, whereas the language model cannot.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Architecture of the pretrained components used in FireVLM (values from the public model configurations)}
+  \label{tab:components}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{P{1.15in}P{1.3in}P{1.4in}P{1.4in}}
+    \toprule
+    \textbf{Property} & \textbf{CLIP ViT-B/32 (image tower)} & \textbf{Qwen2-1.5B} & \textbf{Llama-3.2-1B} \\
+    \midrule
+    Role in FireVLM & Frozen vision encoder & 4-bit decoder + LoRA & 4-bit decoder + LoRA \\
+    Blocks & 12 & 28 & 16 \\
+    Hidden width $d$ & 768 & 1,536 & 2,048 \\
+    Attention heads (query / key--value) & 12 / 12 & 12 / 2 & 32 / 8 \\
+    Head dimension & 64 & 128 & 64 \\
+    MLP hidden width & 3,072 (GELU) & 8,960 (SwiGLU) & 8,192 (SwiGLU) \\
+    Normalisation & LayerNorm & RMSNorm & RMSNorm \\
+    Position information & Learned absolute & RoPE & RoPE (rescaled) \\
+    Attention mask & None (bidirectional) & Causal & Causal \\
+    Vocabulary size & --- & about 152 thousand & about 128 thousand \\
+    Parameters & about 88 million & about 1.54 billion & about 1.24 billion \\
+    $q,k,v,o$ LoRA parameters per unit of rank & --- & 272,384 & 212,992 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \section{Low Level Design}
 \subsection{Dataset and Data Splits}
 \label{sec:dataset}
@@ -576,7 +734,7 @@ Table~\ref{tab:hparams} contains the hyperparameters for all 16 fine-tuning runs
 \input{tables/tab_hparams.tex}
 Both backbones use the same random seed (42) and the same pairing audit files. Each run has an effective batch size of 16 (batch size of 4 with 4 gradient accumulation steps) with the exception of the Llama all-linear $r{=}16$ run which used a batch size of 2 with 8 accumulation steps. The Qwen2 runs are scheduled for 100 epochs (125,800 gradient steps total, 5\% warmup of 6,290 steps or 5 epochs). Early stopping is applied with a $\text{MIN\_DELTA}$ of $10^{-8}$ and training is terminated somewhere between 10 and 15 epochs, at which point the learning rate will have ramped up and will remain above 95\% of its peak for the remainder of the training. The Llama runs are different. They are scheduled for 8 to 10 epochs (the only exceptions being all-linear $r{=}16$ and $q,v$ $r{=}8$, which are both planned for 100 epochs, the latter with a learning rate of $2\times 10^{-4}$), they use an early stopping threshold of $\text{MIN\_DELTA} = 10^{-3}$ and the learning rate decays fully over the planned training horizon. The frozen in-context baseline uses 4-bit NF4 quantisation, sets \texttt{min\_pixels} and \texttt{max\_pixels} to $224 \times 224$ in the image processor, decodes greedily with a single beam and limits generation to 32 tokens.
 
-\subsection{Trainable Parameter Count}
+\subsection{Trainable Parameter Count}\label{sec:paramcount}
 A rank-$r$ adapter on a linear layer with input dimension $d_{\text{in}}$ and output dimension $d_{\text{out}}$ adds $r(d_{\text{in}} + d_{\text{out}})$ trainable weights. In Qwen2-1.5B (28 Transformer layers, hidden dimension $d=1536$, 2 key/value heads of dimension 128 giving $d_{\text{kv}}=256$ and MLP intermediate dimension 8960) each layer adds:
 \begin{itemize}[leftmargin=0.5in, itemsep=1pt]
   \item $q$ projection: $r(1536 + 1536) = r(3072)$ parameters,
@@ -597,7 +755,7 @@ The two independent projectors (visible and thermal) give us $2 \times 2{,}361{,
 Table~\ref{tab:params} breaks down the total into adapter weights, projection weights and total trainable parameters for each of the Qwen2-1.5B variants.
 \input{tables/tab_params.tex}
 
-For Llama-3.2-1B (16 Transformer layers, hidden dimension $d=2048$, 8 query heads, 2 key/value heads with head dimension 128 ($d_{\text{kv}}=512$) and intermediate MLP dimension 8192) each layer contributes:
+For Llama-3.2-1B (16 Transformer layers, hidden dimension $d=2048$, 32 query heads, 8 key/value heads with head dimension 64 ($d_{\text{kv}}=512$) and intermediate MLP dimension 8192) each layer contributes:
 \begin{itemize}[leftmargin=0.5in, itemsep=1pt]
   \item $q$ projection: $r(2048 + 2048) = r(4096)$ parameters,
   \item $k$ and $v$ projections: $r(2048 + 512) = r(2560)$ parameters each,

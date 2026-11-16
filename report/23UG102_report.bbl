@@ -1,0 +1,201 @@
+\begin{thebibliography}{26}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Antol et~al.(2015)Antol, Agrawal, Lu, Mitchell, Batra, Zitnick, and
+  Parikh]{antol2015}
+Stanislaw Antol, Aishwarya Agrawal, Jiasen Lu, Margaret Mitchell, Dhruv Batra,
+  C~Lawrence Zitnick, and Devi Parikh.
+\newblock Vqa: Visual question answering.
+\newblock In \emph{Proceedings of the IEEE international conference on computer
+  vision}, pages 2425--2433, 2015.
+
+\bibitem[Bai et~al.(2023)Bai, Bai, Chu, Cui, Dang, Deng, Fan, Ge, Han, Huang,
+  et~al.]{bai2023}
+Jinze Bai, Shuai Bai, Yunfei Chu, Zeyu Cui, Kai Dang, Xiaodong Deng, Yang Fan,
+  Wenbin Ge, Yu~Han, Fei Huang, et~al.
+\newblock Qwen technical report.
+\newblock \emph{arXiv preprint arXiv:2309.16609}, 2023.
+
+\bibitem[Bai et~al.(2025)Bai, Cai, Chen, Chen, Chen, Cheng, Deng, Ding, Gao,
+  Ge, et~al.]{bai2025}
+Shuai Bai, Yuxuan Cai, Ruizhe Chen, Keqin Chen, Xionghui Chen, Zesen Cheng,
+  Lianghao Deng, Wei Ding, Chang Gao, Chunjiang Ge, et~al.
+\newblock Qwen3-vl technical report.
+\newblock \emph{arXiv preprint arXiv:2511.21631}, 2025.
+
+\bibitem[Habibpour et~al.(2026)Habibpour, Talemi, Spodnik, Khoury, and
+  Afghah]{wildfirevqa}
+Mobin Habibpour, Niloufar~Alipour Talemi, John Spodnik, Camren~J Khoury, and
+  Fatemeh Afghah.
+\newblock Wildfirevqa: A large-scale radiometric thermal vqa benchmark for
+  aerial wildfire monitoring.
+\newblock \emph{arXiv preprint arXiv:2604.20190}, 2026.
+
+\bibitem[Hopkins et~al.(2024)Hopkins, ONeill, Marinaccio, Habibpour, Rowell,
+  Parsons, Flanary, Nazim, Seielstad, and Afghah]{flame3}
+Bryce Hopkins, Leo ONeill, Michael Marinaccio, Mobin Habibpour, Eric Rowell,
+  Russell Parsons, Sarah Flanary, Irtija Nazim, Carl Seielstad, and Fatemeh
+  Afghah.
+\newblock Flame 3 dataset: Unleashing the power of radiometric thermal uav
+  imagery for wildfire management.
+\newblock \emph{arXiv preprint arXiv:2412.02831}, 2024.
+
+\bibitem[Brown et~al.(2020)Brown, Mann, Ryder, Subbiah, Kaplan, Dhariwal,
+  Neelakantan, Shyam, Sastry, Askell, et~al.]{brown2020}
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared~D Kaplan, Prafulla
+  Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell,
+  et~al.
+\newblock Language models are few-shot learners.
+\newblock \emph{Advances in neural information processing systems},
+  33:\penalty0 1877--1901, 2020.
+
+\bibitem[Radford(2021)]{radford2021}
+A~Radford.
+\newblock Learning transferable visual models from natural language
+  supervision.
+\newblock \emph{arXiv preprint arXiv:2103.00020}, 2021.
+
+\bibitem[Dettmers et~al.(2023)Dettmers, Pagnoni, Holtzman, and
+  Zettlemoyer]{dettmers2023}
+Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer.
+\newblock Qlora: Efficient finetuning of quantized llms.
+\newblock \emph{Advances in neural information processing systems},
+  36:\penalty0 10088--10115, 2023.
+
+\bibitem[Hu et~al.(2021)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and
+  Chen]{hu2022}
+Edward~J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean
+  Wang, Lu~Wang, and Weizhu Chen.
+\newblock Lora: Low-rank adaptation of large language models.
+\newblock \emph{arXiv preprint arXiv:2106.09685}, 2021.
+
+\bibitem[{MIT HAN Lab}()]{mithan}
+{MIT HAN Lab}.
+\newblock {Qwen2-VL-1.5B-Instruct}.
+\newblock Hugging Face model repository.
+\newblock URL \url{https://huggingface.co/mit-han-lab/Qwen2-VL-1.5B-Instruct}.
+
+\bibitem[{Meta AI}()]{llama32}
+{Meta AI}.
+\newblock {Llama-3.2-1B-Instruct}.
+\newblock Hugging Face model repository.
+\newblock URL \url{https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct}.
+
+\bibitem[Danish et~al.(2025)Danish, Sadeghi-Niaraki, Khan, Dang, Tightiz, and
+  Moon]{vlmsurvey2024}
+Sufyan Danish, Abolghasem Sadeghi-Niaraki, Samee~Ullah Khan, L~Minh Dang, Lilia
+  Tightiz, and Hyeonjoon Moon.
+\newblock A comprehensive survey of vision-language models: Pretrained models,
+  fine-tuning, prompt engineering, adapters, and benchmark datasets.
+\newblock \emph{Information Fusion}, page 103623, 2025.
+
+\bibitem[Ak et~al.(2024)Ak, Mohta, Dimitriadis, Manchanda, Xu, and
+  Shen]{ak2024aligning}
+Kenan~E Ak, Jay Mohta, Dimitris Dimitriadis, Saurav Manchanda, Yan Xu, and
+  Mingwei Shen.
+\newblock Aligning vision language models with contrastive learning.
+\newblock In \emph{European Conference on Computer Vision}, pages 32--45.
+  Springer, 2024.
+
+\bibitem[Narasinghe and Sudantha(2026)]{peft2024survey}
+Patalee Narasinghe and BH~Sudantha.
+\newblock Parameter-efficient fine-tuning for vision-language models: The
+  post-transformer evolution.
+\newblock In \emph{2026 International Conference on Image Processing and
+  Robotics (ICIPRoB)}, pages 1--6. IEEE, 2026.
+
+\bibitem[Zhang et~al.(2025)Zhang, Deng, Guo, and Hu]{adaptive2024}
+Yi~Zhang, Yi-Xuan Deng, Meng-Hao Guo, and Shi-Min Hu.
+\newblock Adaptive parameter selection for tuning vision-language models.
+\newblock In \emph{2025 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 4280--4290. IEEE, 2025.
+
+\bibitem[Zhou et~al.(2025)Zhou, Ding, and Xue]{kda2024}
+Zhengdong Zhou, Chenhao Ding, and Qilong Xue.
+\newblock Kda-tuning: Knowledge-decoupled adapter tuning for vision-language
+  models.
+\newblock In \emph{International Conference on Intelligent Computing}, pages
+  370--381. Springer, 2025.
+
+\bibitem[Hu et~al.(2023)Hu, Li, Lyu, and Wang]{vlpet2024}
+Zi-Yuan Hu, Yanyang Li, Michael~R Lyu, and Liwei Wang.
+\newblock Vl-pet: Vision-and-language parameter-efficient tuning via
+  granularity control.
+\newblock In \emph{2023 IEEE/CVF International Conference on Computer Vision
+  (ICCV)}, pages 2998--3008. IEEE, 2023.
+
+\bibitem[Deitke et~al.(2025)Deitke, Clark, Lee, Tripathi, Yang, Park, Salehi,
+  Muennighoff, Lo, Soldaini, et~al.]{molmo2024}
+Matt Deitke, Christopher Clark, Sangho Lee, Rohun Tripathi, Yue Yang, Jae~Sung
+  Park, Mohammadreza Salehi, Niklas Muennighoff, Kyle Lo, Luca Soldaini, et~al.
+\newblock Molmo and pixmo: Open weights and open data for state-of-the-art
+  vision-language models.
+\newblock In \emph{2025 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 91--104. IEEE, 2025.
+
+\bibitem[Ozkul et~al.(2025)Ozkul, Karacan, and Zalluhoglu]{visioncore2024}
+Ufuk Ozkul, Levent Karacan, and Cemil Zalluhoglu.
+\newblock Visioncore: Adapting efficient visual answering through enhanced
+  spatial reasoning.
+\newblock In \emph{IFIP International Conference on Artificial Intelligence
+  Applications and Innovations}, pages 221--234. Springer, 2025.
+
+\bibitem[Liu et~al.(2025)Liu, Liang, Li, Xiong, Chen, He, Zhang, and
+  Cui]{synthvlm2024}
+Zheng Liu, Hao Liang, Bozhou Li, Wentao Xiong, Chong Chen, Conghui He, Wentao
+  Zhang, and Bin Cui.
+\newblock Synthvlm: Towards high-quality and efficient synthesis of
+  image-caption datasets for vision-language models.
+\newblock In \emph{Proceedings of the 33rd ACM International Conference on
+  Multimedia}, pages 12807--12814, 2025.
+
+\bibitem[Weng et~al.(2025)Weng, Pang, and Xia]{remotesensing2024}
+Xingxing Weng, Chao Pang, and Gui-Song Xia.
+\newblock Vision-language modeling meets remote sensing: Models, datasets, and
+  perspectives.
+\newblock \emph{IEEE Geoscience and Remote Sensing Magazine}, 13\penalty0
+  (3):\penalty0 276--323, 2025.
+
+\bibitem[Wang et~al.(2024)Wang, Bai, Tan, Wang, Fan, Bai, Chen, Liu, Wang, Ge,
+  et~al.]{wang2024}
+Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin
+  Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, et~al.
+\newblock Qwen2-vl: Enhancing vision-language model's perception of the world
+  at any resolution.
+\newblock \emph{arXiv preprint arXiv:2409.12191}, 2024.
+
+\bibitem[Yang et~al.(2025)Yang, Li, Yang, Zhang, Hui, Zheng, Yu, Gao, Huang,
+  Lv, et~al.]{yang2024}
+An~Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo~Zheng, Bowen
+  Yu, Chang Gao, Chengen Huang, Chenxu Lv, et~al.
+\newblock Qwen3 technical report.
+\newblock \emph{arXiv preprint arXiv:2505.09388}, 2025.
+
+\bibitem[Houlsby et~al.(2019)Houlsby, Giurgiu, Jastrzebski, Morrone,
+  De~Laroussilhe, Gesmundo, Attariyan, and Gelly]{houlsby2019}
+Neil Houlsby, Andrei Giurgiu, Stanislaw Jastrzebski, Bruna Morrone, Quentin
+  De~Laroussilhe, Andrea Gesmundo, Mona Attariyan, and Sylvain Gelly.
+\newblock Parameter-efficient transfer learning for nlp.
+\newblock In \emph{International conference on machine learning}, pages
+  2790--2799. PMLR, 2019.
+
+\bibitem[Lester et~al.(2021)Lester, Al-Rfou, and Constant]{lester2021}
+Brian Lester, Rami Al-Rfou, and Noah Constant.
+\newblock The power of scale for parameter-efficient prompt tuning.
+\newblock In \emph{Proceedings of the 2021 conference on empirical methods in
+  natural language processing}, pages 3045--3059, 2021.
+
+\bibitem[Basahel et~al.(2026)Basahel, Abi~Sen, Bahbouh, Tayan, Mnaouer, and
+  Yamin]{uavwildfire2024}
+Sarah Basahel, Adnan~Ahmed Abi~Sen, Nour~Mahmoud Bahbouh, Omar Tayan, Adel~Ben
+  Mnaouer, and Mohammad Yamin.
+\newblock A smart system for early detection and prevention of forest fire
+  using uav swarms and vlm.
+\newblock In \emph{2026 13th International Conference on Computing for
+  Sustainable Global Development (INDIACom)}, pages 1--6. IEEE, 2026.
+
+\end{thebibliography}

@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99e
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: 23UG102_report.aux
+Reallocating 'name_of_file' (item size: 1) to 9 items.
+The style file: unsrtnat.bst
+Reallocating 'name_of_file' (item size: 1) to 11 items.
+Database file #1: references.bib
+Warning--empty year in mithan
+Warning--empty year in llama32
+You've used 26 entries,
+            2481 wiz_defined-function locations,
+            684 strings with 10513 characters,
+and the built_in function-call counts, 13568 in all, are:
+= -- 1023
+> -- 1026
+< -- 17
++ -- 370
+- -- 318
+* -- 1099
+:= -- 2191
+add.period$ -- 89
+call.type$ -- 26
+change.case$ -- 52
+chr.to.int$ -- 26
+cite$ -- 28
+duplicate$ -- 635
+empty$ -- 1056
+format.name$ -- 346
+if$ -- 2897
+int.to.chr$ -- 1
+int.to.str$ -- 27
+missing$ -- 24
+newline$ -- 140
+num.names$ -- 78
+pop$ -- 271
+preamble$ -- 1
+purify$ -- 26
+quote$ -- 0
+skip$ -- 424
+stack$ -- 0
+substring$ -- 552
+swap$ -- 187
+text.length$ -- 13
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 182
+warning$ -- 2
+while$ -- 95
+width$ -- 0
+write$ -- 346
+(There were 2 warnings)

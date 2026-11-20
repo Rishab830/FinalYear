@@ -52,7 +52,7 @@
 \maketitle
 
 \begin{abstract}
-Visual Question Answering (VQA) is being developed to allow a natural-language question to be asked of an active fire scene by using a pair of visible (RGB) and radiometric (thermal) inputs. This work aims to examine the WildFireVQA dataset and the parameter-efficient adaptation of vision-language models on the Sycan Marsh subset (738 image pairs, 34 questions per image pair, 25,092 question--answer pairs). The two types of adaptation are explored: frozen pretrained Qwen2.5-VL-3B-Instruct model using in-context prompting (0-10 demonstrations; 200 query samples); compact models with a frozen CLIP ViT-B/32 encoder, trainable linear projectors, and a fine-tuned language model using QLoRA techniques, fine-tuned on multiple adapter ranks and target modules with 4-bit quantization. The frozen baseline results in an accuracy of 28.00\% for ten-shot and 15.00\% for zero-shot. Fine-tuned Qwen2-1.5B models are trained on 2,482 test queries, with 84.13\% to 86.62\% of the queries being exactly matched, and a parameter update ranging from 5.8 to 23.2 million. The configurations that use query, key, value, and output attention projections at rank 4 and rank 8 are within the sampling uncertainty of each other (86.62\% and 86.30\%), but the other configurations with either larger all-linear adapters or higher ranks do not improve the accuracy. The Llama-3.2-1B backbone achieves scores in the range of 86.38\% to 88.48\%, which is comparable to the performance of the Llama-2-13B model. The results suggest that compact budgets of attention-only adapters are adequate for domain-specific VQA on fire scenes.
+Visual Question Answering (VQA) is being developed to allow a natural-language question to be asked of an active fire scene by using a pair of visible (RGB) and radiometric (thermal) inputs. This work examines the WildFireVQA dataset and the parameter-efficient adaptation of vision-language models on the Sycan Marsh subset (738 image pairs, 34 questions per image pair, 25,092 question--answer pairs). Two types of adaptation are explored: a frozen pretrained Qwen2.5-VL-3B-Instruct model using in-context prompting (0--10 demonstrations; 200 query samples), and compact models with a frozen CLIP ViT-B/32 encoder, trainable projectors, and a language model fine-tuned using QLoRA with 4-bit quantization over multiple adapter ranks and target modules. The frozen baseline reaches an accuracy of 28.00\% with ten demonstrations and 15.00\% with zero. Fine-tuned Qwen2-1.5B models, evaluated on 2,482 test queries, reach 84.13\% to 86.62\% exact match with 5.8 to 23.2 million trainable parameters. The configurations that use query, key, value, and output attention projections at rank 4 and rank 8 are within the sampling uncertainty of each other (86.62\% and 86.30\%), while larger all-linear adapters or higher ranks do not improve accuracy. The Llama-3.2-1B backbone reaches 85.46\% to 88.48\%. The results suggest that compact budgets of attention-only adapters are adequate for domain-specific VQA on fire scenes.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -64,24 +64,24 @@ vision-language models, parameter-efficient fine-tuning, LoRA
 
 \subsection{Introduction to Wildfire Visual Question Answering}
 
-Wildfires can cause extensive damage to ecosystems, people and property. Visible spectrum (RGB) and radiometric thermal imagery is captured over active fire areas using aerial surveillance platforms, including unmanned aerial vehicles (UAVs). Situation awareness traditionally relies on manual analysis of these sensor streams, which is time-consuming and prone to error.
+Wildfires can cause extensive damage to ecological systems, people and property. Visible spectrum (RGB) and radiometric thermal imagery is captured over active fire areas using aerial surveillance platforms, including unmanned aerial vehicles (UAVs). Situation awareness generally relies on manual analysis of these sensor streams, which is time-intensive and susceptible to error.
 
-In this project, we aim to research how to adapt vision-language models with fewer parameters in the field of Wildfire Visual Question Answering. We benchmark two adaptation regimes: (i) an in-context learning baseline that uses a frozen pretrained Qwen2.5-VL-3B-Instruct model with zero to ten demonstrations to prompt the model \cite{brown2020,bai2025} and (ii) a modular VL architecture with a frozen ViT-B/32 vision encoder \cite{radford2021} and dual trainable projection layers, along with a 4-bit quantized language model fine-tuned using Low-Rank Adaptation (LoRA/QLoRA) \cite{dettmers2023,hu2022}. The task receives as input an RGB image acquired by an aerial or drone camera, a radiometric thermal image, and a natural-language query, and produces a short, natural-language answer.
+In this project, we aim to research how to adapt vision-language models with fewer parameters in the field of Wildfire Visual Question Answering. We benchmark two adaptation regimes: (i) an in-context learning baseline that uses a frozen pretrained Qwen2.5-VL-3B-Instruct model with zero to ten demonstrations to prompt the model \cite{brown2020,bai2025} and (ii) a modular VL architecture with a frozen ViT-B/32 vision encoder \cite{radford2021} and dual trainable projection layers, along with a 4-bit quantized language model (Qwen2-1.5B \cite{qwen2,mithan} or Llama-3.2-1B \cite{llama32}) fine-tuned using Low-Rank Adaptation (LoRA/QLoRA) \cite{dettmers2023,hu2022}. The task receives as input an RGB image acquired by an aerial or drone camera, a radiometric thermal image, and a natural-language query, and produces a short, natural-language answer.
 
 \subsection{Motivation}
 
-Emergency response agencies need to extract information quickly and accurately from aerial fire feeds. However, tuning large-scale, multi-billion-parameter foundation models requires high-memory GPUs, often unavailable to regional monitoring centers and research labs. Low-rank adapters and 4-bit weight quantization significantly reduce training and memory consumption and are highly parameter-efficient fine-tuning methods. The extent of adapter capacity required for multimodal disaster question answering, however, is still an open question. This work investigates the effects of adapter rank and layer positions in terms of task accuracy and the number of parameters.
+Emergency response agencies need to extract information quickly and accurately from aerial fire feeds. However, tuning large-scale, multi-billion-parameter foundation models requires high-memory GPUs, often unavailable to regional monitoring centers and research labs. Low-rank adapters and 4-bit weight quantization significantly reduce training and memory consumption and are highly parameter-efficient fine-tuning methods. The extent of adapter capacity required for multimodal disaster question answering, however, is still an open question. This work investigates the effects of adapter rank and layer positions on task accuracy and parameter count.
 
 \subsection{Problem Statement}
 
-Given an RGB and a radiometric thermal image, along with a natural-language question, produce a concise, correct response while optimizing trainable parameters and operating within the memory constraints of a single commodity GPU.
+Given an RGB and a radiometric thermal image, along with a natural-language question, produce a concise, correct response while optimizing trainable parameters and operating within the memory restrictions of a single commodity GPU.
 
 \subsection{Objectives}
 
 \begin{itemize}[leftmargin=*, itemsep=1pt, topsep=2pt, parsep=0pt]
   \item Create an audited image split of the Sycan Marsh subset of WildFireVQA with no file overlap with the Flame3 subset.
-  \item Evaluate a frozen pretrained vision-language model on 0-shot to 10-shot in-context demonstrations to measure the base performance of the model on the output format and zero-shot reasoning without finetuning.
-  \item Build a parameter-efficient vision-language model based on a frozen CLIP's vision encoder and two trainable modality projectors along with 4-bit quantized language models (Qwen2-1.5B and Llama-3.2-1B).
+  \item Evaluate a frozen pretrained vision-language model on 0-shot to 10-shot in-context demonstrations to measure the base performance of the model on the output format and zero-shot reasoning in the absence of finetuning.
+  \item Build a parameter-efficient vision-language model based on a frozen CLIP vision encoder and two trainable modality projectors along with 4-bit quantized language models (Qwen2-1.5B and Llama-3.2-1B).
   \item Compare placement of the adapters (attention projections and all linear projections) and rank sweep to find the least parameter budget needed for visual question answering of fire scenes.
 \end{itemize}
 
@@ -91,15 +91,15 @@ Given an RGB and a radiometric thermal image, along with a natural-language ques
 
 \subsubsection{The Evolution Beyond Transformers}
 
-As VLMs scale to billions of parameters, parameter-efficient fine-tuning (PEFT) has become crucial. Recently, a survey was published that focuses on PEFT methods for post-Transformer architectures, such as Mamba-based state-space models, RWKV recurrent models and hybrid models that incorporate attention with linear-complexity architectures~\cite{peft2024survey}. PEFT methods are divided into 4 families: (1) Additive methods: add new trainable modules (adapters, prompt tuning, prefix tuning); (2) Selective methods: update only a subset of the parameters – either update bias terms (BitFit) or learn sparse masks (diff pruning); (3) Reparameterization methods: decompose the weight updates into low-rank matrices (LoRA); (4) Hybrid methods: use multiple strategies (e.g., MAM Adapter combines LoRA with parallel FF adapters).
+As VLMs scale to billions of parameters, parameter-efficient fine-tuning (PEFT) has become critical. Recently, a survey was published that focuses on PEFT methods for post-Transformer architectures, such as Mamba-based state-space models, RWKV recurrent models and hybrid models that incorporate attention with linear-complexity architectures~\cite{peft2024survey}. PEFT methods are divided into 4 families: (1) Additive methods: add new trainable modules (adapters, prompt tuning, prefix tuning); (2) Selective methods: update only a subset of the parameters -- either update bias terms (BitFit) or learn sparse masks (diff pruning); (3) Reparameterization methods: decompose the weight updates into low-rank matrices (LoRA); (4) Hybrid methods: use multiple strategies (e.g., MAM Adapter combines LoRA with parallel FF adapters).
 
-Low-rank adaptation (LoRA)~\cite{hu2022} learns the weight updates as low-rank matrices, achieving a significant decrease in the number of parameters to be trained while maintaining a high degree of expressiveness. LoRA is an approach that fixes the weight matrix $W \in \mathbb{R}^{d \times k}$, and trains an additive update to it: $\Delta W \leftarrow BA$ with $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$, where the rank $r \ll \min(d,k)$. This decreases the number of trainable parameters from $dk$ to $r(d+k)$. If $d=k=4096$ and $r=8$ then the reduction is from 16.8 million parameters to 65K parameters (99.6\% reduction). LoRA's main idea is that task specific adaption frequently occurs in a low-dimensional subspace of the parameter space, so you can use a low-rank update. Ranks as low as 1–8 are already found to perform near the performance of full fine-tuning on natural language tasks, but may require a higher rank for vision-language tasks (4–16) because of the difficulty of cross-modal reasoning.
+Low-rank adaptation (LoRA)~\cite{hu2022} learns the weight updates as low-rank matrices, achieving a significant decrease in the number of parameters to be trained while maintaining a high degree of expressiveness. LoRA is an approach that fixes the weight matrix $W \in \mathbb{R}^{d \times k}$, and trains an additive update to it: $\Delta W \leftarrow BA$ with $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$, where the rank $r \ll \min(d,k)$. This decreases the number of trainable parameters from $dk$ to $r(d+k)$. If $d=k=4096$ and $r=8$ then the reduction is from 16.8 million parameters to 65K parameters (99.6\% reduction). LoRA's main idea is that task specific adaption frequently occurs in a low-dimensional subspace of the space of parameters, so you can use a low-rank update. Ranks as low as 1--8 are already found to perform near the performance of full fine-tuning on natural language tasks, but may require a higher rank for vision-language tasks (4--16) because of the difficulty of cross-modal reasoning.
 
 \subsection{Vision-Language Models in Remote Sensing and Disaster Response}
 
 \subsubsection{Wildfire Visual Question Answering}
 
-The WildFireVQA benchmark~\cite{wildfirevqa} fills an important void in disaster response VLMs. The dataset is made up of 3 prescribed burns (Sycan Marsh, Willamette, Shoetank) with 6,097 sets of RGB-thermal images taken by the FLAME~3 project~\cite{flame3} at Clemson University. The images are each accompanied by 34 questions organized into six categories: presence/detection (Is there fire?); counting (How many hotspots?); spatial reasoning (Where is the smoke compared to the flame?); scene understanding (What is the dominant vegetation?); temperature analysis (What is the maximum temperature?); and comparative reasoning (Which area is hotter?) This gives a total of 207,298 QAPs.
+The WildFireVQA benchmark~\cite{wildfirevqa} fills an important void in disaster response VLMs. The dataset is made up of 3 prescribed burns (Sycan Marsh, Willamette, Shoetank) with 6,097 sets of RGB-thermal images taken by the FLAME~3 project~\cite{flame3} at Clemson University. The images are each accompanied by 34 questions organized into six categories: presence/detection (Is there fire?); counting (How many hotspots?); spatial reasoning (Where is the smoke compared to the flame?); understanding of the scene (What is the dominant vegetation?); temperature analysis (What is the maximum temperature?); and comparative reasoning (Which area is hotter?) This gives a total of 207,298 QAPs.
 
 \subsection{Gap Analysis and Positioning}
 
@@ -107,10 +107,10 @@ While there has been tremendous progress for VLMs and PEFT, there are still a nu
 \begin{itemize}[leftmargin=*, itemsep=1pt, topsep=2pt, parsep=0pt]
     \item {Limited domain-specific benchmarks:} WildFireVQA is one of the first VQA benchmarks for radiometric thermal monitoring of wildfires, and includes three burn sites. Generalization to other types of fire (urban, industrial), to geographic regions and to other disaster scenarios (floods, hurricanes) is not investigated.
     \item {Insufficient thermal reasoning:} Current VLMs on RGB images don't work with radiometric thermal data. Knowing the physical units, characteristics of sensors, and thermal-visual correspondences are not part of general pretraining and is necessary for temperature-based reasoning.
-    \item {Adapter capacity vs accuracy trade-offs:} adapter capacity (rank, layer placement) and task-specific accuracy for wildfire VQA are not well understood. Previous studies examined PEFT in natural-image applications, but fire imagery has different image properties (sparse fire scenes, thermal modality, high image resolution) which might necessitate a different adapter configuration.
+    \item {Adapter capacity vs accuracy trade-offs:} adapter capacity (rank, layer placement) and task-specific accuracy for wildfire VQA are not well understood. Previous studies examined PEFT in natural-image applications, but fire imagery has different image properties (sparse fire scenes, thermal modality, high image resolution) which may require a different adapter configuration.
     \item {Real-time deployment constraints:} Operational wildfire systems have to deliver answers within seconds to aid decision making during active wildfire events. Current benchmarks measure accuracy off-line, but do not consider the latency-accuracy-memory trade off in VLMs deployed on edge devices, such as an UAV onboard compute and mobile ground stations.
 \end{itemize}
-The above-identified approaches are summarised in Table~\ref{tab:related}
+The above-identified approaches are summarised in Table~\ref{tab:related}.
 
 \begin{table}[t]
 \centering
@@ -135,13 +135,13 @@ SynthVLM data synthesis \cite{synthvlm2024} & Reduces data cost with synthetic i
 \end{tabular}
 \end{table}
 
-A significant efficiency loss exists in the adapter when changing between different QLoRA settings, such as query/value, query/key/value/output, all linear layers, and ranks 4--16. This project aims to systematically compare the different configurations of QLoRA on WildFireVQA data set and determine the minimum budget required to achieve comparable accuracy results. We will see a practical recipe for adapting compact models (1.5B parameters, 4-bit quantization) on free-tier hardware, to disaster imagery.
+A considerable efficiency loss exists in the adapter when changing between different QLoRA settings, such as query/value, query/key/value/output, all linear layers, and ranks 4--16. This project aims to systematically compare the different configurations of QLoRA on WildFireVQA data set and determine the minimum budget required to attain comparable accuracy results. We will see a practical recipe for adapting compact models (1.5B parameters, 4-bit quantization) on free-tier hardware, to disaster imagery.
 
 \section{System Design}
 
 \subsection{High Level Design}
 
-As shown in Fig.~\ref{fig:pipeline}, the fine-tuned vision-language model consists of three key components: a visual backbone, a language backbone, and a cross-modal module. Each sample contains an aerial visible RGB image and a radiometric thermal image from FLAME~3 together with a query from the WildFireVQA \cite{wildfirevqa,flame3}. Both images are scaled to $224\times224$ pixel. The images are broken into 98 visual tokens (32 spatial tokens per image) by a frozen CLIP ViT-B/32 vision encoder \cite{radford2021}. The 768-dimensional vision tokens are projected by two independent multilayer perceptron (MLP) projectors, one for the visible imagery and one for the thermal imagery, into the hidden dimension $d$ of the target language model (768 for Qwen2-1.5B and 2048 for Llama-3.2-1B). Learned 1D modality type embeddings are added to differentiate the streams. A total of 98 visual tokens emerge as a prefix to the question in a chat-like prompt. The answer text is then autoregressively generated using a 4-bit quantized decoder language model with adapters \cite{dettmers2023,hu2022}. The frozen baseline, by contrast, directly inputs the images and questions into the Qwen2.5-VL-3B-Instruct model, bypassing the need for parameter updates in the model \cite{brown2020,bai2025}.
+As shown in Fig.~\ref{fig:pipeline}, the fine-tuned vision-language model consists of three key components: a visual backbone, a language backbone, and a cross-modal module. Each sample contains an aerial visible RGB image and a radiometric thermal image from FLAME~3 together with a query from the WildFireVQA \cite{wildfirevqa,flame3}. Both images are scaled to $224\times224$ pixels. A frozen CLIP ViT-B/32 vision encoder \cite{radford2021} splits each image into $32\times32$ patches, giving a $7\times7$ grid and hence 49 patch tokens per image (98 visual tokens per sample). The 768-dimensional vision tokens are projected by two independent multilayer perceptron (MLP) projectors, one for the visible imagery and one for the thermal imagery, into the hidden dimension $d$ of the target language model (1536 for Qwen2-1.5B and 2048 for Llama-3.2-1B). Learned 1D modality type embeddings are added to differentiate the streams. The 98 visual tokens are placed as a prefix to the question in a chat-like prompt. The answer text gets then autoregressively generated using a 4-bit quantized decoder language model with adapters \cite{dettmers2023,hu2022}. The frozen baseline, by contrast, directly inputs the images and questions into the Qwen2.5-VL-3B-Instruct model, avoiding the need for updates to the parameters in the model \cite{brown2020,bai2025}.
 
 \begin{figure*}[!t]
   \centering
@@ -171,9 +171,21 @@ As shown in Fig.~\ref{fig:pipeline}, the fine-tuned vision-language model consis
 
 \subsection{Low Level Design}
 
+\subsubsection{Model Architectures}\label{sec:arch}
+
+\textbf{CLIP ViT-B/32 (vision encoder).} The vision encoder is the image tower of CLIP \cite{radford2021}, a dual-encoder model originally trained contrastively on image--text pairs. A $224\times224$ input is split into $32\times32$ patches ($7\times7=49$ tokens), each linearly embedded to 768 dimensions with position embeddings added. A 12-layer, 12-head Transformer encoder with width 768 then processes the sequence through self-attention. The patch-level hidden states are used as visual tokens, while the text tower and contrastive head are not used. All CLIP weights remain frozen.
+
+\textbf{Qwen2-1.5B (language backbone).} Qwen2 \cite{qwen2,mithan} is a decoder-only Transformer with 28 layers and hidden size 1536. It uses grouped-query attention (12 query heads sharing 2 key/value heads) to reduce the key--value cache, rotary position embeddings (RoPE), pre-RMSNorm, and a SwiGLU feed-forward block made of gate, up and down projections. Its seven linear modules ($q,k,v,o$, gate, up, down) are those targeted by the LoRA configurations in Table~\ref{tab:variants}. The base weights are quantized to 4-bit NF4 and frozen.
+
+\textbf{Llama-3.2-1B (language backbone).} Llama-3.2-1B \cite{llama32} has a similar decoder-only design with 16 layers and hidden size 2048. It uses grouped-query attention (32 query and 8 key/value heads), RoPE, RMSNorm and SwiGLU feed-forward blocks. It exposes the same seven linear modules, so the same adapter placements are applied. Its wider hidden size means that the projectors emit 2048-dimensional tokens.
+
+\textbf{Qwen2.5-VL-3B-Instruct (frozen baseline).} Unlike the two backbones above, the baseline \cite{bai2025} is a complete vision-language model: a native-resolution ViT encoder with window attention, an MLP merger that compresses visual tokens, and a Qwen2.5-3B language decoder. It receives images and text directly and is used only for in-context prompting, with no updates to the weights.
+
+\textbf{Connection in FireVLM.} The RGB and thermal images each pass through the frozen CLIP encoder. Two separate MLP projectors map the 768-dimensional tokens to the language-model width, learned modality embeddings are added, and the resulting visual tokens are prepended to the chat-formatted question. The 4-bit language model with LoRA adapters then generates the answer autoregressively.
+
 \subsubsection{Dataset and Data Splits}\label{sec:dataset}
 
-The pipeline loads 207,306 rows of the WildFireVQA dataset to three prescribed burn sites: Shoetank (120,360 rows), Willamette (61,846 rows), and Sycan Marsh (25,092 rows). This study removes the Sycan Marsh subset (25,092 rows) from the table. An initial pairing procedure maps each source annotation row to its canonical image pair based on the statistical information of radiometric temperature in the source annotation thermal TIFF files. A strict pairing audit is done to ensure that every question is paired to a different visible and thermal image pair, and that there are exactly 34 questions for each image pair: 738 visible and thermal image pairs; 622 Fire class, 116 No Fire class, 364 Sycan 2A and 374 Sycan 2D. The rows are deduplicated by both identifier and text, and assertions enforce that there are no duplicate questions in an image.
+The pipeline loads 207,306 rows of the WildFireVQA dataset from three prescribed burn sites: Shoetank (120,360 rows), Willamette (61,846 rows), and Sycan Marsh (25,092 rows). This study extracts the Sycan Marsh subset (25,092 rows) from the table. An initial pairing procedure maps each source annotation row to its canonical image pair based on the statistical information of radiometric temperature in the source annotation thermal TIFF files. A strict pairing audit is done to make certain that every question is paired to a different visible and thermal image pair, and that there are exactly 34 questions for each image pair: 738 visible and thermal image pairs; 622 Fire class, 116 No Fire class, 364 Sycan 2A and 374 Sycan 2D. The rows are deduplicated by both identifier and text, and assertions enforce that there are no duplicate questions in an image.
 
 The Sycan Marsh subset, from 25,092 rows to 738 audited image pairs and three splits is shown in Fig.~\ref{fig:funnel}.
 
@@ -202,11 +214,10 @@ Each image pair has 34 questions, all of which are contained within the image pa
 
 \subsubsection{Experiment Configurations}
 
-The summary of experimental configurations is given in Table~\ref{tab:variants} and in Fig.~\ref{fig:placement}. All 16 fine-tuning runs were run and trained for every configuration over both the Qwen2-1.5B and Llama-3.2-1B backbones. Low rank adapters are applied to attention projections (query $q$, key $k$, value $v$, output $o$) or all linear projections across attention and feedforward MLP blocks, including the gate, up and down projections. The design of the adapter focuses on the efficiency of parameters: to obtain high task accuracy with the fewest parameter additions. The distribution of rank sweeps across configurations was determined by time constraints and initial results of the previous experiments. In all fine-tuned models, the vision encoder is not updated during training, but only the two projectors and modality embeddings.
+The summary of experimental configurations is given in Table~\ref{tab:variants} and in Fig.~\ref{fig:placement}. All 16 fine-tuning runs were trained, one for every configuration over both the Qwen2-1.5B and Llama-3.2-1B backbones. Low rank adapters are applied to attention projections (query $q$, key $k$, value $v$, output $o$) or all linear projections across attention and feedforward MLP blocks, including the gate, up and down projections. The design of the adapter focuses on the efficiency of parameters: to obtain high task accuracy with the fewest parameter additions. The distribution of rank sweeps across configurations was determined by time constraints and initial results of the previous experiments. In all fine-tuned models, the vision encoder is not updated during training, but only the two projectors and modality embeddings.
 
 \begin{figure}[!t]
   \centering
-  \resizebox{\columnwidth}{!}{%
   \resizebox{\columnwidth}{!}{%
   \begin{tikzpicture}[x=1.25cm, y=0.9cm, every node/.style={font=\footnotesize},
       mod/.style={draw, minimum width=1.1cm, minimum height=0.65cm, rounded corners=1pt},
@@ -225,7 +236,7 @@ The summary of experimental configurations is given in Table~\ref{tab:variants} 
     \node[anchor=west] at (7.65,-2) {$r\in\{8,16\}$};
     \draw[decorate, decoration={brace, amplitude=4pt}] (0.6,0.55) -- (4.4,0.55) node[midway, above=4pt] {self-attention};
     \draw[decorate, decoration={brace, amplitude=4pt}] (4.6,0.55) -- (7.4,0.55) node[midway, above=4pt] {MLP};
-  \end{tikzpicture}}}
+  \end{tikzpicture}}
   \caption{Linear modules of a decoder layer that receive LoRA adapters (shaded) in each configuration, and the ranks tested for it, for both backbones.}
   \label{fig:placement}
 \end{figure}
@@ -254,40 +265,40 @@ LoRA high capacity & all linear ($q,k,v,o$, gate, up, down) & 8, 16 & $2r$ \\
 
 \subsubsection{Frozen Pretrained Baseline}
 
-The few-shot baseline is the Qwen2.5-VL-3B-Instruct model with all parameters frozen and trained in 4-bit precision ($trainable = 0$). Test queries are composed of 200 questions and answers from images not used for training. A deterministic ordered pool of 10 demonstration examples are built for each query, all from the same category of the question. The $k$-shot evaluation assesses the first $k$ demonstration pairs ($k \in \{0,1,\dots,10\}$), with only incremental context that is strictly paired. The prompts include system instructions to return concise answers, the visible and thermal images of each demonstration and query. 1,000 bootstrap resampling is used to calculate confidence intervals.
+The few-shot baseline is the Qwen2.5-VL-3B-Instruct model \cite{bai2025} with all parameters frozen and loaded in 4-bit precision (trainable parameters $=0$); no weights are updated. Test queries consist of 200 questions and answers drawn from images not used for training. A deterministic, ordered pool of 10 demonstration examples is built for each query, all from the same question category. The $k$-shot evaluation uses the first $k$ demonstration pairs ($k \in \{0,1,\dots,10\}$), with only strictly paired incremental context. The prompts include system instructions to return concise answers, and the visible and thermal images of each demonstration and query. 1,000 bootstrap resamples are used to calculate confidence intervals.
 
 \subsubsection{QLoRA Parameter-Efficient Fine-Tuning}
 
-The model is initialised from the \texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct} repository for the fine-tuning runs of Qwen2 \cite{mithan}.
-The base weights are quantized to 4-bit NF4 representation and frozen. The dual modality projectors, and the two modality type embeddings require gradient updates, but the low rank adapter matrices do not. Training runs, with effective batch size 16 (batch size 4, gradient accumulation steps 4; batch size 2 and accumulation 8 for Llama all-linear $r{=}16$). At the end of every epoch, the validation loss is calculated and the checkpoint with the minimum validation loss is saved for test on the 2,482 test rows.
+The model is initialised from the \texttt{mit-han-lab/Qwen2-VL-1.5B-Instruct} repository for the fine-tuning runs of Qwen2 \cite{mithan}, and from Llama-3.2-1B-Instruct for the Llama runs \cite{llama32}.
+The base weights are quantized to 4-bit NF4 representation and frozen. The dual modality projectors and the two modality type embeddings receive gradient updates, as do the low-rank adapter matrices. Training runs with effective batch size 16 (batch size 4, gradient accumulation steps 4; batch size 2 and accumulation 8 for Llama all-linear $r{=}16$). At the end of each epoch, the validation loss is calculated, and the checkpoint with the lowest validation loss is saved for testing on the 2,482 test rows.
 
 \subsubsection{Answer Generation and Evaluation Protocol}
 
-Answer generation is deterministic, using greedy decoding (do\_sample = False, num\_beams = 1) , up to 32 new tokens. Only the first line of text before any newlines will be extracted. A prediction is considered to be an exact match (EM = 1) if it exactly matches the string at the end of the reference string after lowercasing and removing leading and trailing whitespace; otherwise, EM = 0. In addition to computing sentence BLEU-4 and ROUGE-L, the evaluation also reports normalized exact match (which also removes articles and punctuation). Exact match is the main metric for the reference answers since most of them are short phrases with one or two words.
+Answer generation is deterministic, using greedy decoding (do\_sample = False, num\_beams = 1), up to 32 new tokens. Only the first line of text before any newlines is extracted. A prediction is considered to be an exact match (EM = 1) if it is identical to the reference string after lowercasing and removing leading and trailing whitespace; otherwise, EM = 0. In addition to computing sentence BLEU-4 and ROUGE-L, the evaluation also reports normalized exact match (which also removes articles and punctuation). Exact match is the main metric since most of the reference answers are short phrases with one or two words.
 
 \section{System Testing}
 
 \subsection{Data Validation Tests}
 
-\textbf{TC-01 to TC-03: pairing and duplicates.} Pairing and duplicates were asserted as a consequence of the pairing audit, and an assertion after deduplication was made confirmed that no image is duplicated across the 16 fine-tuning notebooks. All 738 source image pairs were matched 34 questions each with 734 exact match and 4 tolerance match was confirmed in the printed output result.
+\textbf{TC-01 to TC-03: pairing and duplicates.} Pairings and duplicates were identified as a result of the pairing audit, and a post-deduplication assertion confirmed that no image is duplicated across the 16 fine-tuning notebooks. All 738 source image pairs were matched with 34 questions each, with 734 exact matches and 4 tolerance matches, as confirmed in the printed output.
 
 \section{Results and Analysis}
 
 \subsection{Evaluation Framework}\label{sec:evalsetup}
 
-\textbf{Fine-tuned runs.} All 16 fine-tuned runs generated were scored on 73 held-out image pairs in the test split, accounting for 2,482 question--answer rows (all 16 result files report 2482 samples). Each configuration was trained once; the split seed is 42 and no configuration was repeated with another seed.
+\textbf{Fine-tuned runs.} All 16 fine-tuned runs were scored on the 73 held-out image pairs of the test split, accounting for 2,482 question--answer rows (all 16 result files report 2482 samples). Each configuration was trained once; the split seed is 42 and no configuration was repeated with another seed.
 
-\textbf{Metric.} The main metric is Exact match (EM) as the answers provided will be drawn from a very small set and BLEU and ROUGE are not recommended for this task. It is included for completeness as ROUGE-L. Not tabulated: Across the 16 runs BLEU is between 0.137 and 0.150 and was not employed to rank runs.
+\textbf{Metric.} The main metric is exact match (EM), as the answers are drawn from a very small set and BLEU and ROUGE are not well suited to this task. ROUGE-L is included for completeness. Not tabulated: across the 16 runs BLEU is between 0.137 and 0.150 and was not used to rank runs.
 
-\textbf{Frozen baseline.} For each $k=0,1,\dots,10$ (200 queries per $k$), the frozen Qwen2.5-VL-3B-Instruct baseline is evaluated. It is kept in the project for comparison only. The baseline notebooks have simpler mapping for image paths than the audited pipeline for fine-tuning. The 25,092 rows of annotations are in just 480 RGBs, which averages around 52 rows per RGB, while the pipeline audited has 738 image pairs and 34 questions per image pair. There may therefore have been some baseline question rows which were matched with an image other than the one for which the question was written. The 200 baseline queries were not stored with an image key, so this cannot be verified later, the cause could not be determined and a rerun of the baseline cannot be performed. The baseline results are therefore only reported as an indicative baseline for the frozen in-context prompting only. They do not necessarily go with the carefully orchestrated test split, and none of the conclusions in this chapter relies on their being so.
+\textbf{Frozen baseline.} For each $k=0,1,\dots,10$ (200 queries per $k$), the frozen Qwen2.5-VL-3B-Instruct baseline is evaluated. It is kept in the project for comparison only. The baseline notebooks use a simpler mapping of image paths than the audited pipeline used for fine-tuning. The 25,092 rows of annotations map to just 480 RGB images, which averages around 52 rows per RGB image, while the audited pipeline has 738 image pairs and 34 questions per image pair. Some baseline question rows may therefore have been matched with an image other than the one for which the question was written. The 200 baseline queries were not stored with an image key, so this cannot be verified later, the cause could not be determined, and a rerun of the baseline could not be performed. The baseline results are therefore reported only as an indicative reference for frozen in-context prompting. They do not necessarily correspond to the carefully designed test split, and none of the conclusions in this paper relies on their doing so.
 
 \subsection{Main Comparative Results}
 
-The highest EM in the best frozen setting is 28.00\% with ROUGE-L 0.3760. The optimised runs give EM values ranging from 84.13 to 88.48 which is 56 to 60 points higher than the best baseline value. This size of this gap is indicative because the baseline relies on a different model than the fine-tuned model (Section~\ref{sec:evalsetup}) and may have different images or a different test sample (Section~\ref{sec:testsample}).
+The highest EM in the best frozen setting is 28.00\% with ROUGE-L 0.3760. The fine-tuned runs give EM values ranging from 84.13\% to 88.48\%, which is 56 to 60 points higher than the best baseline value. The size of this gap is only indicative, because the baseline relies on a different model than the fine-tuned models and may have used different images or a different test sample (Section~\ref{sec:evalsetup}).
 
 \subsection{In-Context Few-Shot Baseline}\label{sec:fewshot}
 
-Exact match rises from 15.00\% at $k=0$ to 28.00\% at $k=10$, and ROUGE-L from 0.2438 to 0.3760. Relative to the zero-shot answers on the same queries, the gain is $+5.0$ points at $k=1$, $+8.5$ at $k=2$ and $k=3$, $+10.5$ at $k=5$, $+11.0$ at $k=8$ and $+13.0$ at $k=10$ (95\% bootstrap interval 8.0 to 18.5 points at $k=10$; 29 queries improved and 3 became worse). The majority of the improvement comes when $k=2$.
+Exact match rises from 15.00\% at $k=0$ to 28.00\% at $k=10$, and ROUGE-L from 0.2438 to 0.3760. Relative to the zero-shot answers for the same queries, the gain is $+5.0$ points at $k=1$, $+8.5$ at $k=2$ and $k=3$, $+10.5$ at $k=5$, $+11.0$ at $k=8$ and $+13.0$ at $k=10$ (95\% bootstrap interval: 8.0 to 18.5 points at $k=10$; 29 queries improved and 3 worsened). The majority of the improvement comes by $k=2$.
 
 \begin{figure}[!t]
   \centering
@@ -307,13 +318,13 @@ Exact match rises from 15.00\% at $k=0$ to 28.00\% at $k=10$, and ROUGE-L from 0
 
 \subsection{Qwen2-1.5B: Adapter Placement and Rank}\label{sec:qwen}
 
-The rank sweeps are not all equal in density: $q,k,v,o$ was run at four ranks, whereas $q,v$ and all-linear were run at two ranks each, due to time limitations, and $q,v$ was not used any further, as it did not yield good results in the other experiments.
+The rank sweeps are not all equal in density: $q,k,v,o$ was run at four ranks, whereas $q,v$ and all-linear were run at two ranks each, due to time limitations, and $q,v$ was not explored further, as it did not yield good results in the other experiments.
 
-All eight runs lie between 84.13\% and 86.62\%. The four runs $q,k,v,o$ at $r=4$ and $r=8$ and $q,v$ at $r=8$ and $r=16$ span 86.06\% to 86.62\%, 0.56 points. The $q,v$ run is the same number of trainable parameters as the best run (5,816,320), and is 0.48 points lower. These differences are small compared to the resolution of a single seed, and a 73 image test set, and the runs are not shown here.
+All eight runs lie between 84.13\% and 86.62\%. The four runs $q,k,v,o$ at $r=4$ and $r=8$ and $q,v$ at $r=8$ and $r=16$ span 86.06\% to 86.62\%, i.e.\ 0.56 points. The $q,v$ run at $r=8$ has the same number of trainable parameters as the best run (5,816,320), and is 0.48 points lower. These differences are small compared to the resolution of a single seed and a 73-image test set, and the runs are not shown here.
 
-The four remaining runs ($q,k,v,o$ $r=32$, all-linear $r=16$ and $r=8$, and $q,k,v,o$ $r=16$) are about 0.9 to 2.5 points below the best run. Larger trainable counts did not yield higher exact match with the three runs with the highest number of trainable parameters (23.2, 14.0 and 13.4 million) scoring at 85.74\%, 84.85\% and 85.50\% respectively, which are lower than the four runs with 5.8 to 6.9 million. These 5.8 to 6.9 million parameters include the projectors and modality embeddings in each run of the project, accounting for 81\% of the total parameters in the smallest configuration. The reasons for the lower scores by the larger adapters were not explored.
+The four remaining runs ($q,k,v,o$ $r=32$, all-linear $r=16$ and $r=8$, and $q,k,v,o$ $r=16$) are about 0.9 to 2.5 points below the best run. Larger trainable counts did not yield higher exact match: the three runs with the highest number of trainable parameters (23.2, 14.0 and 13.4 million) score 85.74\%, 84.85\% and 85.50\% respectively, which is lower than the four runs with 5.8 to 6.9 million. These 5.8 to 6.9 million parameters include the projectors and modality embeddings in each run, accounting for 81\% of the total trainable parameters in the smallest configuration. The reasons for the lower scores of the larger adapters were not explored.
 
-Each of the runs was terminated after 10 to 15 epochs (out of 100) during the early stopping. The validation loss (0.1159) for this lowest loss run is not the highest of the eight test runs (which is 0.1236 for the third-highest, $q,k,v,o$ $r=4$). Only the checkpoint of each run was used for validation loss. The minimum validation loss against the test EM for the 16 runs is plotted in Fig.~\ref{fig:valloss}.
+Each of the runs was terminated by early stopping after 10 to 15 epochs (out of 100). The lowest validation loss (0.1159) is not the loss of the best test run (the best run, $q,k,v,o$ $r=4$, has 0.1236). Only the checkpoint with minimum validation loss of each run was used for testing. The minimum validation loss against the test EM for the 16 runs is plotted in Fig.~\ref{fig:valloss}.
 
 \begin{figure}[!t]
   \centering
@@ -335,38 +346,38 @@ Each of the runs was terminated after 10 to 15 epochs (out of 100) during the ea
 
 \subsection{Llama-3.2-1B Backbone}\label{sec:llama}
 
-Exact match ranges from 85.46\% (all-linear, $r=16$) to 88.48\% ($q,k,v,o$, $r=8$). The two runs reported at $r=16$ and all-linear at $r=8$ report the same EM (87.63\%, 2,175 of 2,482 rows), but values of ROUGE-L, validation loss and no. of parameters differ, so they are different runs.
+Exact match ranges from 85.46\% (all-linear, $r=16$) to 88.48\% ($q,k,v,o$, $r=8$). Two runs, $q,k,v,o$ at $r=16$ and all-linear at $r=8$, report the same EM (87.63\%, 2,175 of 2,482 rows), but the values of ROUGE-L, validation loss and number of parameters differ, so they are different runs.
 
-Llama outperforms Qwen2 on 7/8 pairs at the same placement and rank, with a margin of $+0.24$ points to $+4.03$ points for the same placement and rank respectively, compared to Qwen2. Regarding to Qwen2, the best validation loss (0.1017, $q,k,v,o$ $r=16$) is not associated with the highest EM.
+Llama outperforms Qwen2 on 7 of 8 pairs at the same placement and rank, with margins from $+0.24$ to $+4.03$ points. As with Qwen2, the lowest validation loss (0.1017, $q,k,v,o$ $r=16$) is not associated with the highest EM.
 
 \subsection{Question Categories}
 
-The six categories have 584, 584, 292, 438, 292 and 292 rows, i.e.\ 8, 8, 4, 6, 4 and 4 questions for each of the 73 images, so one image contributes 4 rows (1.4 points) to a cell of 292 rows. The percentages repeat as they are from the integer counts – 2150, 2088, 2144 and 2196 – that add up to the total number of correct answers for each run.
+The six categories have 584, 584, 292, 438, 292 and 292 rows, i.e.\ 8, 8, 4, 6, 4 and 4 questions for each of the 73 images, so one image contributes 4 rows (1.4 points) to a cell of 292 rows. The percentages repeat because they are computed from the integer counts -- 2150, 2088, 2144 and 2196 -- that add up to the total number of correct answers for each run.
 
-The presence and detection have the highest EM (90.75\% to 95.21\%) while presence localization and direction have the lowest (71.23\% to 79.45\%). The 62 additional correct rows of $q,k,v,o$ $r=4$ over $r=16$ are summarized into two categories: 28 for cross-modal reasoning (+85.96\% compared to +76.37\%) and 24 for localization and direction (+79.45\% compared to +71.23\%) (the other four categories add +10 overall, and flight planning and classification are for $r=16$ favour). Four out of six categories (presence and detection, flight planning, classification, cross-modal reasoning) the value of Llama $q,k,v,o$ $r=8$ is the highest among the four. No error analysis was performed and it is not determined why some categories are more difficult than others. The differences are only few points for 292 cells and 73 pictures in one run and should not be interpreted as stable differences.
+Presence and detection have the highest EM (90.75\% to 95.21\%) while localization and direction have the lowest (71.23\% to 79.45\%). The 62 additional correct rows of $q,k,v,o$ $r=4$ over $r=16$ are concentrated in two categories: 28 for cross-modal reasoning (85.96\% compared to 76.37\%) and 24 for localization and direction (79.45\% compared to 71.23\%); the other four categories add 10 overall, and flight planning and classification favour $r=16$. In four of six categories (presence and detection, flight planning, classification, cross-modal reasoning) Llama $q,k,v,o$ $r=8$ has the highest value among the four runs compared. No error analysis was performed, and it is not determined why some categories are more difficult than others. The differences are only a few points on 292-row cells and 73 images in one run and should not be interpreted as stable differences.
 
 \subsection{Threats to Validity}
 
 \begin{enumerate}[leftmargin=*, itemsep=1pt, topsep=2pt, parsep=0pt]
-  \item \textbf{Single seed and small test set.} Each configuration is given one training, and the test set contains 73 images.
-  \item \textbf{Uncontrolled backbone comparison.} The backbones used for Qwen2 and Llama learning runs, and some of these learning runs compared with each other, have different values for the learning rate, the number of epochs they plan to execute and early stopping conditions, as well as batch layout (Section~\ref{sec:llama}).
-  \item \textbf{Baseline not paired.} The frozen baseline uses a different model, 200 queries that have no image key, and an image-path mapping where 52 rows are assigned to each of 480 files, rather than 34 questions per 738 pairs of images (Section~\ref{sec:evalsetup}). It was not rerun.
-  \end{enumerate}
+  \item \textbf{Single seed and small test set.} Each configuration is trained once, and the test set contains 73 images.
+  \item \textbf{Uncontrolled backbone comparison.} The Qwen2 and Llama runs, and some runs within each backbone, differ in learning rate, number of planned epochs, early-stopping conditions and batch layout (Section~\ref{sec:llama}).
+  \item \textbf{Baseline not paired.} The frozen baseline uses a different model, 200 queries that have no image key, and an image-path mapping where 52 rows are assigned to each of 480 files, rather than 34 questions per 738 image pairs (Section~\ref{sec:evalsetup}). It was not rerun.
+\end{enumerate}
 
 \section{Conclusion and Future Scope}
 
 \subsection{Conclusion}
 
-This project trains a parameter efficient ViT-B/32-based VQA system from RGB and thermal images of wildfires from the Sycan Marsh subset of WildFireVQA on the same model, with 738 image pairs, 25,092 rows, using seed 42, which is divided into 592, 73 and 73 pairs. The total number of runs trained was 16: 8 runs were trained on Qwen2-1.5B and 8 runs were trained on Llama-3.2-1B.
+This project trains a parameter-efficient ViT-B/32-based VQA system on RGB and thermal images of wildfires from the Sycan Marsh subset of WildFireVQA, with 738 image pairs and 25,092 rows, using seed 42, divided into 592, 73 and 73 pairs. The total number of runs trained was 16: 8 on Qwen2-1.5B and 8 on Llama-3.2-1B.
 
-On the 2,482 test rows, the Qwen2-1.5B runs reach 84.13\% to 86.62\% exact match with 5.8 to 23.2 million trainable parameters, and the Llama-3.2-1B runs reach 85.46\% to 88.48\%. Qwen2 has the same 5,816,320 trainable parameters for $q,k,v,o$ at $r=4$ (86.62\%) and $q,v$ at $r=8$ (86.14\%), and there are 4 attention-only configurations that differ by only 0.56 points, which is less than expected from a single seed and 73 test images. No higher exact match was obtained in these runs with the larger adapters. For Llama, the following comparisons cannot be made based on rank or placement since learning rate, epochs and early stopping settings and batch layout are different from run to run. It is the same for the comparison of the two backbones. A frozen Qwen2.5-VL-3B model with 0 to 10 demonstrations achieves 15.00\% to 28.00\% exact match on 200 randomly sampled queries, which is just a reference, as queries are not paired with the fine-tuning split. No error analysis was conducted, and the reported categories showed the lowest exact match percentages (localization and direction) and the highest percentages of presence and detection (detection). The results reported are all based on a single run for each configuration.
+On the 2,482 test rows, the Qwen2-1.5B runs reach 84.13\% to 86.62\% exact match with 5.8 to 23.2 million trainable parameters, and the Llama-3.2-1B runs reach 85.46\% to 88.48\%. For Qwen2, $q,k,v,o$ at $r=4$ (86.62\%) and $q,v$ at $r=8$ (86.14\%) have the same 5,816,320 trainable parameters, and four attention-only configurations differ by only 0.56 points, which is less than the variation expected from a single seed and 73 test images. No higher exact match was obtained with the larger adapters. For Llama, comparisons by rank or placement cannot be made reliably, since learning rate, epochs, early-stopping settings and batch layout differ from run to run. The same holds for the comparison of the two backbones. A frozen Qwen2.5-VL-3B model with 0 to 10 demonstrations achieves 15.00\% to 28.00\% exact match on 200 randomly sampled queries, which serves only as a reference, as the queries are not paired with the fine-tuning split. No error analysis was conducted; the reported categories showed the lowest exact match for localization and direction and the highest for presence and detection. All reported results are based on a single run per configuration.
 
 \subsection{Future Scope}
 
 \begin{itemize}[leftmargin=*, itemsep=1pt, topsep=2pt, parsep=0pt]
-  \item For each configuration run several times across a number of seeds, to test for differences of approximately one point, and run the bootstrap on all the runs.
-  \item Retrain two backbones with the same learning rate, schedule, early-stopping parameters and the same layout of batches to separate the backbone and adapter effects.
-  \item Rerun the frozen baseline with 73-image test split (one image key per query) with the audited image pairing.
+  \item For each configuration, run several seeds to test for differences of approximately one point, and run the bootstrap across all the runs.
+  \item Retrain the two backbones with the same learning rate, schedule, early-stopping parameters and batch layout to separate backbone and adapter effects.
+  \item Rerun the frozen baseline on the 73-image test split (one image key per query) with the audited image pairing.
 \end{itemize}
 
 
@@ -395,6 +406,8 @@ Systems (NeurIPS), Vol. 36, 2023.
 \bibitem{hu2022}
 E. J. Hu \textit{et al.}, ``LoRA: Low-Rank Adaptation of Large Language Models'',
 International Conference on Learning Representations (ICLR), 2022.
+\bibitem{qwen2}
+A. Yang \textit{et al.}, ``Qwen2 Technical Report'', arXiv:2407.10671, 2024.
 \bibitem{mithan}
 MIT HAN Lab, ``Qwen2-VL-1.5B-Instruct'', Hugging Face model repository, \url{https://huggingface.co/mit-han-lab/Qwen2-VL-1.5B-Instruct}.
 \bibitem{llama32}
@@ -425,4 +438,4 @@ Z. Liu \textit{et al.}, ``SynthVLM: Towards High-Quality and Efficient Synthesis
 Image-Caption Datasets for Vision-Language Models'', arXiv:2407.20756, 2024.
 \end{thebibliography}
 
-\end{document}
+\end{document}}

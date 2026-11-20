@@ -274,13 +274,13 @@ The base weights are quantized to 4-bit NF4 representation and frozen. The dual 
 
 \subsubsection{Answer Generation and Evaluation Protocol}
 
-Answer generation is deterministic, using greedy decoding (do\_sample = False, num\_beams = 1), up to 32 new tokens. Only the first line of text before any newlines is extracted. A prediction is considered to be an exact match (EM = 1) if it is identical to the reference string after lowercasing and removing leading and trailing whitespace; otherwise, EM = 0. In addition to computing sentence BLEU-4 and ROUGE-L, the evaluation also reports normalized exact match (which also removes articles and punctuation). Exact match is the main metric since most of the reference answers are short phrases with one or two words.
+Answer generation is deterministic, using greedy decoding (do\_sample = False, num\_beams = 1), up to 32 new tokens. Only the first line of text before any newlines is extracted. A prediction is considered to be an exact match (EM = 1) if it is identical to the reference string after lowercasing and removing leading and trailing whitespace; otherwise, EM = 0. In addition to computing sentence BLEU-4 and ROUGE-L, the frozen baseline also reports normalized exact match (which also removes articles and punctuation). Exact match is the main metric since most of the reference answers are short phrases with one or two words.
 
 \section{System Testing}
 
 \subsection{Data Validation Tests}
 
-\textbf{TC-01 to TC-03: pairing and duplicates.} Pairings and duplicates were identified as a result of the pairing audit, and a post-deduplication assertion confirmed that no image is duplicated across the 16 fine-tuning notebooks. All 738 source image pairs were matched with 34 questions each, with 734 exact matches and 4 tolerance matches, as confirmed in the printed output.
+\textbf{TC-01 to TC-03: pairing and duplicates.} Pairings and duplicates were identified as a result of the pairing audit, and a post-deduplication assertion confirmed that no image has a duplicate question across the 16 fine-tuning notebooks. All 738 source image pairs were matched with 34 questions each, with 734 exact matches and 4 tolerance matches, as confirmed in the printed output.
 
 \section{Results and Analysis}
 
@@ -320,7 +320,7 @@ Exact match rises from 15.00\% at $k=0$ to 28.00\% at $k=10$, and ROUGE-L from 0
 
 The rank sweeps are not all equal in density: $q,k,v,o$ was run at four ranks, whereas $q,v$ and all-linear were run at two ranks each, due to time limitations, and $q,v$ was not explored further, as it did not yield good results in the other experiments.
 
-All eight runs lie between 84.13\% and 86.62\%. The four runs $q,k,v,o$ at $r=4$ and $r=8$ and $q,v$ at $r=8$ and $r=16$ span 86.06\% to 86.62\%, i.e.\ 0.56 points. The $q,v$ run at $r=8$ has the same number of trainable parameters as the best run (5,816,320), and is 0.48 points lower. These differences are small compared to the resolution of a single seed and a 73-image test set, and the runs are not shown here.
+All eight runs lie between 84.13\% and 86.62\%. The four runs $q,k,v,o$ at $r=4$ and $r=8$ and $q,v$ at $r=8$ and $r=16$ span 86.06\% to 86.62\%, i.e.\ 0.56 points. The $q,v$ run at $r=8$ has the same number of trainable parameters as the best run (5,816,320), and is 0.48 points lower. These differences are small compared to the resolution of a single seed and a 73-image test set, and the runs are not ranked here.
 
 The four remaining runs ($q,k,v,o$ $r=32$, all-linear $r=16$ and $r=8$, and $q,k,v,o$ $r=16$) are about 0.9 to 2.5 points below the best run. Larger trainable counts did not yield higher exact match: the three runs with the highest number of trainable parameters (23.2, 14.0 and 13.4 million) score 85.74\%, 84.85\% and 85.50\% respectively, which is lower than the four runs with 5.8 to 6.9 million. These 5.8 to 6.9 million parameters include the projectors and modality embeddings in each run, accounting for 81\% of the total trainable parameters in the smallest configuration. The reasons for the lower scores of the larger adapters were not explored.
 
@@ -346,13 +346,13 @@ Each of the runs was terminated by early stopping after 10 to 15 epochs (out of 
 
 \subsection{Llama-3.2-1B Backbone}\label{sec:llama}
 
-Exact match ranges from 85.46\% (all-linear, $r=16$) to 88.48\% ($q,k,v,o$, $r=8$). Two runs, $q,k,v,o$ at $r=16$ and all-linear at $r=8$, report the same EM (87.63\%, 2,175 of 2,482 rows), but the values of ROUGE-L, validation loss and number of parameters differ, so they are different runs.
+Exact match ranges from 85.46\% (all-linear, $r=16$) to 88.48\% ($q,k,v,o$, $r=8$). Two runs, $q,v$ at $r=16$ and all-linear at $r=8$, report the same EM (87.63\%, 2,175 of 2,482 rows), but the values of ROUGE-L, validation loss and number of parameters differ, so they are different runs.
 
 Llama outperforms Qwen2 on 7 of 8 pairs at the same placement and rank, with margins from $+0.24$ to $+4.03$ points. As with Qwen2, the lowest validation loss (0.1017, $q,k,v,o$ $r=16$) is not associated with the highest EM.
 
 \subsection{Question Categories}
 
-The six categories have 584, 584, 292, 438, 292 and 292 rows, i.e.\ 8, 8, 4, 6, 4 and 4 questions for each of the 73 images, so one image contributes 4 rows (1.4 points) to a cell of 292 rows. The percentages repeat because they are computed from the integer counts -- 2150, 2088, 2144 and 2196 -- that add up to the total number of correct answers for each run.
+The six categories have 584, 584, 292, 438, 292 and 292 rows, i.e.\ 8, 8, 4, 6, 4 and 4 questions for each of the 73 images, so one image contributes 4 rows (1.4 points) to a cell of 292 rows. The percentages are an exact reproduction of the integer counts -- 2150, 2088, 2144 and 2196 -- that add up to the total number of correct answers for each run.
 
 Presence and detection have the highest EM (90.75\% to 95.21\%) while localization and direction have the lowest (71.23\% to 79.45\%). The 62 additional correct rows of $q,k,v,o$ $r=4$ over $r=16$ are concentrated in two categories: 28 for cross-modal reasoning (85.96\% compared to 76.37\%) and 24 for localization and direction (79.45\% compared to 71.23\%); the other four categories add 10 overall, and flight planning and classification favour $r=16$. In four of six categories (presence and detection, flight planning, classification, cross-modal reasoning) Llama $q,k,v,o$ $r=8$ has the highest value among the four runs compared. No error analysis was performed, and it is not determined why some categories are more difficult than others. The differences are only a few points on 292-row cells and 73 images in one run and should not be interpreted as stable differences.
 
@@ -370,7 +370,7 @@ Presence and detection have the highest EM (90.75\% to 95.21\%) while localizati
 
 This project trains a parameter-efficient ViT-B/32-based VQA system on RGB and thermal images of wildfires from the Sycan Marsh subset of WildFireVQA, with 738 image pairs and 25,092 rows, using seed 42, divided into 592, 73 and 73 pairs. The total number of runs trained was 16: 8 on Qwen2-1.5B and 8 on Llama-3.2-1B.
 
-On the 2,482 test rows, the Qwen2-1.5B runs reach 84.13\% to 86.62\% exact match with 5.8 to 23.2 million trainable parameters, and the Llama-3.2-1B runs reach 85.46\% to 88.48\%. For Qwen2, $q,k,v,o$ at $r=4$ (86.62\%) and $q,v$ at $r=8$ (86.14\%) have the same 5,816,320 trainable parameters, and four attention-only configurations differ by only 0.56 points, which is less than the variation expected from a single seed and 73 test images. No higher exact match was obtained with the larger adapters. For Llama, comparisons by rank or placement cannot be made reliably, since learning rate, epochs, early-stopping settings and batch layout differ from run to run. The same holds for the comparison of the two backbones. A frozen Qwen2.5-VL-3B model with 0 to 10 demonstrations achieves 15.00\% to 28.00\% exact match on 200 randomly sampled queries, which serves only as a reference, as the queries are not paired with the fine-tuning split. No error analysis was conducted; the reported categories showed the lowest exact match for localization and direction and the highest for presence and detection. All reported results are based on a single run per configuration.
+On the 2,482 test rows, the Qwen2-1.5B runs reach 84.13\% to 86.62\% exact match with 5.8 to 23.2 million trainable parameters, and the Llama-3.2-1B runs reach 85.46\% to 88.48\%. For Qwen2, $q,k,v,o$ at $r=4$ (86.62\%) and $q,v$ at $r=8$ (86.14\%) have the same 5,816,320 trainable parameters, and four attention-only configurations differ by only 0.56 points, which is less than the variation expected from a single seed and 73 test images. No higher exact match was obtained with the larger adapters. For Llama, comparisons by rank or placement cannot be made reliably, since learning rate, epochs, early-stopping settings and batch layout differ from run to run. The same holds for the comparison of the two backbones. A frozen Qwen2.5-VL-3B model with 0 to 10 demonstrations achieves 15.00\% to 28.00\% exact match on 200 sampled queries, which serves only as a reference, as the queries are not paired with the fine-tuning split. No error analysis was conducted; the reported categories showed the lowest exact match for localization and direction and the highest for presence and detection. All reported results are based on a single run per configuration.
 
 \subsection{Future Scope}
 
@@ -438,4 +438,4 @@ Z. Liu \textit{et al.}, ``SynthVLM: Towards High-Quality and Efficient Synthesis
 Image-Caption Datasets for Vision-Language Models'', arXiv:2407.20756, 2024.
 \end{thebibliography}
 
-\end{document}}
+\end{document}
